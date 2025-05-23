@@ -1,0 +1,261 @@
+﻿using GEO_DROID.Resources;
+using GEO_DROID.Resources.PrinterResources;
+using GeoDroid.Data;
+using GeoDroid.Data.Models.DTO;
+using InTheHand.Net;
+using InTheHand.Net.Bluetooth;
+using InTheHand.Net.Sockets;
+using Newtonsoft.Json;
+using System.Net.Sockets;
+using System.Text;
+
+
+
+namespace GEO_DROID.Services
+{
+    public class BluetoothServiceManager
+    {
+        public BluetoothClient client;
+        public BluetoothDeviceInfo deviceConected;
+
+        public GeoDroidDbContext _dbContext;
+        public ulong _deviceConectedAddess;
+
+        public NetworkStream canal;
+        public BluetoothServiceManager()
+        {
+            Permissions.RequestAsync<BluetoothPermissions>();
+            Permissions.RequestAsync<Permissions.Camera>();
+            client = new BluetoothClient();
+            _dbContext = new GeoDroidDbContext();
+        }
+
+        public async Task<IReadOnlyCollection<BluetoothDeviceInfo>> SearchDevices()
+        {
+            return await Task.Run(() =>
+             {
+                 return client.DiscoverDevices();
+             });
+        }
+        public async Task<bool> ConectBl(BluetoothDeviceInfo device)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    client.Connect(device.DeviceAddress, BluetoothService.SerialPort);
+                    deviceConected = device;
+                });
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+        public async void ReadData(byte[] byteArray)
+        {
+            if (!client.Connected) { client.Connect(deviceConected.DeviceAddress, BluetoothService.SerialPort); }
+            if (client.Connected)
+            {
+                NetworkStream stream = client.GetStream();
+                if (stream.CanRead)
+                {
+                    await Task.Run(async () =>
+                    {
+                        await stream.ReadAsync(byteArray);
+                    });
+
+                }
+
+            }
+
+        }
+        public async Task<string> SendData(byte[] byteArray, ulong adderss)
+        {
+            try
+            {
+                if (!client.Connected) { client.Connect(adderss, BluetoothService.SerialPort); }
+                if (client.Connected)
+                {
+                    NetworkStream stream = client.GetStream();
+                    if (stream.CanWrite)
+                    {
+                        await Task.Run(async () =>
+                        {
+                            await stream.WriteAsync(byteArray, 0, byteArray.Length);
+
+                            return String.Empty;
+                        });
+                        return String.Empty;
+                    }
+                    else
+                    {
+                        return "No se puede escribir en el stream del dispositivo Bluetooth.";
+                    }
+                }
+                else
+                {
+                    return "El cliente Bluetooth no está conectado.";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Error al enviar datos al dispositivo Bluetooth: {ex.Message}";
+            }
+        }
+        public async void SendData2(List<TicketLine> Ticket, ulong address)
+        {
+            StringBuilder dataToDisplay = new StringBuilder();
+            foreach (TicketLine ticketLine in Ticket)
+            {
+                dataToDisplay.Append(ticketLine.Build());
+            }
+            byte[] byteArray = Encoding.UTF8.GetBytes(dataToDisplay.ToString());
+            if (!client.Connected)
+            {
+                client.Connect(new BluetoothAddress(address), BluetoothService.SerialPort);
+            }
+            if (client.Connected)
+            {
+                NetworkStream stream = client.GetStream();
+                if (stream.CanWrite)
+                {
+                    await Task.Run(() =>
+                    {
+                        stream.WriteAsync(byteArray, 0, byteArray.Length);
+                    });
+                }
+                stream.Close();
+            }
+        }
+        public void ResetPrinter(ulong adderss)
+        {
+            StringBuilder dataToDisplay = new StringBuilder();
+            dataToDisplay.AppendLine($"{(char)27}@");
+            byte[] byteArray = Encoding.UTF8.GetBytes(dataToDisplay.ToString());
+            if (!client.Connected) { client.Connect(adderss, BluetoothService.SerialPort); }
+            if (client.Connected)
+            {
+                NetworkStream stream = client.GetStream();
+                if (stream.CanWrite)
+                {
+                    Task.Run(async () =>
+                  {
+                      await stream.WriteAsync(byteArray, 0, byteArray.Length);
+                      return String.Empty;
+                  });
+                }
+                else
+                {
+                }
+            }
+
+        }
+        public void SaveConectedDevice(BluetoothDeviceInfo device)
+        {
+            BluetoothDeviceInfoDTO conected = new BluetoothDeviceInfoDTO();
+            string adress = JsonConvert.SerializeObject(conected);
+            conected.DeviceAddress = adress;
+        }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        public bool IsReady() { return client.Connected; }
+
+        public StringBuilder RecibirDatos(string _mac)
+        {
+            StringBuilder dataToDisplay = new StringBuilder();
+            byte[] byteArray = new byte[2500];
+            try
+            {
+                if (canal != null)
+                {
+                    if (canal.CanRead)
+                    {
+                        int bytesRead;
+                        while (canal.DataAvailable && (bytesRead = canal.Read(byteArray, 0, byteArray.Length)) != 0)
+                        {
+                            string receivedText = Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
+                            dataToDisplay.Append(receivedText);
+                        }
+                    }
+                }
+                else
+                {
+                    canal = client.GetStream();
+                    if (canal.CanRead)
+                    {
+                        int bytesRead;
+                        while (canal.DataAvailable && (bytesRead = canal.Read(byteArray, 0, byteArray.Length)) != 0)
+                        {
+                            string receivedText = Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
+                            dataToDisplay.Append(receivedText);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al recibir datos: {ex.Message}");
+            }
+
+            return dataToDisplay;
+        }
+        public void LimpiarBuffer() { }
+        public StringBuilder Conectar(string mac, string pin)
+        {
+            BluetoothAddress address = BluetoothAddress.Parse(mac);
+            bool sis = BluetoothSecurity.RemoveDevice(address);
+            bool isPaired = BluetoothSecurity.PairRequest(address, pin);
+            client.Authenticate = false;
+            try
+            {
+                client.Connect(address, BluetoothService.SerialPort);
+                StringBuilder resp = RecibirDatos(mac);
+                return resp;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An error occurred while connecting: " + ex.Message);
+                return null;
+            }
+        }
+        public bool Desconectar()
+        {
+            try
+            {
+                if (canal != null)
+                {
+                    canal.Close();
+                    client.Dispose();
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+                throw;
+            }
+
+        }
+        public bool EnviarDatos(StringBuilder datos, string mac)
+        {
+            BluetoothAddress addss = BluetoothAddress.Parse(mac);
+            byte[] byteArray = Encoding.UTF8.GetBytes(datos.ToString());
+
+            if (canal != null)
+            {
+                if (canal.CanWrite)
+                {
+                    canal.Write(byteArray, 0, byteArray.Length);
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+}

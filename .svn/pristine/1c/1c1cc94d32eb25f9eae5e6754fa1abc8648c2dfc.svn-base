@@ -1,0 +1,11 @@
+﻿
+
+namespace GeoDroid.Data
+{
+    public class DeviceCandidate
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+    }
+}

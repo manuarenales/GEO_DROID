@@ -1,0 +1,67 @@
+﻿@using GEO_DROID.Database.Models.DTO
+@using GEO_DROID.Services
+@using GEO_DROID.Services.SincroService
+@using System.Globalization;
+@using System.Text.Json
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.CultureCase
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+@inject IState<AplicacionState> state
+@inject IState<CultureState> CultureState
+@inject IDispatcher Dispatcher
+@inject IStringLocalizer<StringLocalizer> Localizer;
+
+
+@foreach (MainMenuItem item in state.Value.MainMenuItems)
+{
+    if (@item.ruta == "sincronizacion")
+    {
+        <div class="row" style="  padding-bottom: 0em;" @onclick="() => Dispatcher.Dispatch(new SincronizationAction()) ">
+
+            <div class="col-3 col-sm-3 col-md-2 col-lg-2">
+                <img src="@item.icon" style="width: 4em" class="img-fluid" />
+            </div>
+
+            <div class="col-9 col-sm-9 col-md-10 col-lg-10 ">
+                <span class="Titulo font-weight-bold " style="overflow-wrap: break-word; text-align: start;  ">
+                    @Localizer[@item.title]
+                </span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row" style="  padding-bottom: 0em;" @onclick="() =>Dispatcher.Dispatch(new NavigationToAction(item.ruta ))  ">
+
+            <div class="col-3 col-sm-3 col-md-2 col-lg-2">
+                <img src="@item.icon" style="width: 4em" class="img-fluid" />
+
+            </div>
+
+            <div class="col-9 col-sm-9 col-md-10 col-lg-10 ">
+                <span class="Titulo font-weight-bold" style="overflow-wrap: break-word; text-align: start;">
+                    @Localizer[@item.title]
+                </span>
+
+            </div>
+
+        </div>
+    }
+    <hr />
+}
+
+@code {
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+    }
+
+
+
+}

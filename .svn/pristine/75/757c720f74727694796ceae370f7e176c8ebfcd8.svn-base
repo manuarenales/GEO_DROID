@@ -1,0 +1,175 @@
+﻿ @page "/opciones/{establecimientoid:int}"
+ @using GEO_DROID.Models
+ @using GEO_DROID.Services
+ @inject NavigationManager Navigation
+ @inject EstablecimientosService Builder
+ @inject IStringLocalizer<StringLocalizer> Localizer;
+ @inject CultureService Cultureservice
+
+<div class="d-flex justify-content-center align-items-center bg-dark  ">
+    <h5 class="mt-1" style="color:white"> @establecimiento.nombre  </h5>
+</div>
+
+<ul class="list-group ">
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center">
+        <span class="m-2"> @Localizer["recaudar"] </span>
+        <div class="d-flex justify-content-between align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/tienda.png" /><span>0:00</span>
+            </div>
+            <div>
+                <img class="m-1" src="img/recaudador.png" /><span>0:00</span>
+            </div>
+            <div>
+                <img class="m-1" src="img/notas.png" /><span>B2600.00</span>
+            </div>
+        </div>
+    </li>
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center">
+        <span class="m-2"> @Localizer["motivosmaquinanorecaudada"]  </span>
+        <div class="d-flex justify-content-start align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/maquina.png" /><span>0</span>
+            </div>
+        </div>
+    </li>
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center" @onclick='() => NavigateTo("averias/" + establecimientoid  )'>
+        <span class="m-2"> @Localizer["averias"]</span>
+        <div class="d-flex justify-content-start align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/repare.jpg" /><span>0/1</span>
+            </div>
+        </div>
+
+    </li>
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center">
+        <span class="m-2"> @Localizer["cambios"] </span>
+        <div class="d-flex justify-content-start align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/monedas.png" /><span>1/0/0</span>
+            </div>
+        </div>
+    </li>
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center">
+        <span class="m-2">  @Localizer["prestamos"] </span>
+        <div class="d-flex justify-content-between align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/tienda.png" /><span>0:00</span>
+            </div>
+            <div>
+                <img class="m-1" src="img/manoflecha1.png" /><span>0:00</span>
+            </div>
+            <div>
+                <img class="m-1" src="img/manoflecha2.png" /><span>0.00</span>
+            </div>
+        </div>
+    </li>
+</ul>
+
+<div class="  m-1 p-1 row ">
+    <div class="col-6 d-flex p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="() => ShowModalTickets()"> @Localizer["imprimirtickets"]  </button>
+    </div>
+    <div class="col-6 d-flex p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="() => ShowModalInfo()"> @Localizer["informacion"] </button>
+    </div>
+    <div class="col-12 d-flex justify-content-around align-items-center m-1 p-1">
+        <div>
+            <img class="m-1" src="img/tienda.png" /><span>0:00</span>
+        </div>
+        <div>
+            <img class="m-1" src="img/recaudador.png" /><span>0:00</span>
+        </div>
+    </div>
+</div>
+
+<Modal @ref="modalRefTickets">
+    <ModalContent Size="ModalSize.Fullscreen">
+        <ModalHeader>
+            <ModalTitle> Seleccionar ticket</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+
+        <ModalBody>
+            <TextEdit Placeholder="Buscar" Text="@nameTickets" TextChanged="@OnNameChangedTickets" />
+            <Div Class="m-2">
+                <ListGroup Mode="ListGroupMode.Selectable" @bind-SelectedItem="selectedItem">
+                    @foreach (string item in tickets)
+                    {
+                        <ListGroupItem Name="@item"><Span>@item</Span></ListGroupItem>
+                    }
+                </ListGroup>
+            </Div>
+            <Div Class="d-flex p-1 m-1">
+                <Button disabled="@string.IsNullOrEmpty(selectedItem)" Class="w-100 m-2 p-1 " Color="Color.Info">Seleccionar</Button>
+            </Div>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+<Modal @ref="modalRefInfo">
+    <ModalContent Size="ModalSize.Fullscreen">
+        <ModalHeader>
+            <ModalTitle>Informacion del Establecimiento</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+
+        <ModalBody>
+            <Div Class="m-2">
+                <ListGroup>
+                    <ListGroupItem Class="d-flex flex-column">
+                        <Label>Nombre : </Label>
+                        <Span Style="color: blue;">@establecimiento.nombre</Span>
+                    </ListGroupItem>
+                </ListGroup>
+            </Div>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+@code {
+
+    [Parameter]
+    public int establecimientoid { get; set; }
+
+    private Modal modalRefTickets;
+    private Modal modalRefInfo;
+    private string nameTickets;
+    public Establecimiento establecimiento = new Establecimiento();
+    public List<string> tickets = new List<string>();
+    public List<string> infoList = new List<string>();
+
+    private string selectedItem = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        establecimiento = await Builder.getEstablecimientoByID(establecimientoid);
+        tickets = Builder.getTiketsList(establecimientoid);
+        Cultureservice.CultureChanged += StateHasChanged;
+    }
+
+    Task OnNameChangedTickets(string value)
+    {
+        nameTickets = value;
+        tickets = Builder.getTiketsList(establecimientoid);
+        return Task.CompletedTask;
+    }
+    Task OnNameChangedInfo(string value)
+    {
+        return Task.CompletedTask;
+    }
+
+    private Task ShowModalTickets()
+    {
+        return modalRefTickets.Show();
+    }
+    private Task ShowModalInfo()
+    {
+        return modalRefInfo.Show();
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+}

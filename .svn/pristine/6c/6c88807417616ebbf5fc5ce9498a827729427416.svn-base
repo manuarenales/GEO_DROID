@@ -1,0 +1,88 @@
+﻿using GEO_DROID.Services;
+using GeoDroid.Data;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Maui.LifecycleEvents;
+
+#if ANDROID
+using GEO_DROID.Platforms.Android.Handlers;
+#endif
+
+namespace GEO_DROID
+{
+    public static class MauiProgram
+    {
+        public static MauiApp CreateMauiApp()
+        {
+            var builder = MauiApp.CreateBuilder();
+            builder
+                .UseMauiApp<App>()
+
+                .ConfigureFonts(fonts =>
+                {
+                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                }).ConfigureMauiHandlers(handlers =>
+                {
+#if ANDROID
+                    handlers.AddHandler<BlazorWebView, MauiBlazorWebViewHandler>();
+#endif                
+                }).ConfigureLifecycleEvents(events =>
+                {
+
+                    static void LogEvent(string eventName, string type = null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Lifecycle event: {eventName}{(type == null ? string.Empty : $" ({type})")}");
+                    }
+                });
+
+            /////////////////////////////////////////////////// ORM ////////////////////////////////////////////////
+
+            builder.Services.AddDbContext<GeoDroidDbContext>();
+            var dbContext = new GeoDroidDbContext();
+
+            try { dbContext.Database.Migrate(); }
+            catch (Exception ex) { throw; }
+
+            builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddTransient<Averia>();
+            builder.Services.AddTransient<AveriaEstado>();
+            builder.Services.AddTransient<ConceptoAveria>();
+            builder.Services.AddTransient<DeviceCandidate>();
+            builder.Services.AddTransient<Establecimiento>();
+            builder.Services.AddTransient<Incidencia>();
+            builder.Services.AddTransient<Ruta>();
+            builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddLocalization();
+            builder.Services.AddTransient<CustomNavigationManager>();
+
+            /////////////////////////////////////////////////// Servicios ////////////////////////////////////////////////
+
+            builder.Services.AddTransient<LayoutBuilderService>();
+            builder.Services.AddTransient<EstablecimientosService>();
+            builder.Services.AddSingleton<CultureService>();
+            builder.Services.AddTransient<AveriasService>();
+            builder.Services.AddTransient<CargaService>();
+#if ANDROID
+            builder.Services.AddTransient<BluetoothServiceBroker>();
+#endif
+            builder.Services.AddTransient<MaquinaService>();
+            builder.Services.AddTransient<ConceptoAveriaService>();
+            builder.Services.AddTransient<SincroService>();
+            builder.Services.AddTransient<EstadoAveriaService>();
+            builder.Services.AddTransient<TokenService>();
+            builder.Services.AddTransient<TicketsService>();
+            builder.Services.AddTransient<LecturaContadorService>();
+            builder.Services.AddTransient<GeolineOdataService>();
+            builder.Services.AddSingleton<BluetoothServiceManager>();
+            builder.Services.AddSingleton<PatronContadorDetalleService>();
+            builder.Services.AddSingleton<PatronContadorService>();
+            builder.Services.AddSingleton<LecturaContadorDetalleService>();
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            builder.Logging.AddDebug();
+            return builder.Build();
+        }
+    }
+}

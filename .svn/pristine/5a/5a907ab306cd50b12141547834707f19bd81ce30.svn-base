@@ -1,0 +1,82 @@
+﻿using GEO_DROID.Models;
+using SQLite;
+using System.Collections.Generic;
+
+namespace GEO_DROID.Services
+{
+    public class AveriasService
+    {
+
+        SQLiteAsyncConnection Database;
+        MaquinaService maquinaService;
+        ConceptoAveriaService conceptoAveriaService;
+        EstadoAveriaService estadoAveriaService;
+
+        public AveriasService()
+        {
+            Init();
+            maquinaService = new MaquinaService();
+            conceptoAveriaService = new ConceptoAveriaService();
+            estadoAveriaService = new EstadoAveriaService();
+        }
+
+        async Task Init()
+        {
+            if (Database is not null)
+                return;
+            try
+            {
+                Database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
+                var result = await Database.CreateTableAsync<Averia>();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+        }
+
+        public async Task<List<Averia>> GetAveriasAsync()
+        {
+            List<Averia> resp = new List<Averia>();
+
+            resp = await Database.Table<Averia>().ToListAsync();
+
+            foreach (Averia averia in resp)
+            {
+                averia.maquina = await maquinaService.GetMaquinaByIdAsync(averia.idMaquina);
+                averia.conceptoAveria = await conceptoAveriaService.GetConceptoByIdAsync(averia.idConceptoAverias);
+                averia.averiaEstado = await estadoAveriaService.GetEstadoByIdAsync(averia.idAveriasEstados);
+            }
+            return resp;
+        }
+
+        public async Task<Averia> GetAveriaByIdAsync(int id)
+        {
+
+            return await Database.Table<Averia>().Where(i => i.id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveAveriaAsync(Averia item)
+        {
+            Averia device = await Database.Table<Averia>().Where(i => i.id == item.id).FirstOrDefaultAsync();
+
+            if (device != null)
+            {
+                return await Database.UpdateAsync(item);
+            }
+            else
+            {
+                return await Database.InsertAsync(item);
+            }
+        }
+
+        public async Task<int> DeleteAveriaAsync(Averia item)
+        {
+            var yes = await Database.Table<Averia>().DeleteAsync(i => i.id == item.id);
+            return yes;
+        }
+
+
+    }
+}

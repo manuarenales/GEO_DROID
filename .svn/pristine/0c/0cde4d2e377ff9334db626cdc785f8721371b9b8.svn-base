@@ -1,0 +1,40 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class RecaudacionDetalles
+    {
+        private class TipoRecaudacionQuery
+        {
+            //public TipoDistribucionConceptoRecaudacion tipoDisConRec { get; set; }
+            public RecaudacionDetalles recaudacionDetalles { get; set; }
+            public MaquinaConceptoRecaudacion maquinaConRec { get; set; }
+            public Maquina maquina { get; set; }
+        };
+
+        [Key]
+        public int id { get; set; }
+
+        public int idRecaudacion { get; set; }
+
+        [ForeignKey("idRecaudacion")]
+        public Recaudacion recaudacion { get; set; }
+        public int idConceptoRecaudacion { get; set; }
+        [DataMember]
+        public Decimal importe { get; set; }
+        [DataMember]
+        public Decimal importeDefecto { get; set; }
+
+
+
+    }
+}

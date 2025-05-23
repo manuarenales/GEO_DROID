@@ -1,0 +1,34 @@
+﻿using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Incidencia
+    {
+        [DataMember, PrimaryKey, AutoIncrement]
+        public int id { get; set; }
+        /// <summary>
+        /// 0 when new insertion in mobile device
+        /// </summary>
+        [DataMember]
+        public int idGeo { get; set; }
+        [DataMember]
+        public int idRutaRecaudaciones { get; set; }
+        /// <summary>
+        /// fecha = MIN(fechaAlta) WHERE idRutaRecaudacion=x 
+        /// </summary>
+        [DataMember]
+        public DateTime fecha { get; set; }
+        [DataMember]
+        public DateTime fechaAlta { get; set; }
+        /// <summary>
+        /// [DataMember, ForeingKeyIdGeo(typeof(Maquina))]
+        /// </summary>
+        public int idMaquinas { get; set; }
+    }
+}

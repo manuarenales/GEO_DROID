@@ -1,0 +1,72 @@
+﻿@page "/informaciongeneral"
+@using GEO_DROID.Services
+  @inject IStringLocalizer<StringLocalizer> Localizer;
+  @inject CultureService Cultureservice
+
+@* <Div Class="w-100 title m-2 " Style="background-color: grey"> <h5>Informacion General</h5></Div>*@
+<Div Class=" mb-5 pb-2">
+    <ListGroup Flush>
+        <ListGroupItem Class="d-flex flex-column justify-content-start">
+            <Span>Nombre Del Recaudador</Span>
+            <span class="spancolor">Manuel Pina Monzo</span>
+        </ListGroupItem>
+
+        <ListGroupItem Class="d-flex flex-column justify-content-start">
+            <Span>Fecha Sincronizacion</Span>
+            <span class="spancolor">11/08/1999</span>
+        </ListGroupItem>
+    </ListGroup>
+
+    <Div Class="w-100 title m-2  " Style="background-color: grey"> <h5>Informacion De Ruta</h5></Div>
+    <ListGroup Flush>
+        <ListGroupItem Class="d-flex flex-column justify-content-start">
+            <Span>Num. Recaudaciones</Span>
+            <span Class="spancolor">33</span>
+        </ListGroupItem>
+
+        <ListGroupItem Class="d-flex flex-column justify-content-start">
+            <Span>Neto</Span>
+            <span class="spancolor">33</span>
+        </ListGroupItem>
+
+        <ListGroupItem Class="d-flex flex-column justify-content-start">
+            <Span>Cargas</Span>
+            <span class="spancolor">36</span>
+        </ListGroupItem>
+
+        <ListGroupItem Class="d-flex flex-column justify-content-start">
+            <Span>Recuperaciones de Carga</Span>
+            <span class="spancolor">33</span>
+        </ListGroupItem>
+
+        <ListGroupItem Class="d-flex flex-column justify-content-start">
+            <Span>Prestamos</Span>
+            <span class="spancolor">33</span>
+        </ListGroupItem>
+
+        <ListGroupItem Class="d-flex flex-column justify-content-start">
+            <Span>Recuperaciones de Prestamos</Span>
+            <span class="spancolor">33</span>
+        </ListGroupItem>
+
+        <ListGroupItem Class="d-flex flex-column justify-content-start">
+            <Span>Total</Span>
+            <span class="spancolor">33</span>
+        </ListGroupItem>
+
+    </ListGroup>
+</Div>
+
+
+<Div Class="fixed-bottom d-block  mt-3 p-2 row ">
+    <Div Class="col-12 d-flex p-3 m-1">
+        <Button Class="w-100" Color="Color.Secondary">Imprimir Ticket Resumen Dia </Button>
+    </Div>
+</Div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Cultureservice.CultureChanged += StateHasChanged;
+    }
+}

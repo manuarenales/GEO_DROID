@@ -1,0 +1,32 @@
+﻿@page "/"
+@using GEO_DROID.Services
+@inject LayoutBuilderService Builder
+@inject NavigationManager Navigation
+@inject CultureService Cultureservice
+
+
+<GEO_DROID.Shared.Components.ItemDisplayListComponent MenuItems="@MenuItems"></GEO_DROID.Shared.Components.ItemDisplayListComponent>
+
+
+@code {
+
+    private List<ItemList> MenuItems;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        MenuItems = Builder.GetIndexMenuItems();
+        Cultureservice.CultureChanged += StateHasChanged;
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+    public void reload()
+    {
+        StateHasChanged();
+    }
+
+}
+

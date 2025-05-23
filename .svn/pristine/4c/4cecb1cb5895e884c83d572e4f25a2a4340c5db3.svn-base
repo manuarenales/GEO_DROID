@@ -1,0 +1,74 @@
+﻿using GEO_DROID.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services
+{
+    public class EstablecimientosService
+    {
+
+        public Establecimiento getEstablecimientoByID(int id)
+        {
+
+            Establecimiento resp = new Establecimiento();
+
+            resp.nombre = "Bar Ejemplo ";
+            resp.id = id;
+
+            return resp;
+        }
+        public List<Establecimiento> GetEstablecimientos()
+        {
+            List<Establecimiento> items = new List<Establecimiento>();
+            Establecimiento item1 = new Establecimiento();
+            Establecimiento item2 = new Establecimiento();
+            Establecimiento item3 = new Establecimiento();
+            Establecimiento item4 = new Establecimiento();
+            Establecimiento item5 = new Establecimiento();
+
+            item1.nombre = "Bar Los Hermanos";
+            item1.id = 1;
+
+            item2.nombre = "Bar Rest. El Paseo";
+            item1.id = 2;
+
+            item3.nombre = "Salon Salero";
+            item1.id = 3;
+
+            item4.nombre = "Bar Las Palmeras";
+            item1.id = 4;
+
+            item5.nombre = "Bar Cien";
+            item1.id = 5;
+
+            items.Add(item1);
+            items.Add(item2);
+            items.Add(item3);
+            items.Add(item4);
+            items.Add(item5);
+
+            return items;
+        }
+
+        public List<string> getTiketsList(int id)
+        {
+            List<string> list = new List<string>();
+
+            list.Add("Rec. Totales");
+            list.Add("Recaudacion con desglose");
+            list.Add("Rec. Reducido");
+            list.Add("Rec. Detallado");
+            list.Add("Rec. Detallado Contadores");
+            list.Add("Rec. Superdetallado");
+
+
+            return list;
+        }
+
+
+
+    }
+}

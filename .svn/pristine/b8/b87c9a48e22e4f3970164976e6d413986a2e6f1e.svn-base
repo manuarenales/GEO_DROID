@@ -1,0 +1,25 @@
+﻿h4 {
+    color: black;
+    margin-top: 6px;
+}
+
+.title {
+    background-color: grey;
+    height: 30px;
+}
+
+
+
+img {
+    height: 30px;
+    width: 30px;
+}
+
+span {
+    font-size: 1em;
+}
+
+bottom {
+    height: 200px;
+    background-color: gray;
+}

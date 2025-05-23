@@ -1,0 +1,12 @@
+﻿.selectable-card {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+    .selectable-card:hover {
+        background-color: #f0f0f0; /* Color al hacer hover */
+    }
+
+    .selectable-card:active {
+        background-color: #d0eaff; /* Color al hacer clic */
+    }

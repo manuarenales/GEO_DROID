@@ -1,0 +1,273 @@
+﻿using GEO_DROID.DataAccess;
+using GEO_DROID.Models;
+using SQLite;
+
+
+namespace GEO_DROID.Services
+{
+    public class SincroService
+    {
+
+        EstablecimientosService establecimientosService;
+        MaquinaService maquinaService;
+        ConceptoAveriaService conceptoAveriaService;
+        EstadoAveriaService estadoAveriaService;
+        AveriasService averiaService;
+
+        public SincroService(GeoDroidDbContext dbContext)
+        {
+            establecimientosService = new EstablecimientosService(dbContext);
+            maquinaService = new MaquinaService(dbContext);
+            conceptoAveriaService = new ConceptoAveriaService(dbContext);
+            estadoAveriaService = new EstadoAveriaService(dbContext);
+            averiaService = new AveriasService(dbContext);
+        }
+
+        public async void Sincro()
+        {
+            //// GENERAMOS ESTABLECIMIENTOS ////
+            await CleanEstablecimientos();
+            await CreateEstablecimientosMoc();
+
+            //// GENERAMOS MAQUINA ////
+            await CleanMaquinas();
+            await CreateMaquinasMoc();
+
+            //// GENERAMOS CONCEPTOS ////
+            await CleanConceptos();
+            await CreateConceptos();
+
+            //// GENERAMOS ESTADOS ////
+            await CleanEstados();
+            await CreateEstados();
+
+            ///////////////////////////////
+            await CleanAverias();
+        }
+        public async Task CleanAverias()
+        {
+            List<Averia> averiaList = await averiaService.GetAveriasAsync();
+            foreach (Averia averia in averiaList)
+            {
+                await averiaService.DeleteAveriaAsync(averia);
+            }
+        }
+        public async Task CleanConceptos()
+        {
+            List<ConceptoAveria> establecimientos = await conceptoAveriaService.GetConceptosAveriasAsync();
+            foreach (ConceptoAveria item in establecimientos)
+            {
+                await conceptoAveriaService.DeleteConceptosAveriasAsync(item);
+            }
+        }
+        public async Task CleanEstados()
+        {
+            List<AveriaEstado> establecimientos = await estadoAveriaService.GetEstadoAveriaAsync();
+            foreach (AveriaEstado item in establecimientos)
+            {
+                await estadoAveriaService.DeleteEstadoAveriaAsync(item);
+            }
+        }
+        public async Task CleanEstablecimientos()
+        {
+
+            List<Establecimiento> establecimientos = await establecimientosService.GetEstablecimientosAsync();
+            foreach (Establecimiento item in establecimientos)
+            {
+                await establecimientosService.DeleteEstablecimientoAsync(item);
+            }
+        }
+        public async Task CleanMaquinas()
+        {
+            List<Maquina> mquinas = await maquinaService.GetMaquinasAsync();
+            foreach (Maquina item in mquinas)
+            {
+                await maquinaService.DeleteMaquinaAsync(item);
+            }
+        }
+        public async Task CreateEstablecimientosMoc()
+        {
+            Establecimiento establecimiento1 = new Establecimiento();
+            Establecimiento establecimiento2 = new Establecimiento();
+            Establecimiento establecimiento3 = new Establecimiento();
+            Establecimiento establecimiento4 = new Establecimiento();
+            Establecimiento establecimiento5 = new Establecimiento();
+
+            establecimiento1.nombre = "ASADOR ZUBIA";
+            establecimiento1.codigo = "00003";
+            establecimiento1.direccion = "BAINUETXEKO ZUMALDIA., 2 BAJO";
+
+            establecimiento2.nombre = "HAIZEA ELGETA";
+            establecimiento2.codigo = "00004";
+            establecimiento2.direccion = "BARRENA,48";
+
+            establecimiento3.nombre = "BOLA TOKI";
+            establecimiento3.codigo = "00005";
+            establecimiento3.direccion = "CHONTA,35";
+
+            establecimiento4.nombre = "CASA CULTURAL DE GALICIA";
+            establecimiento4.codigo = "00006";
+            establecimiento4.direccion = "SAN ANDRES, 6";
+
+            establecimiento5.nombre = "GURE KAIOLA";
+            establecimiento5.codigo = "00007";
+            establecimiento5.direccion = "BISTA EDER S/N";
+
+            await establecimientosService.SaveEstablecimientoAsync(establecimiento1);
+            await establecimientosService.SaveEstablecimientoAsync(establecimiento2);
+            await establecimientosService.SaveEstablecimientoAsync(establecimiento3);
+            await establecimientosService.SaveEstablecimientoAsync(establecimiento4);
+            await establecimientosService.SaveEstablecimientoAsync(establecimiento5);
+        }
+        public async Task CreateMaquinasMoc()
+        {
+            Maquina maquina1 = new Maquina();
+            Maquina maquina2 = new Maquina();
+            Maquina maquina3 = new Maquina();
+            Maquina maquina4 = new Maquina();
+            Maquina maquina5 = new Maquina();
+            Maquina maquina6 = new Maquina();
+            Maquina maquina7 = new Maquina();
+            Maquina maquina8 = new Maquina();
+            Maquina maquina9 = new Maquina();
+            Maquina maquina10 = new Maquina();
+            Maquina maquina11 = new Maquina();
+            Maquina maquina12 = new Maquina();
+            Maquina maquina13 = new Maquina();
+            Maquina maquina14 = new Maquina();
+            Maquina maquina15 = new Maquina();
+            Maquina maquina16 = new Maquina();
+            Maquina maquina17 = new Maquina();
+            Maquina maquina18 = new Maquina();
+            Maquina maquina19 = new Maquina();
+            Maquina maquina20 = new Maquina();
+
+            maquina1.codigo = "SKIBILB001";
+            maquina1.descripcionDistribucion = "SKIBILB001 / LOS 777 MAGNIFICOS";
+
+
+            maquina2.codigo = "SZU0120012";
+            maquina2.descripcionDistribucion = "SZU0120012 / BINGO LOTTO";
+
+            maquina3.codigo = "B099067759";
+
+            maquina3.descripcionDistribucion = "B099067759 / SUPER BANCO DEL TESORO";
+
+            maquina4.codigo = "SZU0120018";
+            maquina4.descripcionDistribucion = "SZU0120018 / CASH LINE 2000";
+
+            maquina5.codigo = "B102000263";
+            maquina5.descripcionDistribucion = "B102000263 / BOWLING";
+
+            maquina6.codigo = "B098071066";
+            maquina6.descripcionDistribucion = "B098071066 / RF BURLESQUE";
+
+            maquina7.codigo = "B101072713";
+            maquina7.descripcionDistribucion = "B101072713 / CIRSA GUAY PLUS";
+
+            maquina8.codigo = "B096053516";
+            maquina8.descripcionDistribucion = "B096053516 / CASH LINE 2000";
+
+            maquina9.codigo = "B099068535";
+            maquina9.descripcionDistribucion = "B099068535 / GRAN CABARET 500";
+
+            maquina10.codigo = "B081000791";
+            maquina10.descripcionDistribucion = "B081000791 / CAVERNICOLA";
+
+            maquina11.codigo = "B098070253";
+            maquina11.descripcionDistribucion = "B098070253 / CHARLESTON";
+
+            maquina12.codigo = "B098070244";
+            maquina12.descripcionDistribucion = "B098070244 / CHICAGO FIVE";
+
+            maquina13.codigo = "B096053517";
+            maquina13.descripcionDistribucion = "B096053517 / CHICAGO";
+
+            maquina14.codigo = "B089000741";
+            maquina14.descripcionDistribucion = "B089000741 / KONG CHITA";
+
+            maquina15.codigo = "S098000014";
+            maquina15.descripcionDistribucion = "S098000014 / LATIN DANCER";
+
+            maquina16.codigo = "S098000004";
+            maquina16.descripcionDistribucion = "S098000004 / MANOS A LA OBRA";
+
+            maquina17.codigo = "S098000062";
+            maquina17.descripcionDistribucion = "S098000062 / MONEDIN JOKER";
+
+            maquina18.codigo = "B112004926";
+            maquina18.descripcionDistribucion = "B112004926 / NO VA MAS";
+
+            maquina19.codigo = "B112004925";
+            maquina19.descripcionDistribucion = "B112004925 / NEOPOLIS 2";
+
+            maquina20.codigo = "B098080303";
+            maquina20.descripcionDistribucion = "B098080303 / PANCHO VILLA";
+
+            await maquinaService.SaveMaquinaAsync(maquina1);
+            await maquinaService.SaveMaquinaAsync(maquina2);
+            await maquinaService.SaveMaquinaAsync(maquina3);
+            await maquinaService.SaveMaquinaAsync(maquina4);
+            await maquinaService.SaveMaquinaAsync(maquina5);
+            await maquinaService.SaveMaquinaAsync(maquina6);
+            await maquinaService.SaveMaquinaAsync(maquina7);
+            await maquinaService.SaveMaquinaAsync(maquina8);
+            await maquinaService.SaveMaquinaAsync(maquina9);
+            await maquinaService.SaveMaquinaAsync(maquina10);
+            await maquinaService.SaveMaquinaAsync(maquina11);
+            await maquinaService.SaveMaquinaAsync(maquina12);
+            await maquinaService.SaveMaquinaAsync(maquina13);
+            await maquinaService.SaveMaquinaAsync(maquina14);
+            await maquinaService.SaveMaquinaAsync(maquina15);
+            await maquinaService.SaveMaquinaAsync(maquina16);
+            await maquinaService.SaveMaquinaAsync(maquina17);
+            await maquinaService.SaveMaquinaAsync(maquina18);
+            await maquinaService.SaveMaquinaAsync(maquina19);
+            await maquinaService.SaveMaquinaAsync(maquina20);
+
+        }
+        public async Task CreateConceptos()
+        {
+            ConceptoAveria concepto1 = new ConceptoAveria();
+            ConceptoAveria concepto2 = new ConceptoAveria();
+            ConceptoAveria concepto3 = new ConceptoAveria();
+            ConceptoAveria concepto4 = new ConceptoAveria();
+            ConceptoAveria concepto5 = new ConceptoAveria();
+            ConceptoAveria concepto6 = new ConceptoAveria();
+            ConceptoAveria concepto7 = new ConceptoAveria();
+            ConceptoAveria concepto8 = new ConceptoAveria();
+
+            concepto1.descripcion = "AJUSTE";
+            concepto2.descripcion = "CARGA";
+            concepto3.descripcion = "LIMPIEZA DE LA MAQUINA";
+            concepto4.descripcion = "PROBLEMA DE HARDWARE";
+            concepto5.descripcion = "REVISION DE LAS LUCES";
+            concepto6.descripcion = "REVISION DE LOS RODILLOS";
+            concepto7.descripcion = "REVISION MONEDAS ATASCADAS";
+            concepto8.descripcion = "VALIDACION";
+
+            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto1);
+            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto2);
+            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto3);
+            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto4);
+            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto5);
+            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto6);
+            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto7);
+            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto8);
+        }
+        public async Task CreateEstados()
+        {
+            AveriaEstado concepto1 = new AveriaEstado();
+            AveriaEstado concepto2 = new AveriaEstado();
+
+
+            concepto1.descripcion = "FINALIZADA";
+            concepto2.descripcion = "PENDIENTE";
+
+
+            await estadoAveriaService.SaveEstadoAveriaAsync(concepto1);
+            await estadoAveriaService.SaveEstadoAveriaAsync(concepto2);
+
+        }
+    }
+}

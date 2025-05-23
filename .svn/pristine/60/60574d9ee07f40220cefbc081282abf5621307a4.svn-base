@@ -1,0 +1,27 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GeoDroid.Data.Models
+{
+    public class Localizacion
+    {
+        [Key]
+        public int id { get; set; }
+        [DataMember]
+        public int idTerminal { get; set; }
+        [DataMember, MaxLength(50)]
+        public string fechaHora { get; set; }
+        [DataMember]
+        public double latitud { get; set; }
+        [DataMember]
+        public double longitud { get; set; }
+        [DataMember]
+        public int estado { get; set; }  // AB, A = 1 Servicio, 2 Geodroid  B = 0 Vacio, 1 Wifi y 3G (Network), 2 GPS
+    }
+}

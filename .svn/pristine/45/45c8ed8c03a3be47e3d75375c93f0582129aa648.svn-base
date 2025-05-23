@@ -1,0 +1,355 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace GeoDroid.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class InitialMigration : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "AveriasEstados",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: false),
+                    descripcion = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    color = table.Column<int>(type: "INTEGER", nullable: false),
+                    fin = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AveriasEstados", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ConceptoAverias",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: false),
+                    descripcion = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ConceptoAverias", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Establecimientos",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    codigo = table.Column<string>(type: "TEXT", nullable: false),
+                    nombre = table.Column<string>(type: "TEXT", nullable: false),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: false),
+                    idEmpresa = table.Column<int>(type: "INTEGER", nullable: false),
+                    direccion = table.Column<string>(type: "TEXT", nullable: false),
+                    poblacion = table.Column<string>(type: "TEXT", nullable: false),
+                    codigoPostal = table.Column<string>(type: "TEXT", nullable: false),
+                    telefono1 = table.Column<string>(type: "TEXT", nullable: false),
+                    telefono2 = table.Column<string>(type: "TEXT", nullable: false),
+                    fax = table.Column<string>(type: "TEXT", nullable: false),
+                    email = table.Column<string>(type: "TEXT", nullable: false),
+                    web = table.Column<string>(type: "TEXT", nullable: false),
+                    contacto = table.Column<string>(type: "TEXT", nullable: false),
+                    esAlmacen = table.Column<bool>(type: "INTEGER", nullable: false),
+                    permiso = table.Column<string>(type: "TEXT", nullable: false),
+                    comentarios = table.Column<string>(type: "TEXT", nullable: false),
+                    avisoRecaudacion = table.Column<string>(type: "TEXT", nullable: false),
+                    nombreTitular = table.Column<string>(type: "TEXT", nullable: false),
+                    nifTitular = table.Column<string>(type: "TEXT", nullable: false),
+                    envioFacturasEmail = table.Column<bool>(type: "INTEGER", nullable: false),
+                    fechaDesdeTitular = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    comercial = table.Column<string>(type: "TEXT", nullable: false),
+                    recaudador = table.Column<string>(type: "TEXT", nullable: false),
+                    mecanico = table.Column<string>(type: "TEXT", nullable: false),
+                    tieneLlave = table.Column<bool>(type: "INTEGER", nullable: false),
+                    horaApertura = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    horaCierre = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    comentariosHorario = table.Column<string>(type: "TEXT", nullable: false),
+                    comentariosContrato = table.Column<string>(type: "TEXT", nullable: false),
+                    diasDescanso = table.Column<string>(type: "TEXT", nullable: false),
+                    fechaProximaRecaudacion = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    maxDiasSinArquear = table.Column<int>(type: "INTEGER", nullable: false),
+                    tecnausaCountersServidor = table.Column<string>(type: "TEXT", nullable: false),
+                    tecnausaCountersUsuario = table.Column<string>(type: "TEXT", nullable: false),
+                    tecnausaCountersPassword = table.Column<string>(type: "TEXT", nullable: false),
+                    fechaPermiso = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    fechaCaducidadPermiso = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    fechaPresentacionPermiso = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    estadoPermiso = table.Column<string>(type: "TEXT", nullable: false),
+                    fechaContrato = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    fechaFinContrato = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    recaudacion = table.Column<double>(type: "REAL", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Establecimientos", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Maquinas",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: false),
+                    pctEstablecimiento = table.Column<int>(type: "INTEGER", nullable: false),
+                    fechaUltimoArqueo = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ultimoArqueo = table.Column<decimal>(type: "TEXT", nullable: false),
+                    arqueoEstablecido = table.Column<decimal>(type: "TEXT", nullable: false),
+                    diferenciaArqueo = table.Column<decimal>(type: "TEXT", nullable: false),
+                    redondeoValor = table.Column<decimal>(type: "TEXT", nullable: false),
+                    redondeoParaEmpresa = table.Column<bool>(type: "INTEGER", nullable: false),
+                    fechaUltimaRecaudacion = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    empresaSaldo = table.Column<decimal>(type: "TEXT", nullable: false),
+                    establecimientoSaldo = table.Column<decimal>(type: "TEXT", nullable: false),
+                    protocolosMaquinas = table.Column<int>(type: "INTEGER", nullable: false),
+                    codigo = table.Column<string>(type: "TEXT", nullable: false),
+                    idInstalaciones = table.Column<int>(type: "INTEGER", nullable: false),
+                    idPatronContadores = table.Column<int>(type: "INTEGER", nullable: false),
+                    fechaInstalacion = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    idTipoDistribucion = table.Column<int>(type: "INTEGER", nullable: false),
+                    descripcionDistribucion = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    modeloMaquina = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    password = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    permiso = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    idEmpresas = table.Column<int>(type: "INTEGER", nullable: false),
+                    establecimientoId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Maquinas", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_Maquinas_Establecimientos_establecimientoId",
+                        column: x => x.establecimientoId,
+                        principalTable: "Establecimientos",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Rutas",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    fecha = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    idEstablecimiento = table.Column<int>(type: "INTEGER", nullable: false),
+                    Establecimientoid = table.Column<int>(type: "INTEGER", nullable: false),
+                    bloqueada = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Rutas", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_Rutas_Establecimientos_Establecimientoid",
+                        column: x => x.Establecimientoid,
+                        principalTable: "Establecimientos",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Incidencias",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: false),
+                    idRutaRecaudaciones = table.Column<int>(type: "INTEGER", nullable: false),
+                    fecha = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    fechaAlta = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    idMaquinas = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Incidencias", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_Incidencias_Maquinas_idMaquinas",
+                        column: x => x.idMaquinas,
+                        principalTable: "Maquinas",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Cargas",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: false),
+                    cargaEmpresa = table.Column<decimal>(type: "TEXT", nullable: false),
+                    cargaEstablecimiento = table.Column<decimal>(type: "TEXT", nullable: false),
+                    recuperacionEmpresa = table.Column<decimal>(type: "TEXT", nullable: false),
+                    recuperacionEstablecimiento = table.Column<decimal>(type: "TEXT", nullable: false),
+                    ajusteEmpresa = table.Column<decimal>(type: "TEXT", nullable: false),
+                    ajusteEstablecimiento = table.Column<decimal>(type: "TEXT", nullable: false),
+                    saldoEmpresaChanged = table.Column<decimal>(type: "TEXT", nullable: false),
+                    saldoEstablecimientoChanged = table.Column<decimal>(type: "TEXT", nullable: false),
+                    idAverias = table.Column<int>(type: "INTEGER", nullable: false),
+                    idIncidencia = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Cargas", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_Cargas_Incidencias_idIncidencia",
+                        column: x => x.idIncidencia,
+                        principalTable: "Incidencias",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Averias",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idMaquinas = table.Column<int>(type: "INTEGER", nullable: false),
+                    idConceptos = table.Column<int>(type: "INTEGER", nullable: false),
+                    idEstablecimientos = table.Column<int>(type: "INTEGER", nullable: false),
+                    idIncidencias = table.Column<int>(type: "INTEGER", nullable: false),
+                    idAveriaEstados = table.Column<int>(type: "INTEGER", nullable: false),
+                    idCargas = table.Column<int>(type: "INTEGER", nullable: false),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: false),
+                    idPersonal = table.Column<int>(type: "INTEGER", nullable: false),
+                    observaciones = table.Column<string>(type: "TEXT", nullable: false),
+                    detalle = table.Column<string>(type: "TEXT", nullable: false),
+                    comentarios = table.Column<string>(type: "TEXT", nullable: false),
+                    fechaFin = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    fechaModificacion = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    foto = table.Column<byte[]>(type: "BLOB", nullable: false),
+                    estado = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Averias", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_Averias_AveriasEstados_idAveriaEstados",
+                        column: x => x.idAveriaEstados,
+                        principalTable: "AveriasEstados",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Averias_Cargas_idCargas",
+                        column: x => x.idCargas,
+                        principalTable: "Cargas",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Averias_ConceptoAverias_idConceptos",
+                        column: x => x.idConceptos,
+                        principalTable: "ConceptoAverias",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Averias_Establecimientos_idEstablecimientos",
+                        column: x => x.idEstablecimientos,
+                        principalTable: "Establecimientos",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Averias_Incidencias_idIncidencias",
+                        column: x => x.idIncidencias,
+                        principalTable: "Incidencias",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Averias_Maquinas_idMaquinas",
+                        column: x => x.idMaquinas,
+                        principalTable: "Maquinas",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Averias_idAveriaEstados",
+                table: "Averias",
+                column: "idAveriaEstados");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Averias_idCargas",
+                table: "Averias",
+                column: "idCargas");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Averias_idConceptos",
+                table: "Averias",
+                column: "idConceptos");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Averias_idEstablecimientos",
+                table: "Averias",
+                column: "idEstablecimientos");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Averias_idIncidencias",
+                table: "Averias",
+                column: "idIncidencias");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Averias_idMaquinas",
+                table: "Averias",
+                column: "idMaquinas");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Cargas_idIncidencia",
+                table: "Cargas",
+                column: "idIncidencia");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Incidencias_idMaquinas",
+                table: "Incidencias",
+                column: "idMaquinas");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Maquinas_establecimientoId",
+                table: "Maquinas",
+                column: "establecimientoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Rutas_Establecimientoid",
+                table: "Rutas",
+                column: "Establecimientoid");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "Averias");
+
+            migrationBuilder.DropTable(
+                name: "Rutas");
+
+            migrationBuilder.DropTable(
+                name: "AveriasEstados");
+
+            migrationBuilder.DropTable(
+                name: "Cargas");
+
+            migrationBuilder.DropTable(
+                name: "ConceptoAverias");
+
+            migrationBuilder.DropTable(
+                name: "Incidencias");
+
+            migrationBuilder.DropTable(
+                name: "Maquinas");
+
+            migrationBuilder.DropTable(
+                name: "Establecimientos");
+        }
+    }
+}

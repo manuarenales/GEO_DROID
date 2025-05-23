@@ -1,0 +1,7 @@
+﻿.bluetext {
+    color: blue;
+}
+
+.Error {
+    background-color: red;
+}

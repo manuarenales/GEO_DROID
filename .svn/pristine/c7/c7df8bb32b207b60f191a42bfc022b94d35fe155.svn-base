@@ -1,0 +1,78 @@
+﻿@page "/informaciongeneral"
+@using GEO_DROID.Services
+  @inject IStringLocalizer<StringLocalizer> Localizer;
+  @inject CultureService Cultureservice
+
+@* <div Class="w-100 title m-2 " Style="background-color: grey"> <h5>Informacion General</h5></div>*@
+<div class="mb-5 pb-2">
+    <div class="list-group">
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Nombre Del Recaudador</span>
+            <span class="spancolor">Manuel Pina Monzo</span>
+        </div>
+
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Fecha Sincronizacion</span>
+            <span class="spancolor">11/08/1999</span>
+        </div>
+    </div>
+
+    <div class="w-100 title m-2" style="background-color: grey">
+        <h5>Informacion De Ruta</h5>
+    </div>
+
+    <div class="list-group">
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Num. Recaudaciones</span>
+            <span class="spancolor">33</span>
+        </div>
+
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Neto</span>
+            <span class="spancolor">33</span>
+        </div>
+
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Cargas</span>
+            <span class="spancolor">36</span>
+        </div>
+
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Recuperaciones de Carga</span>
+            <span class="spancolor">33</span>
+        </div>
+
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Prestamos</span>
+            <span class="spancolor">33</span>
+        </div>
+
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Recuperaciones de Prestamos</span>
+            <span class="spancolor">33</span>
+        </div>
+
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Total</span>
+            <span class="spancolor">33</span>
+        </div>
+    </div>
+</div>
+
+<div class="" style="height:20px;">
+</div>
+
+<div Class="fixed-bottom d-block  mt-4 p-2 row ">
+    <div Class="col-12 d-flex p-3 m-1">
+        <button class="btn btn-secondary w-100" @onclick="ImprimirTicket">Imprimir Ticket Resumen Día</button>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Cultureservice.CultureChanged += StateHasChanged;
+    }
+
+    public void ImprimirTicket() { }
+}

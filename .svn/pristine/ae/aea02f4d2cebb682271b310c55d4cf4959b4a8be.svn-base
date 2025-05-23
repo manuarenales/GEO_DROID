@@ -1,0 +1,18 @@
+﻿using Android.Bluetooth;
+using Android.Content;
+using GEO_DROID.Platforms.Android.Handlers;
+
+namespace GEO_DROID
+{
+    public partial class MainPage : ContentPage
+    {
+
+        public MainPage()
+        {
+            InitializeComponent();
+
+
+
+        }
+    }
+}

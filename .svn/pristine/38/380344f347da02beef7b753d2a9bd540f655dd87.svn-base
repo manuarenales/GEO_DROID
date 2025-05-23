@@ -1,0 +1,112 @@
+﻿@page "/informaciongeneral"
+@using GEO_DROID.Services
+  @inject IStringLocalizer<StringLocalizer> Localizer;
+  @inject CultureService Cultureservice
+
+<div class=" content overflow-auto mt-2 w-100 d-flex flex-column align-items-center justify-content-start ">
+
+    <div class="row border w-100">
+        <div class="col-12 d-flex  w-100 justify-content-start">
+            <span class="TextoPequeno">Nombre Del Recaudador</span>
+        </div>
+        <div class="col-12 d-flex w-100  justify-content-start">
+            <span class="spancolor">Manuel Pina Monzo</span>
+        </div>
+    </div>
+
+    <div class="row border w-100">
+        <div class="col-12 d-flex w-100  justify-content-start">
+            <span>Fecha Sincronizacion</span>
+        </div>
+        <div class="col-12 d-flex  w-100 justify-content-start">
+            <span class="spancolor">11/08/1999</span>
+        </div>
+    </div>
+
+    <div class="w-100 Titulo d-flex  justify-content-center align-items-center  m-2 w-100" style="background-color: grey">
+        <span class=" d-flex  justify-content-center align-items-center SubTitulo ">Informacion De Ruta</span>
+    </div>
+
+    <div class="row border w-100 ">
+        <div class="col-12 d-flex w-100 justify-content-start">
+            <span>Num. Recaudaciones</span>
+        </div>
+        <div class="col-12 d-flex w-100  justify-content-start">
+            <span class="spancolor">33</span>
+        </div>
+    </div>
+
+    <div class="row border w-100">
+        <div class="col-12 d-flex w-100  justify-content-start">
+            <span>Neto</span>
+        </div>
+        <div class="col-12 d-flex w-100 justify-content-start">
+            <span class="spancolor">33</span>
+        </div>
+    </div>
+
+    <div class="row border w-100">
+        <div class="col-12 d-flex w-100 justify-content-start">
+            <span>Cargas</span>
+        </div>
+        <div class="col-12 d-flex w-100  justify-content-start">
+            <span class="spancolor">36</span>
+        </div>
+    </div>
+
+    <div class="row border w-100 ">
+        <div class="col-12 d-flex  w-100 justify-content-start">
+            <span>Recuperaciones de Carga</span>
+        </div>
+        <div class="col-12 d-flex  w-100 justify-content-start">
+            <span class="spancolor">33</span>
+        </div>
+    </div>
+
+    <div class="row border w-100">
+        <div class="col-12 d-flex w-100 justify-content-start">
+            <span>Prestamos</span>
+        </div>
+        <div class="col-12 d-flex w-100  justify-content-start">
+            <span class="spancolor">33</span>
+        </div>
+    </div>
+
+    <div class="row border w-100">
+        <div class="col-12 d-flex w-100 justify-content-start">
+            <span>Recuperaciones de Prestamos</span>
+        </div>
+        <div class="col-12 d-flex w-100 justify-content-start">
+            <span class="spancolor">33</span>
+        </div>
+    </div>
+
+    <div class="row border w-100">
+        <div class="col-12 d-flex w-100 justify-content-start">
+            <span>Total</span>
+        </div>
+        <div class="col-12 d-flex w-100  justify-content-start">
+            <span class="spancolor">33</span>
+        </div>
+    </div>
+</div>
+
+<div class="w-100 bg-red" style="height:8vw;">
+</div>
+
+<div Class="fixed-bottom   row ">
+    <div class="col-1"></div>
+    <div Class="col-10 d-flex p-2 ">
+        <button class="btn btn-secondary w-100" @onclick="ImprimirTicket">Imprimir Ticket Resumen Día</button>
+    </div>
+    <div class="col-1"></div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Cultureservice.CultureChanged += StateHasChanged;
+    }
+
+    public void ImprimirTicket() { }
+}

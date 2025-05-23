@@ -1,0 +1,27 @@
+﻿using Fluxor;
+using GeoDroid.Data;
+
+namespace GEO_DROID.Store.Forms
+{
+    [FeatureState]
+    public record AveriaFormState
+    {
+
+        public Averia AveriaSelected { get; init; }
+
+        public bool Valid { get; init; }
+
+        public bool maquinaValid { get; init; }
+
+        public bool conceptoValid { get; init; }
+
+        public bool estadoValid { get; init; }
+
+        public GeoDroid.Data.Carga CargaSelected { get; init; }
+
+        public int lecturacontadorId { get; init; }
+
+        public Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle> LecturaDetallesSelected { get; init; }
+
+    }
+}

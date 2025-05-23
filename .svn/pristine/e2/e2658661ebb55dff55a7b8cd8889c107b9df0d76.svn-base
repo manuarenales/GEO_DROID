@@ -1,0 +1,101 @@
+﻿using SQLite;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Establecimiento
+    {
+        [PrimaryKey, AutoIncrement]
+        public int id { get; set; }
+        [MaxLength(10)]
+        public string codigo { get; set; }
+        [MaxLength(50)]
+        public string nombre { get; set; }
+
+        public int idGeo { get; set; }
+        /// <summary>
+        /// empresa por defecto usada para cuando se crea un nuevo prestamo.
+        /// </summary>
+
+        public int idEmpresa { get; set; }
+
+        [MaxLength(100)]
+        public string direccion { get; set; }
+        [MaxLength(50)]
+        public string poblacion { get; set; }
+        [MaxLength(50)]
+        public string codigoPostal { get; set; }
+        [MaxLength(50)]
+        public string telefono1 { get; set; }
+        [MaxLength(50)]
+        public string telefono2 { get; set; }
+        [MaxLength(50)]
+        public string fax { get; set; }
+        [MaxLength(100)]
+        public string email { get; set; }
+        [MaxLength(100)]
+        public string web { get; set; }
+        [MaxLength(50)]
+        public string contacto { get; set; }
+
+        public bool esAlmacen { get; set; }
+        [MaxLength(50)]
+        public string permiso { get; set; }
+        [MaxLength(2000)]
+        public string comentarios { get; set; }
+        [MaxLength(2000)]
+        public string avisoRecaudacion { get; set; }
+        [MaxLength(50)]
+        public string nombreTitular { get; set; }
+        [MaxLength(20)]
+        public string nifTitular { get; set; }
+
+        public bool envioFacturasEmail { get; set; }
+        [DataMember]
+        public DateTime fechaDesdeTitular { get; set; }
+        [MaxLength(50)]
+        public string comercial { get; set; }
+        [MaxLength(50)]
+        public string recaudador { get; set; }
+        [MaxLength(50)]
+        public string mecanico { get; set; }
+
+        public bool tieneLlave { get; set; }
+        public DateTime horaApertura { get; set; }
+        public DateTime horaCierre { get; set; }
+        [MaxLength(2000)]
+        public string comentariosHorario { get; set; }
+        [MaxLength(2000)]
+        public string comentariosContrato { get; set; }
+        [MaxLength(10)]
+        public string diasDescanso { get; set; }
+        public DateTime fechaProximaRecaudacion { get; set; }
+        public int maxDiasSinArquear { get; set; }
+
+        public string tecnausaCountersServidor { get; set; }
+        public string tecnausaCountersUsuario { get; set; }
+        public string tecnausaCountersPassword { get; set; }
+
+        public DateTime fechaPermiso { get; set; }
+        public DateTime fechaCaducidadPermiso { get; set; }
+        public DateTime fechaPresentacionPermiso { get; set; }
+        [MaxLength(50)]
+        public string estadoPermiso { get; set; }
+        public DateTime fechaContrato { get; set; }
+        public DateTime fechaFinContrato { get; set; }
+
+
+        [NotMapped]
+        public double recaudacion { get; set; }
+
+    }
+}
+

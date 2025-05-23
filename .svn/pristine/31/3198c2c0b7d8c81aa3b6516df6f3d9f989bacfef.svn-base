@@ -1,0 +1,215 @@
+﻿@page "/ajustes"
+@using GEO_DROID.Services
+ @inject NavigationManager Navigation
+  @inject IStringLocalizer<StringLocalizer> Localizer;
+  @inject CultureService Cultureservice
+
+<ListGroup Flush>
+    <ListGroupItem Class="d-flex justify-content-start align-items-lg-center" @onclick="() => OpenConfig()">
+        <img class="m-1" src="/img/smartajustes.png" />
+        <h6 class="m-2">@Localizer["configuracion"] </h6>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex justify-content-start align-items-lg-center" @onclick="() => OpenTestLecturaContadores()">
+        <img class="m-1" src="/img/lecturaContadores.png" />
+        <h6 class="m-2"> @Localizer["testlecturacontadores"]</h6>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex justify-content-start align-items-lg-center" @onclick="() => OpenEstablecerContadores()">
+        <img class="m-1" src="/img/setLeturaCounters.png" />
+        <h6 class="m-2">Establecer contadores</h6>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex justify-content-start align-items-lg-center" @onclick="() => TestImpresora()">
+        <img class="m-1" src="/img/impresoras.png" />
+        <h6 class="m-2">Test impresora Bluetooth</h6>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex justify-content-start align-items-lg-center" @onclick="() => OpenActualizarFirmware()">
+        <img class="m-1" src="/img/actualizFilmware.png" />
+        <h6 class="m-2">Actualizar firmware de modulo</h6>
+    </ListGroupItem>
+</ListGroup>
+
+
+@* ------------ Configuracion ------------*@
+<Modal @ref="modalConfigRef">
+    <ModalContent Size="ModalSize.Fullscreen">
+        <ModalHeader>
+            <ModalTitle>@Localizer["configuracion"]</ModalTitle>
+                <CloseButton />
+            </ModalHeader>
+            <ModalBody>
+                <h5>Sincronizacion</h5>
+                <ListGroup Flush>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Nº Unidad </Span>
+                    <TextEdit type="number" Placeholder="Some text value..." />
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Contraseña</Span>
+                    <TextEdit Placeholder="Some text value..." />
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Servidor GEO</Span>
+                    <TextEdit Placeholder="Some text value..." />
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Puerto GEO</Span>
+                    <TextEdit type="number" Placeholder="Some text value..." />
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex  justify-content-start  align-items-center ">
+                    <Check TValue="bool" @bind-Checked="@sis">Minimizar uso de datos </Check>
+                </ListGroupItem>
+            </ListGroup>
+            <h4>Tickets</h4>
+            <ListGroup Flush>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  " @onclick="() => NavigateTo(router)">
+                    <Span>Impresora</Span>
+                    <Span>00:01:09:D8:E9:11</Span>
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex  justify-content-start  align-items-center ">
+                    <Check TValue="bool" @bind-Checked="@sas">Imprimir area de firmas</Check>
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex  justify-content-start  align-items-center ">
+                    <Check TValue="bool" @bind-Checked="@sos">Imprimir dos copias del tiket</Check>
+                </ListGroupItem>
+            </ListGroup>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+@* ------------ Test Lectura Contadores ------------*@
+<Modal @ref="modalTestContadoresRef">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Test de lectura de contadores</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Field>
+                <FieldLabel>Seleccione como quiere introducir los datos de conexion al modulo bluetooth</FieldLabel>
+            </Field>
+            <Div Class="d-flex flex-column justify-content-center ">
+                <Button Class="w-100 m-1 p-1" Color="Color.Secondary">Seleccionar desde maquina</Button>
+                <Button Class="w-100 m-1 p-1" Color="Color.Primary">Introducir manualmente</Button>
+            </Div>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+@* ------------ Establecer Contadores ------------*@
+<Modal @ref="modalEstablecerContadoresRef">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Establecer contadores</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Field>
+                <FieldLabel>Seleccione como quiere introducir los datos de conexion al modulo bluetooth</FieldLabel>
+            </Field>
+            <Div Class="d-flex flex-column justify-content-center ">
+                <Button Class="w-100 m-1 p-1" Color="Color.Secondary">Seleccionar desde maquina</Button>
+                <Button Class="w-100 m-1 p-1" Color="Color.Primary">Introducir manualmente</Button>
+            </Div>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+@* ------------ TestImpresora ------------*@
+<Modal @ref="modalTestImpresionRef">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Test impresora Bluetooth</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+            <Div Class="d-flex justify-content-center align-items-center">
+                <div class="spinner-border text-warning p-1" role="status">
+                </div>
+                <h3 class="m-1"> Imprimiendo.... </h3>
+            </Div>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+@* ------------ Actualizar Firmware ------------*@
+<Modal @ref="modalActualizarFirmRef">
+    <ModalContent Size="ModalSize.Fullscreen">
+        <ModalHeader>
+            <ModalTitle>Actualizar Firmware</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <ListGroup Flush>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Mac</Span>
+                    <TextEdit Placeholder="..." />
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Pin</Span>
+                    <TextEdit Placeholder="..." />
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Read</Span>
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Write (TECNAUSA)</Span>
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Write (M2M.MOVISTAR.ES)</Span>
+                </ListGroupItem>
+                <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+                    <Span>Write (WLAPN.COM 000114)</Span>
+                </ListGroupItem>
+            </ListGroup>
+            <Div Class="d-flex flex-column  justify-content-center ">
+                <Button Class="w-100 m-2 p-2 ml-2" Color="Color.Secondary">Actualizar</Button>
+            </Div>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+@code {
+
+    private Modal modalConfigRef;
+    private Modal modalTestContadoresRef;
+    private Modal modalEstablecerContadoresRef;
+    private Modal modalTestImpresionRef;
+    private Modal modalActualizarFirmRef;
+
+    private bool sis = true;
+    private bool sas = true;
+    private bool sos = true;
+    private string router = "utilities";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cultureservice.CultureChanged += StateHasChanged;
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+
+    private Task OpenConfig()
+    {
+        return modalConfigRef.Show();
+    }
+    private Task OpenTestLecturaContadores()
+    {
+        return modalTestContadoresRef.Show();
+    }
+    private Task OpenEstablecerContadores()
+    {
+        return modalEstablecerContadoresRef.Show();
+    }
+    private Task TestImpresora()
+    {
+        return modalTestImpresionRef.Show();
+    }
+    private Task OpenActualizarFirmware()
+    {
+        return modalActualizarFirmRef.Show();
+    }
+
+
+
+}

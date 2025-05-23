@@ -1,0 +1,57 @@
+﻿@* @inject NavigationManager NavigationManager
+
+<footer class="footer bg-light">
+    <div class="row p-2 justify-content-center align-items-center">
+        <div class="col-1">
+        </div>
+        <div class="col-2">
+            <button type="button" class="btn btn-primary" @onclick="NavigateBackward"><i class="bi bi-arrow-left"></i></button>
+        </div>
+        <div class="col-6">
+            <!-- Contenido del centro del footer -->
+        </div>
+        <div class="col-2">
+            <button type="button" class="btn btn-primary" @onclick="NavigateForward"><i class="bi bi-arrow-right"></i></button>
+        </div>
+        <div class="col-1">
+        </div>
+    </div>
+</footer>
+
+@code {
+    // Función para navegar hacia atrás
+    private void NavigateBackward()
+    {
+        NavigationManager.NavigateTo(NavigationManager.Uri == "/" ? "/" : GetPreviousUrl());
+    }
+
+    // Función para navegar hacia adelante
+    private void NavigateForward()
+    {
+        NavigationManager.NavigateTo(NavigationManager.Uri == "/" ? "/" : GetNextUrl());
+    }
+
+    // Método para obtener la URL anterior
+    private string GetPreviousUrl()
+    {
+        var segments = NavigationManager.Uri.Split('/');
+        var index = Array.LastIndexOf(segments, segments.Last());
+        if (index >= 0 && index < segments.Length - 1)
+        {
+            return string.Join("/", segments.Take(index + 1));
+        }
+        return "/";
+    }
+
+    // Método para obtener la URL siguiente
+    private string GetNextUrl()
+    {
+        var segments = NavigationManager.Uri.Split('/');
+        var index = Array.LastIndexOf(segments, segments.Last());
+        if (index >= 0 && index < segments.Length - 1 && index + 1 < segments.Length)
+        {
+            return string.Join("/", segments.Take(index + 2));
+        }
+        return "/";
+    }
+} *@

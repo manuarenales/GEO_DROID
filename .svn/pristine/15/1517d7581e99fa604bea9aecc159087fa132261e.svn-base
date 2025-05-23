@@ -1,0 +1,15 @@
+﻿
+using System.ComponentModel.DataAnnotations;
+
+namespace GEO_DROID.Models
+{
+    public class ConceptoAveria
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+
+        [MaxLength(50)]
+        public string descripcion { get; set; }
+    }
+}

@@ -1,0 +1,65 @@
+﻿using GEO_DROID.Models;
+using SQLite;
+
+namespace GEO_DROID.Services
+{
+    public class EstadoAveriaService
+    {
+
+        SQLiteAsyncConnection Database;
+
+        public EstadoAveriaService()
+        {
+            Init();
+        }
+
+        async Task Init()
+        {
+            if (Database is not null)
+                return;
+            try
+            {
+                Database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
+                var result = await Database.CreateTableAsync<AveriaEstado>();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+        }
+
+        public async Task<List<AveriaEstado>> GetEstadosAsync()
+        {
+            return await Database.Table<AveriaEstado>().ToListAsync();
+        }
+
+        public async Task<AveriaEstado> GetEstadoByIdAsync(int id)
+        {
+
+            return await Database.Table<AveriaEstado>().Where(i => i.id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveEstadoAsync(AveriaEstado item)
+        {
+            AveriaEstado device = await Database.Table<AveriaEstado>().Where(i => i.id == item.id).FirstOrDefaultAsync();
+
+            if (device != null)
+            {
+                return await Database.UpdateAsync(item);
+            }
+            else
+            {
+                return await Database.InsertAsync(item);
+            }
+        }
+
+        public async Task<int> DeleteEStadoAsync(AveriaEstado item)
+        {
+            var yes = await Database.Table<AveriaEstado>().DeleteAsync(i => i.id == item.id);
+            return yes;
+        }
+
+
+    }
+}

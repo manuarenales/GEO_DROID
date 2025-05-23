@@ -1,0 +1,25 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+
+namespace GeoDroid.Data.Models
+{
+    public class LecturaContadorAuto
+    {
+        public enum Tipo
+        {
+            Manual = 0,
+            Cable = 1,
+            Bluetooth = 2
+        };
+
+        [Key]
+        public int id { get; set; }
+        [ForeignKey("incidencia")]
+        public int idIncidencias { get; set; }
+        public virtual Incidencia incidencia { get; set; }
+        public int tipoLecturaContadores { get; set; }
+
+        public int valor { get; set; }
+    }
+}

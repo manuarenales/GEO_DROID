@@ -1,0 +1,32 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GeoDroid.Data
+{
+    [DataContract(Namespace = "http://schemas.datacontract.org/2004/07/GeoDroid.Models")]
+    public class EmpresaCompetidora
+    {
+        [Key, DataMember]
+        public int id { get; set; }
+        [DataMember]
+        public int idGeo { get; set; }
+        [DataMember]
+        public string codigo { get; set; }
+        [DataMember]
+        public string nombre { get; set; }
+
+        public string TextoEmpresaCompetidora
+        {
+            get
+            {
+                return codigo + " - " + nombre;
+            }
+        }
+    }
+}

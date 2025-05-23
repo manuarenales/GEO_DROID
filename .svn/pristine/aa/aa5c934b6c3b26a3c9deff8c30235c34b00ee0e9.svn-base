@@ -1,0 +1,3 @@
+﻿.fluent-multi-splitter > .fluent-multi-splitter-pane {
+    overflow: unset !important;
+}

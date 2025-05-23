@@ -1,0 +1,113 @@
+﻿@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject MaquinaService MaquinaServce
+
+
+<div class="d-flex flex-column justify-content-start mb-1 " @onclick='() => ShowModal()'>
+    <label class="TextoMedio">
+        Maquina
+    </label>
+    @if (maquinaAveria != null)
+    {
+        <input class="form-control @(IsValid ? "" : "is-invalid")  " style="height: fit-content; min-height: 1.5em;  color: blue" @bind="@maquinaAveria.descripcionDistribucion" readonly ontouchstart="" />
+    }
+    else
+    {
+        <input class="form-control @(IsValid ? "" : "is-invalid")  " style="height: 1.5em;" readonly ontouchstart="" />
+    }
+    @if (!IsValid)
+    {
+        <div class="invalid-feedback">
+            Please choose a valid machine.
+        </div>
+        <div class="valid-feedback">
+            valid machine.
+        </div>
+    }
+</div>
+
+<div class="modal show " tabindex="-1" role="dialog" style="display: @(modalVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+        <div class="modal-content bg-light" style="height: 100%;">
+            <div class="modal-header">
+                <span class="modal-title Titulo ">Maquina</span>
+                <button type="button" class="close" aria-label="Close" @onclick="HideModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <input class="form-control mb-2" @bind="Bmaquina" placeholder="Buscar" @oninput="FilterEstados" />
+                <ul class="list-group list-group-flush" style="height: 80%; overflow-y: auto;">
+                    @foreach (Maquina maquina in maquinas.Where(e => string.IsNullOrEmpty(Bmaquina) || e.codigo.ToLower().Contains(Bmaquina.ToLower())))
+                    {
+                        <li class="list-group-item" @onclick="() => SetMaquinaAveria(maquina)">
+                            <span>@maquina.descripcionDistribucion</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    [Parameter]
+    public Maquina maquinaAveria { get; set; }
+    [Parameter]
+    public EventCallback<Maquina> maquinaAveriaChanged { get; set; }
+    [Parameter]
+    public EventCallback<Maquina> Changed { get; set; }
+    [Parameter]
+    public EventCallback OnValueChanged { get; set; }
+    [Parameter]
+    public int idEstablecimiento { get; set; }
+    [Parameter]
+    public bool IsValid { get; set; }
+
+    bool modalVisible = false;
+
+    public List<Maquina> maquinas = new List<Maquina>();
+    private string Bmaquina = "";
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (idEstablecimiento == 0)
+        {
+            maquinas = await MaquinaServce.GetMaquinasAsync();
+        }
+        else
+        {
+            maquinas = await MaquinaServce.GetMaquinasByEstablecimientoAsync(idEstablecimiento);
+        }
+        maquinas = await MaquinaServce.GetMaquinasAsync();
+    }
+
+    private void ShowModal()
+    {
+        modalVisible = true;
+    }
+
+    private void HideModal()
+    {
+        modalVisible = false;
+    }
+    private void SetMaquinaAveria(Maquina maquina)
+    {
+        // maquinaAveria = maquina;
+
+        maquinaAveriaChanged.InvokeAsync(maquina);
+        Changed.InvokeAsync(maquina);
+
+        OnValueChanged.InvokeAsync();
+        HideModal();
+    }
+
+    public void FilterEstados(ChangeEventArgs filter)
+    {
+        Bmaquina = filter.Value.ToString();
+    }
+}

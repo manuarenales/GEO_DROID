@@ -1,0 +1,298 @@
+﻿@page "/averiaform1/{averiaid:int}/{establecimiento:int}"
+@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject AveriasService AveriasService
+@inject MaquinaService MaquinaServce
+@inject EstadoAveriaService EstadoAveriaService
+@inject ConceptoAveriaService ConceptoAveriaService
+@inject NavigationManager Navigation
+@inject CultureService Cultureservice
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+
+<ListGroup Class="w-100">
+    <Div Class="d-flex flex-column justify-content-center align-items-center bg-dark ">
+        <span style="color:white" class="subtitle ">Detalles</span>
+    </Div>
+    <ListGroupItem Class="@(IsIdMaquinaValid ? "d-flex flex-column justify-content-start" : "d-flex flex-column justify-content-start invalid")" @onclick="() => ShowMaquinaModal()">
+        <label>
+            Maquina
+        </label>
+        @if (maquinaAveria != null)
+        {
+            <span class="bluetext fs-6 "> @maquinaAveria.codigo </span>
+        }
+    </ListGroupItem>
+    <ListGroupItem Class="@(IsIdConceptoValid ? "d-flex flex-column justify-content-start" : "d-flex flex-column justify-content-start invalid")" @onclick="() => ShowConceptoModal()">
+        <label>
+            Concepto
+        </label>
+        @if (conceptoAveria != null)
+        {
+            <span class="bluetext fs-6"> @conceptoAveria.descripcion </span>
+        }
+    </ListGroupItem>
+    <ListGroupItem Class="@(IsIdEstadoValid ? "d-flex flex-column justify-content-start" : "d-flex flex-column justify-content-start invalid")" @onclick="() => ShowComentariosModal()">
+        <label>
+            Estado
+        </label>
+        @if (estadoAveria != null)
+        {
+            <span class="bluetext fs-6 "> @estadoAveria.descripcion </span>
+        }
+
+    </ListGroupItem>
+
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span> Descripcion </span>
+        <textarea class="bluetext" type="text" @bind="averia.observaciones " placeholder="Comentarios" />
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span> Detalle </span>
+        <textarea class="bluetext" type="text" @bind="averia.detalle" placeholder="Detalle" />
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span> Comentarios </span>
+        <textarea class="bluetext" type="text" @bind="averia.comentarios" placeholder="Comentarios" />
+    </ListGroupItem>
+
+
+    <Div Class="d-flex flex-column justify-content-center  align-items-center bg-dark ">
+        <span style="color:white" class="subtitle ">Acciones </span>
+    </Div>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span class="fs-6  ">
+            Realizar carga
+        </span>
+        <span class="bluetext">No realizada</span>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span class="fs-6  ">
+            Lectura inicial de contadores
+        </span>
+        <span class="bluetext">No realizada</span>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span class="fs-6  ">
+            Lectura final contadores
+        </span>
+        <span class="bluetext">No realizada</span>
+    </ListGroupItem>
+</ListGroup>
+
+<div style="height: 65px;"></div>
+<Div Class="row m-2  fixed-bottom mb-3 ">
+    <Div Class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100 " @onclick='() => GuardarAveria()'>Guardar</button>
+    </Div>
+    <Div Class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" disabled="@((averiaid == -1))" @onclick='() => EliminarAveria()'>Eliminar</button>
+    </Div>
+    <Div Class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick='() => NavigateTo("averias/" + establecimiento)'>Cancelar</button>
+    </Div>
+</Div>
+
+
+@*------------------------ POP UP MAQUINA ------------------------*@
+<Modal @ref="modalMaquina" style="height:80%;">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Maquina</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <input class="w-100" @bind="Bmaquina" />
+            <ul class="list-group list-group-flush">
+                @foreach (Maquina maquina in maquinas.Where(m => Bmaquina == "" || m.codigo.Contains(Bmaquina)))
+                {
+                    <li class="list-group-item " @onclick="() =>SetMaquinaAveria(maquina )">
+                        <span class=""> @maquina.codigo </span> /  <span class=""> @maquina.descripcionDistribucion </span>
+                    </li>
+                }
+            </ul>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+@*------------------------ POP UP CONCEPTO -----------------------*@
+<Modal @ref="modalConcepto" style="height:80%;">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Concepto</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <input class="w-100" @bind="Bconcepto" />
+            <ul class="list-group list-group-flush">
+                @foreach (ConceptoAveria concepto in conceptos.Where(c => Bconcepto == "" || c.descripcion.Contains(Bconcepto)))
+                {
+                    <li class="list-group-item " @onclick="() =>SetConceptoAveria(concepto)">
+                        <span class=""> @concepto.descripcion </span>
+                    </li>
+                }
+            </ul>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+@*------------------------ POP UP ESTADO -------------------------*@
+<Modal @ref="modalEstado" style="height:80%;">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Estado</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <input class="w-100" @bind="Bestado" />
+            <ul class="list-group list-group-flush">
+                @foreach (AveriaEstado estado in estados.Where(e => Bestado == "" || e.descripcion.Contains(Bestado)))
+                {
+                    <li class="list-group-item " @onclick="() =>SetEstadoAveria(estado)">
+                        <span class=""> @estado.descripcion </span>
+                    </li>
+                }
+            </ul>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+
+@code {
+
+    [Parameter]
+    public int averiaid { get; set; }
+    [Parameter]
+    public int establecimiento { get; set; }
+
+    private string Bmaquina = "";
+    private string Bconcepto = "";
+    private string Bestado = "";
+
+    private string title = "";
+    private Averia averia = new Averia();
+
+    public Maquina maquinaAveria = new Maquina();
+    public ConceptoAveria conceptoAveria = new ConceptoAveria();
+    public AveriaEstado estadoAveria = new AveriaEstado();
+
+    public List<Maquina> maquinas = new List<Maquina>();
+    public List<ConceptoAveria> conceptos = new List<ConceptoAveria>();
+    public List<AveriaEstado> estados = new List<AveriaEstado>();
+
+    private Modal modalMaquina;
+    private Modal modalConcepto;
+    private Modal modalEstado;
+
+    private bool IsIdMaquinaValid { get; set; } = true;
+    private bool IsIdConceptoValid { get; set; } = true;
+    private bool IsIdEstadoValid { get; set; } = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        maquinas = await MaquinaServce.Getmaquinas();
+        conceptos = await ConceptoAveriaService.Getconceptos();
+        estados = await EstadoAveriaService.GetEstadosAsync();
+
+        if (averiaid == -1)
+        {
+            title = "Añadir Averia";
+            averia = new Averia();
+        }
+        else
+        {
+            title = "Editando Averia";
+            averia = await AveriasService.GetAveriaByIdAsync(averiaid);
+            if (averia != null)
+            {
+                maquinaAveria = await MaquinaServce.GetMaquinaByIdAsync(averia.idMaquina);
+                conceptoAveria = await ConceptoAveriaService.GetConceptoByIdAsync(averia.idConceptoAverias);
+                estadoAveria = await EstadoAveriaService.GetEstadoByIdAsync(averia.idAveriasEstados);
+            }
+            else
+            {
+                averia = new Averia();
+            }
+        }
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, true);
+    }
+
+    public async void EliminarAveria()
+    {
+        int res = await AveriasService.DeleteAveriaAsync(averia);
+        NavigateTo("averias/" + establecimiento);
+    }
+
+    public async void GuardarAveria()
+    {
+        if (ValidateForm())
+        {
+            int res = await AveriasService.SaveAveriaAsync(averia);
+            NavigateTo("averias/" + establecimiento);
+        }
+
+    }
+
+    private Task ShowMaquinaModal()
+    {
+        return modalMaquina.Show();
+    }
+
+    private Task ShowConceptoModal()
+    {
+        return modalConcepto.Show();
+    }
+
+    private Task ShowComentariosModal()
+    {
+        return modalEstado.Show();
+    }
+
+    private void SetEstadoAveria(AveriaEstado estado)
+    {
+        averia.idAveriasEstados = estado.id;
+        estadoAveria = estado;
+        modalEstado.Hide();
+        ValidateForm();
+    }
+
+    private void SetConceptoAveria(ConceptoAveria concepto)
+    {
+        averia.idConceptoAverias = concepto.id;
+        conceptoAveria = concepto;
+        modalConcepto.Hide();
+        ValidateForm();
+    }
+
+    private void SetMaquinaAveria(Maquina maquina)
+    {
+        averia.idMaquina = maquina.id;
+        maquinaAveria = maquina;
+        modalMaquina.Hide();
+        ValidateForm();
+    }
+
+    private bool ValidateForm()
+    {
+        IsIdMaquinaValid = averia.idMaquina != 0;
+        IsIdConceptoValid = averia.idConceptoAverias != 0;
+        IsIdEstadoValid = averia.idAveriasEstados != 0;
+        if (IsIdMaquinaValid && IsIdConceptoValid && IsIdEstadoValid)
+        {
+            StateHasChanged();
+            return true;
+        }
+        else
+        {
+            StateHasChanged();
+            return false;
+        }
+    }
+
+}

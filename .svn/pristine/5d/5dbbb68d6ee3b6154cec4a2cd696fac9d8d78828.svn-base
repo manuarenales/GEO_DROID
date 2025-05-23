@@ -1,0 +1,73 @@
+﻿using GEO_DROID.Services;
+using GeoDroid.Data;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.EntityFrameworkCore;
+
+
+
+#if ANDROID
+using GEO_DROID.Platforms.Android.Handlers;
+#endif
+
+namespace GEO_DROID
+{
+    public static class MauiProgram
+    {
+        public static MauiApp CreateMauiApp()
+        {
+            var builder = MauiApp.CreateBuilder();
+            builder
+                .UseMauiApp<App>()
+
+                .ConfigureFonts(fonts =>
+                {
+                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                }).ConfigureMauiHandlers(handlers =>
+                {
+#if ANDROID
+                    handlers.AddHandler<BlazorWebView, MauiBlazorWebViewHandler>();
+#endif
+                });
+
+            /////////////////////////////////////////////////// ORM ////////////////////////////////////////////////
+
+            builder.Services.AddDbContext<GeoDroidDbContext>();
+            var dbContext = new GeoDroidDbContext();
+
+            dbContext.Database.Migrate();
+            builder.Services.AddMauiBlazorWebView();
+
+            builder.Services.AddSingleton<Averia>();
+            builder.Services.AddSingleton<AveriaEstado>();
+            builder.Services.AddSingleton<ConceptoAveria>();
+            builder.Services.AddSingleton<DeviceCandidate>();
+            builder.Services.AddSingleton<Establecimiento>();
+            builder.Services.AddSingleton<Incidencia>();
+            builder.Services.AddSingleton<Ruta>();
+            builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddLocalization();
+            builder.Services.AddTransient<CustomNavigationManager>();
+
+            /////////////////////////////////////////////////// Servicios ////////////////////////////////////////////////
+
+            builder.Services.AddScoped<LayoutBuilderService>();
+            builder.Services.AddScoped<EstablecimientosService>();
+            builder.Services.AddScoped<CultureService>();
+            builder.Services.AddScoped<AveriasService>();
+
+            builder.Services.AddScoped<CargaService>();
+
+            builder.Services.AddScoped<MaquinaService>();
+            builder.Services.AddScoped<ConceptoAveriaService>();
+            builder.Services.AddScoped<SincroService>();
+            builder.Services.AddScoped<EstadoAveriaService>();
+            builder.Services.AddScoped<TokenService>();
+            builder.Services.AddScoped<GeolineOdataService>();
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            builder.Logging.AddDebug();
+            return builder.Build();
+        }
+    }
+}

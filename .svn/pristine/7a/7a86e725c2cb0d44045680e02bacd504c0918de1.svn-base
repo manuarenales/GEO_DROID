@@ -1,0 +1,71 @@
+﻿using GEO_DROID.Models;
+using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services
+{
+    public class ConceptoAveriaService
+    {
+
+        SQLiteAsyncConnection Database;
+
+        public ConceptoAveriaService()
+        {
+            Init();
+        }
+
+        async Task Init()
+        {
+            if (Database is not null)
+                return;
+            try
+            {
+                Database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
+                var result = await Database.CreateTableAsync<ConceptoAveria>();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+        }
+
+        public async Task<List<ConceptoAveria>> Getconceptos()
+        {
+            return await Database.Table<ConceptoAveria>().ToListAsync();
+        }
+
+        public async Task<ConceptoAveria> GetConceptoByIdAsync(int id)
+        {
+
+            return await Database.Table<ConceptoAveria>().Where(i => i.id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveConceptoAsync(ConceptoAveria item)
+        {
+            ConceptoAveria device = await Database.Table<ConceptoAveria>().Where(i => i.id == item.id).FirstOrDefaultAsync();
+
+            if (device != null)
+            {
+                return await Database.UpdateAsync(item);
+            }
+            else
+            {
+                return await Database.InsertAsync(item);
+            }
+        }
+
+        public async Task<int> DeleteConceptoAsync(ConceptoAveria item)
+        {
+            var yes = await Database.Table<ConceptoAveria>().DeleteAsync(i => i.id == item.id);
+            return yes;
+        }
+
+
+
+    }
+}

@@ -1,0 +1,58 @@
+﻿
+using IDispatcher = Fluxor.IDispatcher;
+using GEO_DROID.Services.SincroService;
+using Fluxor;
+using GEO_DROID.Store.Confirmation;
+using GEO_DROID.Store.FluxorConfirmationExtensions;
+using Microsoft.AspNetCore.Components;
+
+namespace GEO_DROID.Store.Application
+{
+    public class AplicacionEffects
+    {
+        private SyncProcess _sincroService;
+        private readonly NavigationManager _navigationManager;
+        private readonly IState<ConfirmationState> confirmationState;
+
+        public AplicacionEffects(SyncProcess sincroservice, IState<ConfirmationState> ConfirmationState, NavigationManager navigationManager)
+        {
+            _sincroService = sincroservice;
+            confirmationState = ConfirmationState;
+            _navigationManager = navigationManager;
+        }
+
+        [EffectMethod]
+        public async Task SincroRequestAsync(SincronizationAction action, IDispatcher dispatcher)
+        {
+            try
+            {
+                // Mostrar el popup de confirmación (esto no debe bloquear la UI)
+                bool confirmed = await dispatcher.ShowConfirmationAsync("Sincronización", "¿Estás seguro de que deseas sincronizar?");
+
+                // Si el usuario confirma, mostrar el spinner y empezar la sincronización 
+                if (confirmed)
+                {
+                    // Mostrar spinner
+                    dispatcher.Dispatch(new ShowSpinnerAction("Sincronización", "Sincronizando con el servidor..."));
+
+                    // Ejecutar la sincronización en segundo plano
+                    var task = _sincroService.StartAsync(null);
+
+                    // Esperar la sincronización de forma asincrónica  
+
+                    await task;
+                    // Después de la sincronización, ocultar el spinner
+                    dispatcher.Dispatch(new HideSpinnerAction());
+                }
+            }
+            catch (Exception ex)
+            {
+                // Manejo de errores 
+                Console.WriteLine($"Error: {ex.Message}");
+                dispatcher.Dispatch(new HideSpinnerAction());
+            }
+        }
+
+
+    }
+}

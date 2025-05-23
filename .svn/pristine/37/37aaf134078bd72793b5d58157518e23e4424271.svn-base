@@ -1,0 +1,660 @@
+﻿using GeoDroid.Data.DTO;
+using GeoDroid.Data.Models;
+using GeoDroid.Data;
+using Microsoft.Data.Sqlite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using SQLitePCL;
+using Microsoft.EntityFrameworkCore;
+
+namespace GEO_DROID.Services.SincroService
+{
+    struct Config
+    {
+        //static string _dbName;
+        public Config()
+        {
+
+        }
+
+        //static public string getFilePath(string fileName)
+        //{
+        //    //string p = getAppDataDir();
+
+        //    return Path.Combine(getAppDataDir(), fileName);
+        //}
+        static public void ResetDatabaseOnlyLocalizacion()
+        {
+            //SQLiteConnection db = new SQLiteConnection(Config.dbPath());
+            //db.DropTable<Localizacion>();
+            //CreateTableLocalizacion();
+            //db.Close();
+        }
+        static public string getAppDataDir()
+        {
+            return System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+        }
+
+        static public bool CacheImportesTableExists()
+        {
+            bool exists = false;
+
+            try
+            {
+                //SQLiteConnection db = new SQLiteConnection(Config.connectionString());
+
+                //List<SQLiteMasterModel> list = db.Query<SQLiteMasterModel>("SELECT * FROM sqlite_master WHERE type='table' AND name='CacheImportes'");
+                //if (list.Count > 0)
+                //    exists = true;
+
+                //db.Close();
+            }
+            catch (Exception ex)
+            {
+                string error = ex.Message;
+            }
+
+            return exists;
+        }
+        static public void DropDataBase(GeoDroidDbContext _dbContext)
+        {
+            try
+            {
+                _dbContext.Establecimientos.RemoveRange(_dbContext.Establecimientos);
+                _dbContext.SaveChanges();
+
+                _dbContext.MaquinaConceptoRecaudacion.RemoveRange(_dbContext.MaquinaConceptoRecaudacion);
+                _dbContext.SaveChanges();
+
+                _dbContext.Maquina.RemoveRange(_dbContext.Maquina);
+                _dbContext.SaveChanges();
+
+                _dbContext.Averia.RemoveRange(_dbContext.Averia);
+                _dbContext.SaveChanges();
+
+                _dbContext.AveriaEstado.RemoveRange(_dbContext.AveriaEstado);
+                _dbContext.SaveChanges();
+
+                _dbContext.Ruta.RemoveRange(_dbContext.Ruta);
+                _dbContext.SaveChanges();
+
+                _dbContext.TipoDistribucionConceptoRecaudacion.RemoveRange(_dbContext.TipoDistribucionConceptoRecaudacion);
+                _dbContext.SaveChanges();
+
+                _dbContext.PatContDetalle.RemoveRange(_dbContext.PatContDetalle);
+                _dbContext.SaveChanges();
+
+                _dbContext.Incidencia.RemoveRange(_dbContext.Incidencia);
+                _dbContext.SaveChanges();
+
+                _dbContext.LecturaContadorAuto.RemoveRange(_dbContext.LecturaContadorAuto);
+                _dbContext.SaveChanges();
+
+                _dbContext.LecturaContador.RemoveRange(_dbContext.LecturaContador);
+                _dbContext.SaveChanges();
+
+                _dbContext.LecturaDetalle.RemoveRange(_dbContext.LecturaDetalle);
+                _dbContext.SaveChanges();
+
+                _dbContext.LecturaDetalleAuto.RemoveRange(_dbContext.LecturaDetalleAuto);
+                _dbContext.SaveChanges();
+
+                _dbContext.Recaudacion.RemoveRange(_dbContext.Recaudacion);
+                _dbContext.SaveChanges();
+
+                _dbContext.DesgloseBruto.RemoveRange(_dbContext.DesgloseBruto);
+                _dbContext.SaveChanges();
+
+                _dbContext.RecaudacionDetalles.RemoveRange(_dbContext.RecaudacionDetalles);
+                _dbContext.SaveChanges();
+
+                _dbContext.Cambio.RemoveRange(_dbContext.Cambio);
+                _dbContext.SaveChanges();
+
+                _dbContext.Carga.RemoveRange(_dbContext.Carga);
+                _dbContext.SaveChanges();
+
+                _dbContext.ConceptoPrestamo.RemoveRange(_dbContext.ConceptoPrestamo);
+                _dbContext.SaveChanges();
+
+                _dbContext.Prestamo.RemoveRange(_dbContext.Prestamo);
+                _dbContext.SaveChanges();
+
+                _dbContext.PrestamoRecuperacion.RemoveRange(_dbContext.PrestamoRecuperacion);
+                _dbContext.SaveChanges();
+
+                _dbContext.Empresa.RemoveRange(_dbContext.Empresa);
+                _dbContext.SaveChanges();
+
+                _dbContext.UltimaLecturaRecaudacion.RemoveRange(_dbContext.UltimaLecturaRecaudacion);
+                _dbContext.SaveChanges();
+
+                _dbContext.ConfigurationGEO.RemoveRange(_dbContext.ConfigurationGEO);
+                _dbContext.SaveChanges();
+
+                _dbContext.Localizacion.RemoveRange(_dbContext.Localizacion);
+                _dbContext.SaveChanges();
+
+                _dbContext.ConceptoGastoEstablecimiento.RemoveRange(_dbContext.ConceptoGastoEstablecimiento);
+                _dbContext.SaveChanges();
+
+                _dbContext.GastoEstablecimiento.RemoveRange(_dbContext.GastoEstablecimiento);
+                _dbContext.SaveChanges();
+
+                _dbContext.ConceptoMotivoMaquinaNoRecaudada.RemoveRange(_dbContext.ConceptoMotivoMaquinaNoRecaudada);
+                _dbContext.SaveChanges();
+
+                _dbContext.MotivoMaquinaNoRecaudada.RemoveRange(_dbContext.MotivoMaquinaNoRecaudada);
+                _dbContext.SaveChanges();
+
+                _dbContext.Instalacion.RemoveRange(_dbContext.Instalacion);
+                _dbContext.SaveChanges();
+
+                _dbContext.MotivoVisitaComercial.RemoveRange(_dbContext.MotivoVisitaComercial);
+                _dbContext.SaveChanges();
+
+                _dbContext.VisitaComercial.RemoveRange(_dbContext.VisitaComercial);
+                _dbContext.SaveChanges();
+
+                _dbContext.TipoAccionComercial.RemoveRange(_dbContext.TipoAccionComercial);
+                _dbContext.SaveChanges();
+
+                _dbContext.MotivoAccionComercial.RemoveRange(_dbContext.MotivoAccionComercial);
+                _dbContext.SaveChanges();
+
+                _dbContext.AccionComercial.RemoveRange(_dbContext.AccionComercial);
+                _dbContext.SaveChanges();
+
+                _dbContext.TipoCombustible.RemoveRange(_dbContext.TipoCombustible);
+                _dbContext.SaveChanges();
+
+                _dbContext.Vehiculo.RemoveRange(_dbContext.Vehiculo);
+                _dbContext.SaveChanges();
+
+                _dbContext.VehiculoCombustible.RemoveRange(_dbContext.VehiculoCombustible);
+                _dbContext.SaveChanges();
+
+                _dbContext.VehiculoKm.RemoveRange(_dbContext.VehiculoKm);
+                _dbContext.SaveChanges();
+
+                _dbContext.VehiculoRepostaje.RemoveRange(_dbContext.VehiculoRepostaje);
+                _dbContext.SaveChanges();
+
+                _dbContext.Poblacion.RemoveRange(_dbContext.Poblacion);
+                _dbContext.SaveChanges();
+
+                _dbContext.ModeloMaquina.RemoveRange(_dbContext.ModeloMaquina);
+                _dbContext.SaveChanges();
+
+                _dbContext.EstablecimientoPotencial.RemoveRange(_dbContext.EstablecimientoPotencial);
+                _dbContext.SaveChanges();
+
+                _dbContext.EstablecimientoPotencialMaquina.RemoveRange(_dbContext.EstablecimientoPotencialMaquina);
+                _dbContext.SaveChanges();
+
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        static public void CreateCacheImportesTable()
+        {
+            try
+            {
+                //var dbPath = Config.dbPath();
+                //SQLiteConnection db = new SQLiteConnection(Config.dbPath());
+                //db.CreateTable<CacheImportes>();
+                //db.Close();
+            }
+            catch (Exception ex)
+            {
+                string error = ex.Message;
+            }
+        }
+
+        static public void BuildDataBase()
+        {
+            //try
+            //{
+            //    SQLiteConnection db = dbIni ?? new SQLiteConnection(Config.dbPath());
+
+            //    //If database was previously initialized do not recreate configuration data
+            //    if (!ConfigurationTableExists(db))
+            //    {
+            //        db.CreateTable<Configuration>();
+
+            //        Configuration config = new Configuration();
+            //        config.id = 1;
+            //        config.ip = "172.16.1.23";
+            //        config.port = 10008;
+            //        config.unitNumber = 1;
+            //        config.syncToken = null;
+            //        config.password = "1111";
+            //        config.printerMAC = "00:01:90:D8:E9:11";
+            //        config.syncCompressionEnabled = true;
+            //        db.Insert(config);
+            //    }
+
+            //    db.CreateTable<Establecimiento>();
+            //    db.CreateTable<MaquinaConceptoRecaudacion>();
+            //    db.CreateTable<Maquina>();
+            //    db.CreateTable<Averia>();
+            //    db.CreateTable<AveriaEstado>();
+            //    db.CreateTable<ConceptoAveria>();
+            //    db.CreateTable<Ruta>();
+            //    db.CreateTable<TipoDistribucionConceptoRecaudacion>();
+            //    db.CreateTable<PatContDetalle>();
+            //    db.CreateTable<Incidencia>();
+            //    db.CreateTable<LecturaContador>();
+            //    db.CreateTable<LecturaContadorAuto>();
+            //    db.CreateTable<LecturaDetalle>();
+            //    db.CreateTable<LecturaDetalleAuto>();
+            //    db.CreateTable<ModuloCaptura>();
+            //    db.CreateTable<Recaudacion>();
+            //    db.CreateTable<DesgloseBruto>();
+            //    db.CreateTable<RecaudacionDetalles>();
+            //    db.CreateTable<Cambio>();
+            //    db.CreateTable<Carga>();
+            //    db.CreateTable<ConceptoPrestamo>();
+            //    db.CreateTable<Prestamo>();
+            //    db.CreateTable<PrestamoRecuperacion>();
+            //    db.CreateTable<Empresa>();
+            //    db.CreateTable<UltimaLecturaRecaudacion>();
+            //    db.CreateTable<ConfigurationGEO>();
+            //    db.CreateTable<Localizacion>();
+            //    db.CreateTable<ConceptoGastoEstablecimiento>();
+            //    db.CreateTable<GastoEstablecimiento>();
+            //    db.CreateTable<ConceptoMotivoMaquinaNoRecaudada>();
+            //    db.CreateTable<MotivoMaquinaNoRecaudada>();
+            //    db.CreateTable<Instalacion>();
+            //    db.CreateTable<MotivoVisitaComercial>();
+            //    db.CreateTable<VisitaComercial>();
+            //    db.CreateTable<TipoAccionComercial>();
+            //    db.CreateTable<MotivoAccionComercial>();
+            //    db.CreateTable<AccionComercial>();
+            //    db.CreateTable<TipoCombustible>();
+            //    db.CreateTable<Vehiculo>();
+            //    db.CreateTable<VehiculoCombustible>();
+            //    db.CreateTable<VehiculoKm>();
+            //    db.CreateTable<VehiculoRepostaje>();
+            //    db.CreateTable<EmpresaCompetidora>();
+            //    db.CreateTable<Poblacion>();
+            //    db.CreateTable<ModeloMaquina>();
+            //    db.CreateTable<EstablecimientoPotencial>();
+            //    db.CreateTable<EstablecimientoPotencialMaquina>();
+
+            //    if (db != dbIni)
+            //        db.Close();
+            //}
+            //catch (Exception ex)
+            //{
+            //    string error = ex.Message;
+            //}
+        }
+
+        static public void DeleteRowsInCacheImportesTable(DateTime fechaHasta)
+        {
+            try
+            {
+                //var dbPath = Config.dbPath();
+                //string cad = "Delete from CacheImportes where fecha < '" + fechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") + "'";
+                //string cad2 = "Delete from CacheImportesConceptosRecaudacion where idCacheImportes IN (SELECT id FROM CacheImportes WHERE fecha < '" + fechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") + "')";
+                //SQLiteConnection db = new SQLiteConnection(Config.dbPath());
+                //db.CreateCommand(cad2, null).ExecuteNonQuery();
+                //db.CreateCommand(cad, null).ExecuteNonQuery();
+                //db.Close();
+            }
+            catch (Exception ex)
+            {
+                string error = ex.Message;
+            }
+        }
+
+        static public string getFilePath(string fileName)
+        {
+            //string p = getAppDataDir();
+
+            return Path.Combine(getAppDataDir(), fileName);
+        }
+        //static public void setDBName(string dbName)
+        //{
+        //    _dbName = dbName;
+        //}
+
+        //static public string dbPath()
+        //{
+
+        //    return getFilePath(_dbName);
+        //}
+
+        //static public string connectionString()
+        //{
+        //    //return "Data Source=" + Config.dbPath() + ";DefaultTimeout=100";
+        //    return Config.dbPath();
+        //}
+
+
+
+        //static public bool IsDataBaseFileInitialized()
+        //{
+        //    bool initialized = false;
+
+        //    string dbPath = Config.dbPath();
+
+        //    try
+        //    {
+        //        //Check first if file has been created
+        //        if (File.Exists(dbPath))
+        //        {
+        //            initialized = true;
+        //        }
+        //    }
+        //    catch (Exception)
+        //    {
+        //    }
+
+        //    return initialized;
+        //}
+
+        //public bool CheckTableExists(string tableName)
+        //{
+        //    bool exists = false;
+
+        //    try
+        //    {
+        //        _dbContext.EnsureCreated();
+
+        //        List<SQLiteMasterModel> list = db.Query<SQLiteMasterModel>("SELECT * FROM sqlite_master WHERE type='table' AND name='" + tableName + "'");
+        //        if (list.Count > 0)
+        //            exists = true;
+
+        //        if (db != dbIni)
+        //            db.Close();
+        //    }
+        //    catch { }
+
+        //    return exists;
+        //}
+
+        //static public bool ConfigurationTableExists()
+        //{
+        //    bool exists = false;
+
+        //    try
+        //    {
+        //        SQLiteConnection db = dbIni ?? new SQLiteConnection(Config.connectionString());
+        //        //Check if we have configuration table. If it is not found then, 
+
+        //        List<SQLiteMasterModel> list = db.Query<SQLiteMasterModel>("SELECT * FROM sqlite_master WHERE type='table' AND name='Configuration'");
+        //        if (list.Count > 0)
+        //            exists = true;
+
+        //        //SQLiteCommand cmd = db.CreateCommand("SELECT * FROM sqlite_master WHERE type='table' AND name='Configuration'");
+
+        //        //return (cmd.ExecuteQuery <SQLiteMasterModel>() != null);
+
+        //        /*SQLiteConnection db = new SQLiteConnection(Config.connectionString());
+        //        TableQuery<Configuration> tq = db.Table<Configuration>();
+        //        if (tq != null)
+        //            exists = true;*/
+
+        //        if (db != dbIni)
+        //            db.Close();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        //User table does not exist
+        //        //throw;
+        //        string error = ex.Message;
+        //    }
+
+        //    return exists;
+        //}
+
+        //static public bool CacheImportesTableExists()
+        //{
+        //    bool exists = false;
+
+        //    try
+        //    {
+        //        SQLiteConnection db = new SQLiteConnection(Config.connectionString());
+
+        //        List<SQLiteMasterModel> list = db.Query<SQLiteMasterModel>("SELECT * FROM sqlite_master WHERE type='table' AND name='CacheImportes'");
+        //        if (list.Count > 0)
+        //            exists = true;
+
+        //        db.Close();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string error = ex.Message;
+        //    }
+
+        //    return exists;
+        //}
+
+        //static public void CreateCacheImportesTable()
+        //{
+        //    try
+        //    {
+        //        var dbPath = Config.dbPath();
+
+        //        SQLiteConnection db = new SQLiteConnection(Config.dbPath());
+
+        //        db.CreateTable<CacheImportes>();
+        //        db.Close();
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string error = ex.Message;
+        //    }
+
+        //}
+
+        //static public void DropCacheImportesTable()
+        //{
+        //    try
+        //    {
+        //        var dbPath = Config.dbPath();
+
+        //        SQLiteConnection db = new SQLiteConnection(Config.dbPath());
+
+        //        db.DropTable<CacheImportes>();
+        //        db.Close();
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string error = ex.Message;
+        //    }
+
+        //}
+
+
+
+        //static public void DeleteRowsInCacheImportesTable(DateTime fechaHasta)
+        //{
+        //    try
+        //    {
+        //        var dbPath = Config.dbPath();
+
+        //        string cad = "Delete from CacheImportes where fecha < '" + fechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") + "'";
+        //        string cad2 = "Delete from CacheImportesConceptosRecaudacion where idCacheImportes IN (SELECT id FROM CacheImportes WHERE fecha < '" + fechaHasta.ToString("yyyy-MM-ddTHH:mm:ss") + "')";
+
+        //        SQLiteConnection db = new SQLiteConnection(Config.dbPath());
+
+
+        //        db.CreateCommand(cad2, null).ExecuteNonQuery();
+        //        db.CreateCommand(cad, null).ExecuteNonQuery();
+        //        db.Close();
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string error = ex.Message;
+        //    }
+
+        //}
+
+        //static public void BuildDataBase()
+        //{
+        //    BuildDataBase(null);
+        //}
+
+        //static public void BuildDataBase()
+        //{
+        //    try
+        //    {
+
+
+        //        //If database was previously initialized do not recreate configuration data
+        //        if (!ConfigurationTableExists(db))
+        //        {
+        //            db.CreateTable<Configuration>();
+
+        //            Configuration config = new Configuration();
+        //            config.id = 1;
+        //            config.ip = "172.16.1.23";
+        //            config.port = 10008;
+        //            config.unitNumber = 1;
+        //            config.syncToken = null;
+        //            config.password = "1111";
+        //            config.printerMAC = "00:01:90:D8:E9:11";
+        //            config.syncCompressionEnabled = true;
+        //            db.Insert(config);
+        //        }
+
+        //        db.CreateTable<Establecimiento>();
+        //        db.CreateTable<MaquinaConceptoRecaudacion>();
+        //        db.CreateTable<Maquina>();
+        //        db.CreateTable<Averia>();
+        //        db.CreateTable<AveriaEstado>();
+        //        db.CreateTable<ConceptoAveria>();
+        //        db.CreateTable<Ruta>();
+        //        db.CreateTable<TipoDistribucionConceptoRecaudacion>();
+        //        db.CreateTable<PatContDetalle>();
+        //        db.CreateTable<Incidencia>();
+        //        db.CreateTable<LecturaContador>();
+        //        db.CreateTable<LecturaContadorAuto>();
+        //        db.CreateTable<LecturaDetalle>();
+        //        db.CreateTable<LecturaDetalleAuto>();
+        //        db.CreateTable<ModuloCaptura>();
+        //        db.CreateTable<Recaudacion>();
+        //        db.CreateTable<DesgloseBruto>();
+        //        db.CreateTable<RecaudacionDetalles>();
+        //        db.CreateTable<Cambio>();
+        //        db.CreateTable<Carga>();
+        //        db.CreateTable<ConceptoPrestamo>();
+        //        db.CreateTable<Prestamo>();
+        //        db.CreateTable<PrestamoRecuperacion>();
+        //        db.CreateTable<Empresa>();
+        //        db.CreateTable<UltimaLecturaRecaudacion>();
+        //        db.CreateTable<ConfigurationGEO>();
+        //        db.CreateTable<Localizacion>();
+        //        db.CreateTable<ConceptoGastoEstablecimiento>();
+        //        db.CreateTable<GastoEstablecimiento>();
+        //        db.CreateTable<ConceptoMotivoMaquinaNoRecaudada>();
+        //        db.CreateTable<MotivoMaquinaNoRecaudada>();
+        //        db.CreateTable<Instalacion>();
+        //        db.CreateTable<MotivoVisitaComercial>();
+        //        db.CreateTable<VisitaComercial>();
+        //        db.CreateTable<TipoAccionComercial>();
+        //        db.CreateTable<MotivoAccionComercial>();
+        //        db.CreateTable<AccionComercial>();
+        //        db.CreateTable<TipoCombustible>();
+        //        db.CreateTable<Vehiculo>();
+        //        db.CreateTable<VehiculoCombustible>();
+        //        db.CreateTable<VehiculoKm>();
+        //        db.CreateTable<VehiculoRepostaje>();
+        //        db.CreateTable<EmpresaCompetidora>();
+        //        db.CreateTable<Poblacion>();
+        //        db.CreateTable<ModeloMaquina>();
+        //        db.CreateTable<EstablecimientoPotencial>();
+        //        db.CreateTable<EstablecimientoPotencialMaquina>();
+
+        //        if (db != dbIni)
+        //            db.Close();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        string error = ex.Message;
+        //    }
+        //}
+
+        //static public void DropDataBase()
+        //{
+
+
+        //    db.DropTable<Establecimiento>();
+        //    db.DropTable<MaquinaConceptoRecaudacion>();
+        //    db.DropTable<Maquina>();
+        //    db.DropTable<Averia>();
+        //    db.DropTable<AveriaEstado>();
+        //    db.DropTable<ConceptoAveria>();
+        //    db.DropTable<Ruta>();
+        //    db.DropTable<TipoDistribucionConceptoRecaudacion>();
+        //    db.DropTable<PatContDetalle>();
+        //    db.DropTable<Incidencia>();
+        //    db.DropTable<LecturaContadorAuto>();
+        //    db.DropTable<LecturaContador>();
+        //    db.DropTable<LecturaDetalle>();
+        //    db.DropTable<LecturaDetalleAuto>();
+        //    db.DropTable<ModuloCaptura>();
+        //    db.DropTable<Recaudacion>();
+        //    db.DropTable<DesgloseBruto>();
+        //    db.DropTable<RecaudacionDetalles>();
+        //    db.DropTable<Cambio>();
+        //    db.DropTable<Carga>();
+        //    db.DropTable<ConceptoPrestamo>();
+        //    db.DropTable<Prestamo>();
+        //    db.DropTable<PrestamoRecuperacion>();
+        //    db.DropTable<Empresa>();
+        //    db.DropTable<UltimaLecturaRecaudacion>();
+        //    db.DropTable<ConfigurationGEO>();
+        //    db.DropTable<Localizacion>();
+        //    db.DropTable<ConceptoGastoEstablecimiento>();
+        //    db.DropTable<GastoEstablecimiento>();
+        //    db.DropTable<ConceptoMotivoMaquinaNoRecaudada>();
+        //    db.DropTable<MotivoMaquinaNoRecaudada>();
+        //    db.DropTable<Instalacion>();
+        //    db.DropTable<MotivoVisitaComercial>();
+        //    db.DropTable<VisitaComercial>();
+        //    db.DropTable<TipoAccionComercial>();
+        //    db.DropTable<MotivoAccionComercial>();
+        //    db.DropTable<AccionComercial>();
+        //    db.DropTable<TipoCombustible>();
+        //    db.DropTable<Vehiculo>();
+        //    db.DropTable<VehiculoCombustible>();
+        //    db.DropTable<VehiculoKm>();
+        //    db.DropTable<VehiculoRepostaje>();
+        //    db.DropTable<EmpresaCompetidora>();
+        //    db.DropTable<Poblacion>();
+        //    db.DropTable<ModeloMaquina>();
+        //    db.DropTable<EstablecimientoPotencial>();
+        //    db.DropTable<EstablecimientoPotencialMaquina>();
+
+        //    if (db != dbIni)
+        //        db.Close();
+        //}
+
+        //static public void ResetDatabaseOnlyLocalizacion()
+        //{
+
+        //    CreateTableLocalizacion();
+
+        //}
+
+        //static public void CreateTableLocalizacion()
+        //{
+        //    SQLiteConnection db = new SQLiteConnection(Config.dbPath());
+        //    db.CreateTable<Localizacion>();
+        //    db.Close();
+        //}
+    }
+}

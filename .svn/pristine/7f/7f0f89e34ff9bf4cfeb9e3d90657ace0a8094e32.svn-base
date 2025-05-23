@@ -1,0 +1,55 @@
+﻿using Blazorise;
+using Blazorise.Bootstrap;
+using Blazorise.Icons.FontAwesome;
+using GEO_DROID.Models;
+using GEO_DROID.Resources;
+using GEO_DROID.Services;
+using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.Extensions.Logging;
+#if ANDROID
+using GEO_DROID.Platforms.Android.Handlers;
+#endif
+
+namespace GEO_DROID
+{
+    public static class MauiProgram
+    {
+        public static MauiApp CreateMauiApp()
+        {
+            var builder = MauiApp.CreateBuilder();
+            builder
+                .UseMauiApp<App>()
+
+                .ConfigureFonts(fonts =>
+                {
+                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                }).ConfigureMauiHandlers(handlers =>
+                {
+#if ANDROID
+                    handlers.AddHandler<BlazorWebView, MauiBlazorWebViewHandler>();
+#endif
+                });
+
+
+            builder.Services.AddBlazorise(options => { options.Immediate = true; }).AddBootstrapProviders().AddFontAwesomeIcons();
+            builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddSingleton<TodoItemDatabase>();
+            builder.Services.AddSingleton<Averia>();
+            builder.Services.AddSingleton<AveriaEstado>();
+            builder.Services.AddSingleton<ConceptoAveria>();
+            builder.Services.AddSingleton<DeviceCandidate>();
+            builder.Services.AddSingleton<Establecimiento>();
+            builder.Services.AddSingleton<Incidencia>();
+            builder.Services.AddSingleton<Ruta>();
+
+            builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddLocalization();
+            /////////////////////////////////////////////////// Servicios //////////////////////////////////////////////// 
+            ///
+            builder.Services.AddScoped<LayoutBuilderService>();
+            builder.Services.AddScoped<EstablecimientosService>();
+            builder.Logging.AddDebug();
+            return builder.Build();
+        }
+    }
+}

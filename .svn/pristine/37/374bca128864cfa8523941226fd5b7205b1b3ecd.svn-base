@@ -1,0 +1,27 @@
+﻿@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject NavigationManager Navigation
+@inject EstablecimientosService EstablecimientoService
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+
+
+@code {
+    public List<Establecimiento> MenuItems = new List<Establecimiento>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        MenuItems = await EstablecimientoService.GetEstablecimientos();
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+    private async void DeleteItem(Establecimiento establecimiento)
+    {
+        await EstablecimientoService.DeleteEstablecimientoAsync(establecimiento);
+        MenuItems.Remove(establecimiento);
+        StateHasChanged();
+    }
+}

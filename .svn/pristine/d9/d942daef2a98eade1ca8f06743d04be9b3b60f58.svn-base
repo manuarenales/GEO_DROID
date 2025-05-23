@@ -1,0 +1,34 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GeoDroid.Data.Models
+{
+    public class MotivoMaquinaNoRecaudada
+    {
+        [Key]
+        public int id { get; set; }
+
+        /// <summary>
+        /// 0 when new insertion in mobile device
+        /// </summary>
+        public int idGeo { get; set; }
+
+        [ForeignKey("Incidencia")]
+        public int idIncidencia { get; set; }
+        public virtual Incidencia Incidencia { get; set; }
+
+        [ForeignKey("ConceptoMotivoMaquinaNoRecaudada")]
+        public int idConceptoMotivoMaquinaNoRecaudada { get; set; }
+        public virtual ConceptoMotivoMaquinaNoRecaudada ConceptoMotivoMaquinaNoRecaudada { get; set; }
+
+        [DataMember, MaxLength(2000)]
+        public string comentarios { get; set; }
+    }
+}

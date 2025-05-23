@@ -1,0 +1,142 @@
+﻿using GEO_DROID.Models;
+using SQLite;
+using System.Collections.Generic;
+
+namespace GEO_DROID.Services
+{
+    public class AveriasService
+    {
+
+        SQLiteAsyncConnection Database;
+        MaquinaService maquinaService;
+        ConceptoAveriaService conceptoAveriaService;
+        EstadoAveriaService estadoAveriaService;
+        CargaService cargaService;
+        IncidenciaService incidenciaService;
+
+        Averia AveriaBackUp;
+
+        public AveriasService()
+        {
+            Init();
+            maquinaService = new MaquinaService();
+            conceptoAveriaService = new ConceptoAveriaService();
+            estadoAveriaService = new EstadoAveriaService();
+            cargaService = new CargaService();
+            incidenciaService = new IncidenciaService();
+        }
+
+        async Task Init()
+        {
+            if (Database is not null)
+                return;
+            try
+            {
+                Database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
+                var result = await Database.CreateTableAsync<Averia>();
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+        }
+
+        public async Task<List<Averia>> GetAveriasAsync()
+        {
+            List<Averia> resp = new List<Averia>();
+
+            resp = await Database.Table<Averia>().ToListAsync();
+
+            foreach (Averia averia in resp)
+            {
+                averia.maquina = await maquinaService.GetMaquinaByIdAsync(averia.idMaquina);
+                averia.concepto = await conceptoAveriaService.GetConceptoByIdAsync(averia.idConceptoAverias);
+                averia.averiaEstado = await estadoAveriaService.GetEstadoByIdAsync(averia.idAveriasEstados);
+                averia.carga = await cargaService.GetCargaByIdAsync(averia.idCarga);
+            }
+            return resp;
+        }
+
+        public async Task<Averia> GetAveriaByIdAsync(int id)
+        {
+            var averia = await Database.Table<Averia>().Where(a => a.id == id).FirstOrDefaultAsync();
+            if (averia != null)
+            {
+                averia.maquina = await Database.Table<Maquina>().Where(m => m.id == averia.idMaquina).FirstOrDefaultAsync();
+                averia.averiaEstado = await Database.Table<AveriaEstado>().Where(m => m.id == averia.idAveriasEstados).FirstOrDefaultAsync();
+                averia.concepto = await Database.Table<ConceptoAveria>().Where(m => m.id == averia.idConceptoAverias).FirstOrDefaultAsync();
+                averia.carga = await Database.Table<Carga>().Where(m => m.id == averia.idCarga).FirstOrDefaultAsync();
+            }
+            return averia;
+        }
+
+        public async Task<int> SaveAveriaAsync(Averia item)
+        {
+            // la  averia debe de crear una incidencia primero y luego si tengo Carga la añado el id de la incidencia a la carga y la creo ; 
+
+            Incidencia newIncidencia = new Incidencia();
+            newIncidencia.idMaquinas = item.idMaquina;
+            await incidenciaService.SaveIncidenciaAsync(newIncidencia);
+
+            List<Incidencia> incidencia = await incidenciaService.GetIncidenciasAsync();
+
+            item.incidencia = newIncidencia;
+
+
+            if (item.carga != null)
+            {
+
+            }
+
+
+
+            if (item.maquina != null)
+            {
+                item.idMaquina = item.maquina.id;
+            }
+            if (item.averiaEstado != null)
+            {
+                item.idAveriasEstados = item.averiaEstado.id;
+            }
+            if (item.concepto != null)
+            {
+                item.idConceptoAverias = item.concepto.id;
+            }
+
+            Averia device = await Database.Table<Averia>().Where(i => i.id == item.id).FirstOrDefaultAsync();
+
+            if (device != null)
+            {
+                return await Database.UpdateAsync(item);
+            }
+            else
+            {
+                return await Database.InsertAsync(item);
+            }
+        }
+
+        public async Task<int> DeleteAveriaAsync(Averia item)
+        {
+            var yes = await Database.Table<Averia>().DeleteAsync(i => i.id == item.id);
+            return yes;
+        }
+
+        public void SaveAveria(Averia averia)
+        {
+            AveriaBackUp = averia;
+        }
+
+        public Averia GetAveria()
+        {
+            return AveriaBackUp;
+        }
+
+        public void ResetAveria()
+        {
+            AveriaBackUp = null;
+        }
+
+
+
+    }
+}

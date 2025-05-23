@@ -1,0 +1,129 @@
+﻿@page "/carga/{establecimientoid:int}"
+@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject AveriasService AveriasService
+@inject MaquinaService MaquinaServce
+@inject EstablecimientosService EstablecimientosService
+@inject EstadoAveriaService EstadoAveriaService
+@inject ConceptoAveriaService ConceptoAveriaService
+@inject NavigationManager Navigation
+@inject CultureService Cultureservice
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+
+<form class="w-100 content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start " needs-validation>
+
+    <div class="row w-100 bg-dark ">
+        <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
+            @if (establecimiento != null)
+            {
+                <span style="color:white" class="SubTitulo">@establecimiento.nombre</span>
+            }
+        </div>
+        <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
+            @if (averia != null)
+            {
+                @if (averia.maquina != null)
+                {
+                    <span style="color:white" class="SubTitulo">@averia.maquina.descripcionDistribucion</span>
+                }
+            }
+        </div>
+    </div>
+
+    @if (carga != null)
+    {
+        <div class="row w-100 ">
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>Carga</span>
+                <input @bind="carga.carga" type="number" class="mb-1" />
+            </div>
+
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>Recuperacion </span>
+                <input @bind="carga.recuperacion" type="number" class="mb-1" />
+            </div>
+        </div>
+    }
+
+
+
+
+</form>
+
+<div class="w-100 bg-red" style="height:8vw;"></div>
+
+<div class="row m-1 fixed-bottom  ">
+    <div class="col-6 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="GuardarCarga">Guardar</button>
+    </div>
+    <div class="col-6 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="CancelarCarga">Cancelar </button>
+    </div>
+</div>
+
+
+
+@code {
+
+    [Parameter]
+    public int establecimientoid { get; set; }
+
+    public Establecimiento establecimiento { get; set; }
+
+    public Averia averia { get; set; }
+
+    public Carga carga { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        this.establecimiento = await EstablecimientosService.getEstablecimientoByID(establecimientoid);
+        averia = AveriasService.GetAveria();
+        if (averia.carga != null)
+        {
+
+            carga = averia.carga;
+        }
+        else
+        {
+            carga = new Carga();
+        }
+    }
+
+    public void GuardarCarga()
+    {
+        averia.carga = carga;
+        AveriasService.SaveAveria(averia);
+        if (averia.id == 0)
+        {
+            string rute = $"/averiaform1/" + -1 + "/" + establecimientoid;
+            Navigation.NavigateTo(rute, false, true);
+        }
+        else
+        {
+            string rute = $"/averiaform1/" + averia.id + "/" + establecimientoid;
+            Navigation.NavigateTo(rute, false, true);
+
+        }
+
+    }
+
+    public void CancelarCarga()
+    {
+        carga = null;
+        averia.carga = null;
+        AveriasService.SaveAveria(averia);
+        if (averia.id == 0)
+        {
+            Navigation.NavigateTo($"/averiaform1/" + -1 + "/" + establecimientoid, false, true);
+        }
+        else
+        {
+            Navigation.NavigateTo($"/averiaform1/" + averia.id + "/" + establecimientoid, false, true);
+
+        }
+    }
+
+
+}

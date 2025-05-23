@@ -1,0 +1,21 @@
+﻿@implements IDialogContentComponent<GenericConfirmationDialog>
+
+@if (Dialog != null)
+{
+    <FluentStack Orientation="Orientation.Vertical">
+
+    </FluentStack>
+}
+
+@code {
+    [Parameter]
+    public GenericConfirmationDialog Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog? Dialog { get; set; }
+
+    private void ToggleDialogPrimaryActionButton(bool enable)
+    {
+        Dialog!.TogglePrimaryActionButton(enable);
+    }
+}

@@ -1,0 +1,58 @@
+﻿using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Averia
+    {
+        public Averia()
+        {
+            observaciones = "";
+
+        }
+        [DataMember, PrimaryKey, AutoIncrement]
+        public int id { get; set; }
+        [DataMember]
+        public int idGeo { get; set; }
+        // [DataMember, ForeingKeyIdGeo(typeof(Incidencia))]
+        public int idIncidencias { get; set; }
+        // [DataMember, ForeingKeyIdGeo(typeof(ConceptoAveria))]
+        public int idConceptoAverias { get; set; }
+        // [DataMember, ForeingKeyIdGeo(typeof(AveriaEstado))]
+        public int idAveriasEstados { get; set; }
+        [DataMember]
+        public int idPersonal { get; set; }
+        [DataMember, MaxLength(2000)]
+        public string observaciones { get; set; }
+        [DataMember, MaxLength(2000)]
+        public string detalle { get; set; }
+        [DataMember, MaxLength(2000)]
+        public string comentarios { get; set; }
+        [DataMember]
+        public DateTime fechaFin { get; set; }
+        [DataMember]
+        public DateTime fechaModificacion { get; set; }
+        [DataMember]
+        public byte[] foto { get; set; }
+        [DataMember]
+        public string estado { get; set; }
+        [DataMember]
+        public int idMaquina { get; set; }
+
+
+        [Ignore]
+        public Incidencia incidencia { get; set; }
+        [Ignore]
+        public ConceptoAveria conceptoAveria { get; set; }
+        [Ignore]
+        public Maquina maquina { get; set; }
+        [Ignore]
+        public AveriaEstado averiaEstado { get; set; }
+    }
+}
+

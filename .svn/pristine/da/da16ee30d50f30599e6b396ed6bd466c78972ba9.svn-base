@@ -1,0 +1,74 @@
+﻿@page "/averias"
+@using GEO_DROID.Services
+@using GEO_DROID.Shared.Components
+@using GEO_DROID.Store
+@using IDispatcher = Fluxor.IDispatcher;
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IDispatcher Dispatcher
+@inject IState<EstablecimientoState> EstablecimientoState
+@inject IState<AveriaState> AveriaState
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject NavigationManager Navigation
+
+
+<ul class="list-group mb-3  ">
+    <li class="  list-group-item d-flex justify-content-start align-items-lg-center" @onclick='() => NavigateTo("averiaform1", null )'>
+        <img class="m-1" src="img/add.png" />
+        <h7 class="m-2"> @Localizer["Añadir Averia"] </h7>
+    </li>
+
+    <li class=" list-group-item d-flex justify-content-start align-items-lg-center">
+        <h5> Mis averías</h5>
+    </li>
+    @if (AveriaState?.Value.AveriaListSelected is not null)
+    {
+        @foreach (Averia averia in AveriaState.Value.AveriaListSelected)
+        {
+            <li class="list-group-item d-flex flex-column" @onclick='() => NavigateTo("averiaform1", averia)'>
+
+                @if (@averia.Incidencia is not null && @averia.Incidencia.maquina != null)
+                {
+                    <span>@averia.Incidencia.maquina.codigo</span>
+                }
+                @if (@averia.AveriaEstado is not null)
+                {
+                    <span style="color:blue;">@averia.AveriaEstado.descripcion</span>
+                }
+            </li>
+        }
+    }
+    <li class="  list-group-item d-flex justify-content-start align-items-lg-center">
+        <h5>Otras</h5>
+    </li>
+</ul>
+
+@code {
+
+    Averia passav;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Dispatcher.Dispatch(new GetAveriasByEstablecimiento(EstablecimientoState.Value.EstablecimientoSelected.id));
+    }
+
+
+
+    private void NavigateTo(string pageTitle, Averia averia)
+    {
+        if (averia != null)
+        {
+            Dispatcher.Dispatch(new ResetAveriasForm());
+            Dispatcher.Dispatch(new ChangeAveriaSelectedFormAction(averia));
+            Dispatcher.Dispatch(new NavigationToAction("averiaform1"));
+        }
+        else
+        {
+            Dispatcher.Dispatch(new ResetAveriasForm());
+            Dispatcher.Dispatch(new ChangeAveriaSelectedFormAction(null));
+            Dispatcher.Dispatch(new NavigationToAction("averiaform1"));
+        }
+    }
+}

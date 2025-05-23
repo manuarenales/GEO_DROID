@@ -1,0 +1,123 @@
+﻿@using GEO_DROID.Services
+@using System.Globalization;
+@using System.Text.Json
+ @inject NavigationManager Navigation
+ @inject IStringLocalizer<StringLocalizer> Localizer;
+ @inject SincroService Sincroservice;
+@inject IJSRuntime JS
+
+
+
+@foreach (ItemList item in MenuItems)
+{
+
+    if (@item.ruta == "sincronizacion")
+    {
+
+        <div class="row" style="  padding-bottom: 0em;" @onclick="() => ShowSincroModal()">
+
+            <div class="col-3 col-sm-3 col-md-2 col-lg-2">
+                <img src="@item.icon" style="width: 4em" class="img-fluid" />
+            </div>
+
+            <div class="col-9 col-sm-9 col-md-10 col-lg-10 ">
+                <span class="Titulo font-weight-bold " style="overflow-wrap: break-word; text-align: start;  ">
+                    @Localizer[@item.title]
+                </span>
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="row" style="  padding-bottom: 0em;" @onclick="() => NavigateTo(item.ruta)">
+
+            <div class="col-3 col-sm-3 col-md-2 col-lg-2">
+                <img src="@item.icon" style="width: 4em" class="img-fluid" />
+            </div>
+
+            <div class="col-9 col-sm-9 col-md-10 col-lg-10 ">
+                <span class="Titulo font-weight-bold" style="overflow-wrap: break-word; text-align: start;">
+                    @Localizer[@item.title]
+                </span>
+            </div>
+
+        </div>
+    }
+    <hr />
+}
+
+
+<div class="modal" style="display: @(modalVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex justify-content-center align-items-center">
+                    <img class="m-1 Titulo " style="width: 2em; height: 2em;" src="/img/alert.png" />
+                    <span class="Titulo font-weight-bold ">Aviso</span>
+                </div>
+
+                <button type="button" class="close" aria-label="Close" @onclick="HideModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="TextoGrande">Pulse Aceptar para iniciar el proceso de sincronización</p>
+                <div style="display: @(spinnerDisplay ? "block" : "none")" class="spinner-border text-warning"></div>
+            </div>
+            <div class="modal-footer">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <button type="button" class="btn btn-secondary" @onclick="HideModal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" @onclick="Sincro">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public List<ItemList> MenuItems { get; set; }
+    private bool modalVisible = false;
+    private bool spinnerDisplay = false;
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, false);
+    }
+
+    private void ShowSincroModal()
+    {
+        modalVisible = true;
+    }
+
+    private void HideModal()
+    {
+        modalVisible = false;
+    }
+
+    private async void Sincro()
+    {
+        spinnerDisplay = true;
+
+        var averiaJson = await JS.InvokeAsync<string>("localStorage.getItem", "configuration");
+        Sincroservice.Sincro();
+
+        if (averiaJson != null)
+        {
+            GeoDroid.Data.Models.Configuracion configuration = JsonSerializer.Deserialize<GeoDroid.Data.Models.Configuracion>(averiaJson);
+            // await Sincroservice.RealSyncro(configuration);
+            //Sincroservice.Sincro();
+        }
+        else
+        {
+            /// no tenemos configuracion pop up ;
+
+        }
+        spinnerDisplay = false;
+        HideModal();
+    }
+
+
+}

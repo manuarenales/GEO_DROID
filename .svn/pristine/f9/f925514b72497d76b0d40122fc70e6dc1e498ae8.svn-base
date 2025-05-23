@@ -1,0 +1,741 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services
+{
+    public class Commands
+    {
+        class CommandFactory
+        {
+            static public GeoProtocolCommand CreateCommand(string s)
+            {
+                string[] parts = s.Split(new string[] { GeoProtocolCommand.commandPartsSeparator }, StringSplitOptions.RemoveEmptyEntries);
+                GeoProtocolCommand command = null;
+                bool unknownCommand = false;
+                if (parts.Length > 0)
+                {
+                    string commandType = parts[0];
+
+                    try
+                    {
+                        Type type = Type.GetType("GeoDroid.GeoProtocol." + commandType);
+                        command = (GeoProtocolCommand)Activator.CreateInstance(type);
+                        command.BuildFromString(s);
+                    }
+                    catch (Exception) //Not fun
+                    {
+                        unknownCommand = true;
+                    }
+
+                }
+
+                if (unknownCommand)
+                    command = new ErrorCommand(ErrorCommandType.UnknownCommand);
+
+
+                return command;
+            }
+        }
+        public enum ErrorCommandType
+        {
+            SocketDisconnected,         //Se ha roto la conexión entre las partes
+            TableNotFound,              //Se ha pedido una tabla a la PDA desde GEO que no existe
+            SerializationError,         //Se ha producido un error en la serialización/deserialización tras un comando de Send/Request
+            VersionError,               //Se mandó un comando de version que no se sabe tratar (por que el número de versión es
+            CommandMismatch,            //La otra parte envio un comando que no sigue el contrato entre las partes. Es un comando enviado a destiempo
+            UnknownCommand,             //La otra parte envio un comando que no se pudo deserializar en un comando valido por la factorái de comandos (lo crea la factoria)
+            ReceivedUnknownCommand,     //Lo manda la parte que recibe un UnknownCommand para que el otro lado reintente o hago lo que le parezca.                  
+            UnitNotRegistered,          //El terminal con este número de unidad no ha sido dado de alta en GEO
+
+
+            LOGIN_LoginFailed,                //El terminal con este número de unidad está dado de alta en GEO pero su password es erroneo
+            LOGIN_LicenseError,               //Error al testear la licencia
+                                              //LOGIN_LicenseProcessError,      //Error generando la licencia en GEO (Saltó una excepción, etc...)
+            LOGIN_SupplantedTerminal,         //Se ha conectado un cliente con un número de terminal igual a otro existente en terminales pero con distinto testigo
+            LOGIN_NewTerminal,                //Se ha conectado un cliente con un número de terminal que no se ha sincronizado 
+
+            NoError
+        }
+        public abstract class GeoProtocolCommand
+        {
+            public const string commandPartsSeparator = "-#@@#-";
+
+            //public delegate void ProcessCommandDelegate(GeoProtocolCommand command);
+
+            abstract public void BuildFromString(string s);
+            abstract public string GetCommandString();
+
+
+            //public void Process(GeoProtocolCommand command){}
+
+            public GeoProtocolCommand(string name)
+            {
+                _name = name;
+            }
+
+            public bool IsType(string name)
+            {
+                return _name.Equals(name);
+            }
+
+
+            public string GetName() { return _name; }
+
+            private string _name;
+
+
+        }
+        public class TableSendCommand : GeoProtocolCommand
+        {
+            public TableSendCommand()
+                : base(CommunicationCommands.sendTableTag)
+            {
+            }
+
+            public TableSendCommand(string tableName, string adata)
+                : base(CommunicationCommands.sendTableTag)
+            {
+                _data = adata;
+                _tableName = tableName;
+            }
+
+            protected TableSendCommand(string communicationCommand)
+                : base(communicationCommand)
+            {
+            }
+
+            public override void BuildFromString(string s)
+            {
+                string[] parts = s.Split(new string[] { GeoProtocolCommand.commandPartsSeparator }, StringSplitOptions.RemoveEmptyEntries);
+                string command = parts[0];
+                string table = parts[1];
+                string data = parts[2];
+
+                _tableName = table;
+                _data = data;
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + _tableName + sep + _data + sep + CommunicationCommands.endTag + sep;
+            }
+
+            public string GetTableName() { return _tableName; }
+            public virtual string GetData() { return _data; }
+
+            protected string _tableName;
+            protected string _data;
+        }
+        public class TableSendCommandZip : TableSendCommand
+        {
+            public TableSendCommandZip()
+                : base(CommunicationCommands.sendTableZipTag)
+            {
+            }
+
+            public TableSendCommandZip(string tableName, string adata, Encoding encoding = null)
+                : base(CommunicationCommands.sendTableZipTag)
+            {
+                ///IMPORTANTE!!! Como el Encoding utilizado en las comunicaciones es ISO-8859-1 y en las serializaciones es UTF-8,
+                ///los datos que tengamos que enviar y tengan caracteres especiales deben pasar por las codificaciones correspondientes.
+                _data = UtilZip.ComprimirString(adata, encoding);
+                _tableName = tableName;
+            }
+
+            public override string GetData() { return UtilZip.DescomprimirString(_data); }
+        }
+        public class TableRequestCommand : GeoProtocolCommand
+        {
+            public TableRequestCommand()
+                : base(CommunicationCommands.requestTableTag)
+            {
+            }
+
+            public TableRequestCommand(string tableName)
+                : base(CommunicationCommands.requestTableTag)
+            {
+                _tableName = tableName;
+            }
+
+            public override void BuildFromString(string s)
+            {
+                string[] parts = s.Split(new string[] { GeoProtocolCommand.commandPartsSeparator }, StringSplitOptions.RemoveEmptyEntries);
+                string command = parts[0];
+                string table = parts[1];
+
+                _tableName = table;
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + _tableName + sep + CommunicationCommands.endTag + sep;
+            }
+
+            public string GetTableName() { return _tableName; }
+
+            string _tableName;
+        }
+        public class LocationCommand : GeoProtocolCommand
+        {
+            public LocationCommand()
+                : base(CommunicationCommands.locationCommandTag)
+            {
+            }
+
+            public LocationCommand(int unitId, string password, string license, string deviceName, string verNumber, int verStructure, bool resumingSync, DateTime fechaSync, DateTime fecha, double latitud, double longitud, int estado)//, Motivo motivo = Motivo.SincronizacionCompleta)
+                : base(CommunicationCommands.locationCommandTag)
+            {
+                _unitId = unitId;
+                _password = password;
+                _versionStructure = verStructure;
+                _versionApk = verNumber;
+                _deviceName = deviceName;
+                _license = license;
+                _resummingSync = resumingSync;
+                _fechaSync = fechaSync;
+                _fecha = fecha;
+                _latitud = latitud;
+                _longitud = longitud;
+                _estado = estado;
+            }
+
+            public override void BuildFromString(string s)
+            {
+                string[] parts = s.Split(new string[] { GeoProtocolCommand.commandPartsSeparator }, StringSplitOptions.None);
+
+                if (parts.Length >= 14)
+                {
+                    string command = parts[1];
+                    string unitId = parts[2];
+                    string password = parts[3];
+                    string license = parts[4];
+                    string deviceName = parts[5];
+                    string versionApk = parts[6];
+                    string versionStruct = parts[7];
+                    string resummingSync = parts[8];
+                    string fechaSync = parts[9];
+                    string fecha = parts[10];
+                    string latitud = parts[11];
+                    string longitud = parts[12];
+                    string estado = parts[13];
+
+                    _unitId = Convert.ToInt32(unitId);
+                    _password = password;
+                    _license = license;
+                    _deviceName = deviceName;
+
+                    _versionApk = versionApk;
+                    _versionStructure = Convert.ToInt32(versionStruct);
+                    _resummingSync = Convert.ToBoolean(resummingSync);
+                    _fechaSync = Convert.ToDateTime(fechaSync);
+                    _fecha = Convert.ToDateTime(fecha);
+                    _latitud = Convert.ToDouble(latitud);
+                    _longitud = Convert.ToDouble(longitud);
+                    _estado = Convert.ToInt32(estado);
+                }
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + GetUnitId() + sep + GetPassword() + sep + GetLicense() + sep + GetDeviceName() + sep + GetVersionApk() + sep + GetVersionStructure() + sep + GetResummingSync() + /*sep + (int)GetMotivo() +*/ sep + GetFechaSync().ToString("yyyy-MM-ddTHH:mm:ss") + sep + GetFecha().ToString("yyyy-MM-ddTHH:mm:ss") + sep + GetLatitud() + sep + GetLongitud() + sep + GetEstado() + sep + CommunicationCommands.endTag + sep;
+            }
+
+            public int GetVersionStructure() { return _versionStructure; }
+            public string GetVersionApk() { return _versionApk; }
+            public string GetDeviceName() { return _deviceName; }
+            public string GetLicense() { return _license; }
+            public int GetUnitId() { return _unitId; }
+            public string GetPassword() { return _password; }
+            public bool GetResummingSync() { return _resummingSync; }
+            public DateTime GetFechaSync() { return _fechaSync; }
+            public DateTime GetFecha() { return _fecha; }
+            public double GetLatitud() { return _latitud; }
+            public double GetLongitud() { return _longitud; }
+            public int GetEstado() { return _estado; }
+
+            int _unitId;
+            string _password;
+            int _versionStructure;
+            string _versionApk;
+            string _deviceName;
+            string _license;
+            bool _resummingSync;
+            DateTime _fechaSync;
+            DateTime _fecha;
+            double _latitud;
+            double _longitud;
+            int _estado;
+        }
+        public class LogInCommand : GeoProtocolCommand
+        {
+            public enum Motivo { SincronizacionCompleta = 0, SincronizacionGeolocalizacion = 1, SincronizacionAverias = 2 };
+
+            public LogInCommand()
+                : base(CommunicationCommands.logInCommandTag)
+            {
+            }
+
+            public LogInCommand(int unitId, string password, string license, string deviceName, string verNumber, int verStructure, bool resumingSync, Motivo motivo = Motivo.SincronizacionCompleta)
+                : base(CommunicationCommands.logInCommandTag)
+            {
+                _unitId = unitId;
+                _password = password;
+                _versionStructure = verStructure;
+                _versionApk = verNumber;
+                _deviceName = deviceName;
+                _license = license;
+                _resummingSync = resumingSync;
+                _motivo = motivo;
+            }
+
+            public override void BuildFromString(string s)
+            {
+                string[] parts = s.Split(new string[] { GeoProtocolCommand.commandPartsSeparator }, StringSplitOptions.None);
+                string command = parts[1];
+                string unitId = parts[2];
+                string password = parts[3];
+                string license = parts[4];
+                string deviceName = parts[5];
+                string versionApk = parts[6];
+                string versionStruct = parts[7];
+                string resummingSync = parts[8];
+                string motivo = null;
+                if (parts.Length > 9)
+                    motivo = parts[9];
+
+                _unitId = Convert.ToInt32(unitId);
+                _password = password;
+                _license = license;
+                _deviceName = deviceName;
+
+                if (parts.Length == 10)
+                {   ///En versiones GEODROID 1.00 hasta 1.07, se manejaban 10 partes, porque no se enviaba la versión de apk
+                    ///y en la versión de estructura nos ha llegado el dato de resummingSync.
+                    ///Ponemos versión de estructura a cero para identificar que es una versión antigua.
+                    _versionApk = "1.00";
+                    _versionStructure = 0;
+                    _resummingSync = Convert.ToBoolean(versionStruct);
+                }
+                else
+                {
+                    _versionApk = versionApk;
+                    _versionStructure = Convert.ToInt32(versionStruct);
+                    _resummingSync = Convert.ToBoolean(resummingSync);
+                    int _m = (int)Motivo.SincronizacionCompleta;
+                    int.TryParse(motivo, out _m);
+                    _motivo = (Motivo)_m;
+                }
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + GetUnitId() + sep + GetPassword() + sep + GetLicense() + sep + GetDeviceName() + sep + GetVersionApk() + sep + GetVersionStructure() + sep + GetResummingSync() + sep + (int)GetMotivo() + sep + CommunicationCommands.endTag + sep;
+            }
+
+            /*public void Process(GeoProtocolCommand command)
+            {
+                if (command.IsType(CommunicationCommands.logInResponseCommandTag))
+                {
+                    LogInResponseCommand responseCmd = command as LogInResponseCommand;
+                    _CorrectCommandNotificationDelegate();                
+                }
+                else 
+                {
+                    _NotValidCommandDelegate();
+                }    
+            }*/
+
+            public int GetVersionStructure() { return _versionStructure; }
+            public string GetVersionApk() { return _versionApk; }
+            public string GetDeviceName() { return _deviceName; }
+            public string GetLicense() { return _license; }
+            public int GetUnitId() { return _unitId; }
+            public string GetPassword() { return _password; }
+            public bool GetResummingSync() { return _resummingSync; }
+            public Motivo GetMotivo() { return _motivo; }
+
+            int _unitId;
+            string _password;
+            int _versionStructure;
+            string _versionApk;
+            string _deviceName;
+            string _license;
+            bool _resummingSync;
+            Motivo _motivo;
+        }
+        public class LogInResponseCommand : GeoProtocolCommand
+        {
+            public LogInResponseCommand()
+                : base(CommunicationCommands.logInResponseCommandTag)
+            {
+            }
+
+            public LogInResponseCommand(int idPersonal, string nombrePersonal, DateTime fechaServidor, string license, ErrorCommandType error)
+                : base(CommunicationCommands.logInResponseCommandTag)
+            {
+                _idPersonal = idPersonal;
+                _nombrePersonal = nombrePersonal;
+                _fechaServidor = fechaServidor;
+                _error = error;
+                _license = license;
+            }
+
+            public override void BuildFromString(string s)
+            {
+                string[] parts = s.Split(new string[] { GeoProtocolCommand.commandPartsSeparator }, StringSplitOptions.RemoveEmptyEntries);
+                string command = parts[0];
+                string idPersonal = parts[1];
+                string nombrePersonal = parts[2];
+                string fechaServidor = parts[3];
+                string license = parts[4];
+                string error = parts[5];
+
+                _idPersonal = Convert.ToInt32(idPersonal);
+                _nombrePersonal = nombrePersonal;
+                _fechaServidor = DateTime.Parse(fechaServidor);
+                _license = license;
+                _error = (ErrorCommandType)int.Parse(error);
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + GetIdPersonal() + sep + GetNombrePersonal() + sep + GetFechaServidor().ToString("yyyy-MM-ddTHH:mm:ss") + sep + _license + sep + ((int)GetError()) + sep + CommunicationCommands.endTag + sep;
+            }
+
+            public int GetIdPersonal() { return _idPersonal; }
+            public string GetNombrePersonal() { return _nombrePersonal; }
+            public string GetLicense() { return _license; }
+            public DateTime GetFechaServidor() { return _fechaServidor; }
+            public ErrorCommandType GetError() { return _error; }
+
+            int _idPersonal;
+            string _nombrePersonal;
+            DateTime _fechaServidor;
+            ErrorCommandType _error;
+            string _license;
+        }
+        public class PDAToGEODataCommand : GeoProtocolCommand
+        {
+            public PDAToGEODataCommand()
+                : base(CommunicationCommands.pdaToGeoDataTag)
+            {
+            }
+
+            public override void BuildFromString(string s)
+            {
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + CommunicationCommands.endTag + sep;
+            }
+            /*
+                    public string GetTableName() { return _tableName; }
+
+                    string _tableName;*/
+        }
+        public class GEOToPDADataCommand : GeoProtocolCommand
+        {
+            public GEOToPDADataCommand()
+                : base(CommunicationCommands.geoToPDADataTag)
+            {
+            }
+
+            public override void BuildFromString(string s)
+            {
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + CommunicationCommands.endTag + sep;
+            }
+            /*
+                    public string GetTableName() { return _tableName; }
+
+                    string _tableName;*/
+        }
+        public class NewAPKRequest : GeoProtocolCommand
+        {
+            public NewAPKRequest()
+                : base(CommunicationCommands.newAPKRequestTag)
+            {
+            }
+
+            public override void BuildFromString(string s)
+            {
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + CommunicationCommands.endTag + sep;
+            }
+        }
+        public class NewAPKSend : GeoProtocolCommand
+        {
+            public NewAPKSend()
+                : base(CommunicationCommands.newAPKSendTag)
+            {
+            }
+
+            public NewAPKSend(string data)
+                : base(CommunicationCommands.newAPKSendTag)
+            {
+                _data = data;
+            }
+
+            public override void BuildFromString(string s)
+            {
+                string[] parts = s.Split(new string[] { GeoProtocolCommand.commandPartsSeparator }, StringSplitOptions.RemoveEmptyEntries);
+
+                string command = parts[0];
+
+                //If we send no data 
+                if (parts.Length < 3)
+                    _data = "";
+                else
+                    _data = parts[1];
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + _data + sep + CommunicationCommands.endTag + sep;
+            }
+
+            public string GetData() { return _data; }
+
+            string _data;
+        }
+        public class LicenseSendCommand : GeoProtocolCommand
+        {
+            public LicenseSendCommand()
+                : base(CommunicationCommands.licenseSendCommandTag)
+            {
+            }
+
+            public LicenseSendCommand(string data)
+                : base(CommunicationCommands.licenseSendCommandTag)
+            {
+                _data = data;
+            }
+
+            public override void BuildFromString(string s)
+            {
+                string[] parts = s.Split(new string[] { GeoProtocolCommand.commandPartsSeparator }, StringSplitOptions.RemoveEmptyEntries);
+                string command = parts[0];
+                string data = parts[1];
+
+                _data = data;
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + _data + sep + CommunicationCommands.endTag + sep;
+            }
+
+            public string GetData() { return _data; }
+
+            string _data;
+        }
+        public class ACKCommand : GeoProtocolCommand
+        {
+            public ACKCommand()
+                : base(CommunicationCommands.ackTag)
+            {
+            }
+
+            public override void BuildFromString(string s)
+            {
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + CommunicationCommands.endTag + sep;
+            }
+        }
+        public class ErrorCommand : GeoProtocolCommand
+        {
+            public ErrorCommand()
+                : base(CommunicationCommands.errorTag)
+            {
+                _errorType = ErrorCommandType.NoError;
+            }
+
+            public ErrorCommand(ErrorCommandType errorType)
+                : base(CommunicationCommands.errorTag)
+            {
+
+                _errorType = errorType;
+            }
+
+            public override void BuildFromString(string s)
+            {
+                string[] parts = s.Split(new string[] { GeoProtocolCommand.commandPartsSeparator }, StringSplitOptions.RemoveEmptyEntries);
+                string command = parts[0];
+                string errorType = parts[1];
+                _errorType = (ErrorCommandType)Convert.ToInt32(errorType);
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + ((int)_errorType).ToString() + sep + CommunicationCommands.endTag + sep;
+            }
+
+            public ErrorCommandType ErrorType
+            {
+                get { return _errorType; }
+            }
+
+            ErrorCommandType _errorType;
+        }
+        //This is sent when one of the parts wants to explicitly abort connection
+        /*class RetryLastCommand : GeoProtocolCommand
+        {
+            public RetryLastCommand()
+                : base(CommunicationCommands.retryLastCommandTag)
+            {
+            }
+
+            public override void BuildFromString(string s)
+            {
+            }
+
+            public override string GetCommandString()
+            {
+                return "#" + GetName() + "#" + CommunicationCommands.endTag + "#";
+            }
+        }*/
+
+        //This is sent when one of the parts wants to explicitly abort connection
+        public class EndConnectionCommand : GeoProtocolCommand
+        {
+            public EndConnectionCommand()
+                : base(CommunicationCommands.endConnectionTag)
+            {
+            }
+
+            public override void BuildFromString(string s)
+            {
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + CommunicationCommands.endTag + sep;
+            }
+        }
+        //This is sent when one of the parts wants to explicitly abort connection
+        public class WaitCommand : GeoProtocolCommand
+        {
+            public WaitCommand()
+                : base(CommunicationCommands.waitCommandTag)
+            {
+            }
+
+            public override void BuildFromString(string s)
+            {
+            }
+
+            public override string GetCommandString()
+            {
+                string sep = GeoProtocolCommand.commandPartsSeparator;
+                return sep + GetName() + sep + CommunicationCommands.endTag + sep;
+            }
+        }
+
+        /// <summary>
+        /// Utilería de compresión
+        /// </summary>
+        public static class UtilZip
+        {
+            public static string ComprimirString(string text, Encoding encoding)
+            {
+                if (text == null)
+                    return text;
+
+                if (encoding == null)
+                    encoding = Encoding.UTF8;
+
+                byte[] buffer = encoding.GetBytes(text);
+                MemoryStream memoryStream = new MemoryStream();
+                using (GZipStream gZipStream = new GZipStream(memoryStream, CompressionMode.Compress, true))
+                {
+                    gZipStream.Write(buffer, 0, buffer.Length);
+                }
+
+                memoryStream.Position = 0;
+
+                byte[] compressedData = new byte[memoryStream.Length];
+                memoryStream.Read(compressedData, 0, compressedData.Length);
+
+                byte[] gZipBuffer = new byte[compressedData.Length + 4];
+                Buffer.BlockCopy(compressedData, 0, gZipBuffer, 4, compressedData.Length);
+                Buffer.BlockCopy(BitConverter.GetBytes(buffer.Length), 0, gZipBuffer, 0, 4);
+                return Convert.ToBase64String(gZipBuffer);
+            }
+
+            public static string DescomprimirString(string compressedText)
+            {
+                if (compressedText == null)
+                    return compressedText;
+
+                byte[] gZipBuffer = Convert.FromBase64String(compressedText);
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    int dataLength = BitConverter.ToInt32(gZipBuffer, 0);
+                    memoryStream.Write(gZipBuffer, 4, gZipBuffer.Length - 4);
+
+                    byte[] buffer = new byte[dataLength];
+
+                    memoryStream.Position = 0;
+                    using (GZipStream gZipStream = new GZipStream(memoryStream, CompressionMode.Decompress))
+                    {
+                        gZipStream.Read(buffer, 0, buffer.Length);
+                    }
+
+                    return Encoding.UTF8.GetString(buffer); //No modificar este encoding. Los encoding deben ser coherentes entre sincronización, serialización y compresión. Un pequeño cambio afecta a los datos procesados.
+                }
+            }
+        }
+
+    }
+    internal class CommunicationCommands
+    {
+        public const string dataTag = "DATA_BEGIN";
+        public const string endTag = "COMMAND_END";
+        public const string requestTableGroupTag = "TABLES_REQUEST";
+        public const string requestTableTag = "TableRequestCommand";
+        public const string sendTableTag = "TableSendCommand";
+        public const string sendTableZipTag = "TableSendCommandZip";
+        public const string endGroupTag = "CON_END";
+        public const string pdaToGeoDataTag = "PDAToGEODataCommand";
+        public const string geoToPDADataTag = "GEOToPDADataCommand";
+        public const string logInCommandTag = "LogInCommand";
+        public const string logInResponseCommandTag = "LogInResponseCommand";
+        public const string androidTerminalTag = "ANDROID";
+        public const string ackTag = "ACKCommand";
+        public const string errorTag = "ErrorCommand";
+        public const string newAPKRequestTag = "NewAPKRequest";
+        public const string newAPKSendTag = "NewAPKSend";
+        public const string retryLastCommandTag = "RetryLastCommand";
+        public const string licenseSendCommandTag = "LicenseSendCommand";
+        public const string endConnectionTag = "EndConnectionCommand";
+        public const string waitCommandTag = "WaitCommand";
+        public const string locationCommandTag = "LocationCommand";
+    }
+}

@@ -1,0 +1,33 @@
+﻿//using GeoDroid.Data;
+
+//namespace GEO_DROID.Services
+//{
+//    public class ConceptoAveriaService
+//    {
+//        public ConceptoAveriaService()
+//        {
+
+//        }
+//        public async Task<List<ConceptoAveria>> GetConceptosAveriasAsync()
+//        {
+//            return await _dbContext.ConceptoAverias.ToListAsync();
+//        }
+//        public async Task<ConceptoAveria> GetConceptosAveriasById(int? id)
+//        {
+//            return await _dbContext.ConceptoAverias
+//            .Where(a => a.id == id)
+//            .FirstOrDefaultAsync();
+//        }
+//        public async Task<int> SaveConceptosAveriasAsync(ConceptoAveria item)
+//        {
+//            _dbContext.ConceptoAverias.Add(item);
+//            return await _dbContext.SaveChangesAsync();
+//        }
+//        public async Task<int> DeleteConceptosAveriasAsync(ConceptoAveria item)
+//        {
+//            _dbContext.ConceptoAverias.Remove(item);
+//            return await _dbContext.SaveChangesAsync();
+//        }
+
+//    }
+//}

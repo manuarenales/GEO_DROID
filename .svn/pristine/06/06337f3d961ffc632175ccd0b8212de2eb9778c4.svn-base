@@ -1,0 +1,212 @@
+﻿using GeoDroid.Data;
+using GeoDroid.Data.DTO;
+using GeoDroid.Data.Models;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services.SincroService
+{
+    public class DBHelper
+    {
+
+        public static void ReMapForeignKeys<T>(GeoDroidDbContext _dbContext) where T : class, new()
+        {
+            //Type type = typeof(T);
+            //var props = type.GetProperties()
+            //                .Where(p => p.GetCustomAttributes(typeof(ForeingKeyIdGeo), false).Any());
+
+            //// Remap for each property found
+            //foreach (var prop in props)
+            //{
+            //    var foreignKeyAttributes = (ForeingKeyIdGeo[])prop.GetCustomAttributes(typeof(ForeingKeyIdGeo), false);
+            //    var nullableAttributes = (CanBeNull[])prop.GetCustomAttributes(typeof(CanBeNull), false);
+
+            //    // Get the ForeignKeyIdGeo attribute
+            //    var attr = foreignKeyAttributes[0];
+
+            //    try
+            //    {
+            //        // Prepare query logic using EF
+            //        if (nullableAttributes.Length > 0)
+            //        {
+            //            // Update entities with nullable foreign key
+            //            var query = from t1 in _dbContext.Set<T>()
+            //                        join t2 in _dbContext.Set(attr.srcTable)
+            //                        on EF.Property<object>(t1, prop.Name) equals EF.Property<object>(t2, attr.matchingField)
+            //                        where (int)EF.Property<object>(t1, prop.Name) > 0
+            //                        select new { t1, t2 };
+
+            //            foreach (var item in query)
+            //            {
+            //                // Set the value for the foreign key property
+            //                prop.SetValue(item.t1, item.t2.GetType().GetProperty(attr.valueField).GetValue(item.t2));
+            //            }
+            //        }
+            //        else
+            //        {
+            //            // Update entities without nullable foreign key
+            //            var query = from t1 in _dbContext.Set<T>()
+            //                        join t2 in _dbContext.Set(attr.srcTable)
+            //                        on EF.Property<object>(t1, prop.Name) equals EF.Property<object>(t2, attr.matchingField)
+            //                        select new { t1, t2 };
+
+            //            foreach (var item in query)
+            //            {
+            //                // Set the value for the foreign key property
+            //                prop.SetValue(item.t1, item.t2.GetType().GetProperty(attr.valueField).GetValue(item.t2));
+            //            }
+            //        }
+
+            //        // Save changes to the database
+            //        _dbContext.SaveChanges();
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        // Handle any exceptions
+            //        Console.WriteLine($"Error while updating foreign keys: {ex.Message}");
+            //    }
+            //}
+        }
+
+        public static T GetValorConfigurationGEO<T>(string codigo, GeoDroidDbContext _dbContext, T defaultValue)
+        {
+            try
+            {
+                var config = _dbContext.ConfigurationGEO
+                                      .Where(conf => conf.codigo == codigo)
+                                      .FirstOrDefault();
+
+                if (config != null && config.valor != null)
+                {
+                    return (T)Convert.ChangeType(config.valor, typeof(T));
+                }
+
+                return defaultValue;
+            }
+            catch (Exception)
+            {
+                return defaultValue;
+            }
+        }
+
+
+
+        public static List<CacheImportes> GetCacheImportes(GeoDroidDbContext _dbContext, DateTime fechaDesde, DateTime fechaHasta)
+        {
+            List<CacheImportes> list = new List<CacheImportes>();
+
+            var v = (from c in _dbContext.CacheImportes
+                     where c.fecha >= fechaDesde && c.fecha <= fechaHasta
+                     select new
+                     {
+                         Cache = c,
+                         CacheConceptos = _dbContext.CacheImportesConceptosRecaudacion
+                                           .Where(cc => cc.idCacheImportes == c.id).ToList()
+                     }).ToList();
+
+            foreach (var c in v)
+            {
+                c.Cache.cacheImportesConceptosRecaudacion = c.CacheConceptos;
+                list.Add(c.Cache);
+            }
+
+            return list;
+        }
+
+        public static List<CacheImportes> GetResumenImportes(GeoDroidDbContext _dbContext, bool cargarCache, DateTime fechaDesdeCache)
+        {
+            List<CacheImportes> list = new List<CacheImportes>();
+
+            // ---- Datos en caché ----
+            if (cargarCache)
+            {
+                list = GetCacheImportes(_dbContext, fechaDesdeCache, DateTime.MaxValue);
+            }
+
+            // ---- Datos actuales ----
+            CacheImportes cache = new CacheImportes();
+
+            DateTime fechaDesde = DateTime.MinValue;
+            CacheImportes ultimoCache = _dbContext.CacheImportes.OrderByDescending(x => x.fecha).FirstOrDefault();
+            if (ultimoCache != null)
+                fechaDesde = ultimoCache.fecha;
+
+            // RECAUDACIONES
+            var lRec = from r in _dbContext.Recaudacion
+                       join inci in _dbContext.Incidencia on r.idIncidencia equals inci.id
+                       where inci.fecha > fechaDesde
+                       select r.netoEmpresa;
+
+            cache.numeroRecaudaciones = lRec.Count();
+            cache.neto = lRec.Sum();
+
+            // Conceptos de recaudación
+            cache.cacheImportesConceptosRecaudacion = new List<CacheImportesConceptosRecaudacion>();
+
+            var conceptosList = (from rc in _dbContext.RecaudacionDetalles
+                                 join r in _dbContext.Recaudacion on rc.idRecaudacion equals r.id
+                                 join inci in _dbContext.Incidencia on r.idIncidencia equals inci.id
+                                 join m in _dbContext.Maquina on inci.idMaquinas equals m.id
+                                 join tdcr in _dbContext.TipoDistribucionConceptoRecaudacion
+                                 on new { f1 = m.idTipoDistribucion, f2 = rc.idConceptoRecaudacion }
+                                 equals new { f1 = tdcr.idTipoDistribucion, f2 = tdcr.idConceptoRecaudacionGeo }
+                                 where !tdcr.establecimiento && inci.fecha > fechaDesde
+                                 select new { rc, tdcr })
+                                 .GroupBy(recDetDist => recDetDist.tdcr.idConceptoRecaudacionGeo);
+
+            foreach (var lConceptos in conceptosList.OrderBy(o => o.Key))
+            {
+                CacheImportesConceptosRecaudacion c = new CacheImportesConceptosRecaudacion
+                {
+                    idConceptoRecaudacionGeo = lConceptos.Key,
+                    importe = lConceptos.Sum(o => o.rc.importe)
+                };
+                cache.cacheImportesConceptosRecaudacion.Add(c);
+            }
+
+            // CARGAS
+            decimal cargas = (from c in _dbContext.Carga
+                              join inci in _dbContext.Incidencia on c.idIncidencia equals inci.id
+                              where c.idGeo == 0 && inci.fecha > fechaDesde
+                              select c.cargaEmpresa).Sum();
+            cache.cargas = cargas;
+
+            // Recuperaciones de cargas
+            decimal recuperacionesCargas = (from c in _dbContext.Carga
+                                            join inci in _dbContext.Incidencia on c.idIncidencia equals inci.id
+                                            where c.idGeo == 0 && inci.fecha > fechaDesde
+                                            select c.recuperacionEmpresa).Sum();
+            cache.recuperacionesCargas = recuperacionesCargas;
+
+            // GASTOS
+            decimal gastos = (from g in _dbContext.GastoEstablecimiento
+                              where g.fecha > fechaDesde
+                              select g.total).Sum();
+            cache.gastos = gastos;
+
+            // PRÉSTAMOS
+            decimal prestamos = (from p in _dbContext.Prestamo
+                                 where p.idGeo == 0 && p.fecha > fechaDesde
+                                 select p.importe).Sum();
+            cache.prestamos = prestamos;
+
+            // Recuperaciones de préstamos
+            decimal recuperacionesPrestamos = (from p in _dbContext.PrestamoRecuperacion
+                                               where p.fecha > fechaDesde
+                                               select p.importe).Sum();
+            cache.recuperacionesPrestamos = recuperacionesPrestamos;
+
+            // Agregar el cache actual a la lista
+            list.Add(cache);
+
+            return list;
+        }
+
+    }
+}

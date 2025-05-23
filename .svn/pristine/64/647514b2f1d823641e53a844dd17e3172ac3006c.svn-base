@@ -1,0 +1,25 @@
+﻿using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    [DataContract]
+    public class AveriaEstado
+    {
+        [DataMember, PrimaryKey, AutoIncrement]
+        public int id { get; set; }
+        [DataMember]
+        public int idGeo { get; set; }
+        [DataMember, MaxLength(20)]
+        public string descripcion { get; set; }
+        [DataMember]
+        public int color { get; set; }
+        [DataMember]
+        public bool fin { get; set; }
+    }
+}

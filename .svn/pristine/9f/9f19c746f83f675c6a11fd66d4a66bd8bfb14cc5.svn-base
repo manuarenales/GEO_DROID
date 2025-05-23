@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class LecturaDetalleAuto
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        public int idLecturaContadoresAuto { get; set; }
+        public int tipoContadoresProtocolos { get; set; }
+        public Int64 valor { get; set; }
+    }
+}

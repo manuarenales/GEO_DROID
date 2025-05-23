@@ -1,0 +1,1262 @@
+﻿#if ANDROID
+using Android.App;
+using Android.Content;
+using Android.Net.Wifi;
+using Android.OS;
+using Android.Widget;
+#endif
+using GeoDroid.Data.DTO;
+using GeoDroid.Data;
+using System.Diagnostics;
+using System.Net;
+using GEO_DROID.GeoProtocol;
+using GeoDroid.Data.SQL;
+
+namespace GEO_DROID.Services.SincroService
+{
+#if ANDROID
+    public class SyncProcess
+    {
+        //public static System.Timers.Timer t1;
+        public string androidVers;
+
+        private readonly GeoDroidDatabase _dbContext;
+
+
+        // OBTENER LOS DETALLES POR TIDO DE DISTRIBUCION
+        class RecDectTipDist
+        {
+            public RecaudacionDetalles rd { get; set; }
+            public TipoDistribucionConceptoRecaudacion td { get; set; }
+        };
+
+        public SyncProcess(GeoDroidDatabase database)
+        {
+            _activity = ActivityHelper.GetCurrentActivity(); ;
+            androidVers = "Android " + Build.VERSION.Release;
+            _dbContext = database;
+
+            //Toast.MakeText(activity, androidVers, ToastLength.Long).Show();
+            /* t1 = new System.Timers.Timer();
+             //t1.Elapsed += (sender, args) => CancelProcess();
+             t1.Interval = 80000;
+             t1.Enabled = true;
+             t1.Start();*/
+            /*string dbPath = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments), "GeoDroid.GeoDroid-Signed.apk");
+            /*string dbPath = "/sdcard/GeoDroid.GeoDroid-Signed.apk";
+            PackageManagerSupport.InstallApplication(this, dbPath);*/
+        }
+
+        public void OnClickDialogConfigFinished(object s, DialogClickEventArgs e)
+        {
+            ErrorHandler();
+        }
+
+        private string GetIP(string nombreEquipo)
+        {
+            string ip = nombreEquipo;
+            IPAddress[] direccionesIP = Dns.GetHostAddresses(nombreEquipo);
+            ip = direccionesIP[0].ToString();
+            return ip;
+        }
+
+        public async Task StartAsync(ProgressDialog pd, LogInCommand.Motivo motivo = LogInCommand.Motivo.SincronizacionCompleta)
+        {
+
+            try
+            {
+                Configuration lel = await _dbContext._database.Table<Configuration>().FirstOrDefaultAsync();
+
+                if (lel == null)
+                {
+                    lel = new Configuration();
+                    lel.port = 10008;
+                    lel.ip = "172.16.1.69";
+                    lel.password = "1111";
+                    lel.printSignature = false;
+                    lel.idPersonal = 1;
+                    lel.printerMAC = "";
+                    lel.printTwoCopies = false;
+                    lel.serverDate = DateTime.Now;
+                    lel.syncCompressionEnabled = false;
+                    lel.unitNumber = 1;
+                    //lel.syncToken = ""; 
+                    lel.userName = "TEST";
+                    await _dbContext._database.InsertAsync(lel);
+                }
+                _conf = lel;
+                solicitado = false;
+                motivoGEO = motivo;
+                progDiag = pd;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+            string ip = null;
+            try
+            {
+                ip = GetIP(_conf.ip);
+
+            }
+            catch (Exception)
+            {
+                if (_activity != null)
+                {
+                    var db = new AlertDialog.Builder(_activity);
+                    db.SetTitle("Aviso")
+                    //.SetIcon(Resource.Drawable.configuracion_terminal)
+                    .SetMessage("No se pudo resolver el host o ip especificada " + _conf.ip)
+                    .SetPositiveButton("Aceptar", OnClickDialogConfigFinished)
+                    //.SetIcon(Resource.Drawable.error)
+                    .Create().Show();
+                }
+            }
+            if (ip != null)
+            {
+                try
+                {
+                    ConfigurationGEO config = await _dbContext._database.Table<ConfigurationGEO>().Where(c => c.codigo == ConfigurationGEO.TP_CACHE_IMPORTES).FirstOrDefaultAsync();
+
+                    if (config != null)
+                    {
+                        // Compruebo si existe la tabla cache de importes y sino la creo  
+                        if (!Config.CacheImportesTableExists())
+                            Config.CreateCacheImportesTable();
+
+                        Config.DeleteRowsInCacheImportesTable(DateTime.Today.AddDays(-15));
+
+                        List<CacheImportes> lCache = DBHelper.GetResumenImportes(_dbContext, false, DateTime.Today);
+                        foreach (CacheImportes c in lCache)
+                        {
+                            if (!c.IsCero)
+                            {
+                                c.fecha = DateTime.Now;
+                                await _dbContext._database.InsertAsync(c);
+                                foreach (CacheImportesConceptosRecaudacion cc in c.cacheImportesConceptosRecaudacion)
+                                {
+                                    cc.idCacheImportes = c.id;
+                                    await _dbContext.InsertAsync(cc);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Manejo de errores
+                    Console.WriteLine(ex);
+                }
+
+                //if (motivoGEO == 1)
+                //    SincronizarSoloLocalización(ip);
+                //else 
+                //{
+                _client = new GEOClient(false, false, false, _dbContext);
+                _client.RemoteHost = ip;
+                _client.RemotePort = _conf.port;
+                _client.clientConnected = _OnClientConnected;
+                _client.clientNotConnected = _OnClientNotConnected;
+
+                bool gonnaContinue = _ContinueInstallation();
+
+                if (!gonnaContinue)
+                    ClientConnect();
+                //} 
+                //
+
+            }
+
+        }
+
+        public async void Start2(ProgressDialog pd, LogInCommand.Motivo motivo = LogInCommand.Motivo.SincronizacionCompleta)
+        {
+
+            List<Configuration> confList = await _dbContext._database.Table<Configuration>().ToListAsync();
+            if (confList.Count > 0)
+            {
+                _conf = confList[0];
+                solicitado = false;
+                motivoGEO = motivo;
+                progDiag = pd;
+                string ip = null;
+
+                try
+                {
+                    ip = GetIP(_conf.ip);
+                }
+                catch (Exception) { }
+                System.Diagnostics.Debug.WriteLine("GeolocalizacionService: Start2 Procesando*****************************");
+                if (ip != null)
+                {
+                    _client = new GEOClient(false, false, false, _dbContext);
+                    _client.RemoteHost = ip;
+                    _client.RemotePort = _conf.port;
+                    _client.clientConnected = _OnClientConnected2;
+                    _client.clientNotConnected = _OnClientNotConnected;
+
+                    ClientConnect();
+                }
+
+            }
+        }
+
+        public void SincronizarSoloLocalizaciónOLD(string ip)
+        {
+            string s = "Letting know GEO About new LOCATION data in PDA...\n";
+            Log(s);
+
+            string tableName = "Localizacion";
+
+            //LogAndProgress("Enviando tabla " + tableName + "...\n", 0);
+
+            TableSendCommand tsc = null;
+            string data = null;
+
+            data = SerializationCommands.SerializeTable(tableName);
+            tsc = new TableSendCommand(tableName, data);
+
+            _client = new GEOClient(false, false, false, _dbContext);
+            _client.RemoteHost = ip;
+            _client.RemotePort = _conf.port;
+            _client.clientConnected = _OnClientConnected;
+            _client.clientNotConnected = _OnClientNotConnected;
+            ClientConnect();
+            //_client.EnviaDatos(tsc.GetCommandString());
+
+            // se va a resetear (borrar y crear) la tabla localización y termina, para meter los nuevos datos
+            Config.ResetDatabaseOnlyLocalizacion();
+        }
+
+        public void Stop()
+        {
+            _client.processCommandDelegate = null;
+            _client.Disconnect();
+        }
+
+        public void _OnConnectionTimeOut()
+        {
+            ShowErrorMessage("Tiempo de espera excedido." + System.Environment.NewLine + "Sincronización cancelada."); //El servidor no contesta en el tiempo esperado
+            _EndSyncProcessConnection();
+        }
+
+        public bool _ContinueInstallation()
+        {
+            bool resume = false;
+
+            //If we have our flag file continue updating
+            string fileName = Config.getFilePath("continue_updating");
+            if (File.Exists(fileName))
+            {
+                ClientConnect();
+                //Reload user data
+                /*SQLiteConnection session= new SQLiteConnection(Config.connectionString());
+                _conf=session.Query<Configuration>("select * from configuration",null).First<Configuration>();*/
+
+                Context context = Android.App.Application.Context;
+                Android.Content.Res.Resources res = context.Resources;
+                string apkVersion = res.GetString(Resource.String.ApplicationNumberVersion);
+                int apkStructure = Convert.ToInt32(res.GetString(Resource.String.ApplicationStructureVersion));
+
+                //GeoProtocolCommand command = new LogInCommand(_conf.unitNumber, _conf.password, _conf.syncToken, "Android", apkVersion, apkStructure, true);
+                GeoProtocolCommand command = new LogInCommand(_conf.unitNumber, _conf.password, _conf.syncToken, androidVers, apkVersion, apkStructure, true);
+                _client.EnviaDatos(command.GetCommandString());
+                _client.processCommandDelegate = _OnServerResummingConfirmationAsync;
+                _client.timeOutExpiredDelegate = _OnConnectionTimeOut;
+
+                File.Delete(fileName);
+                resume = true;
+            }
+            return resume;
+        }
+
+        public void SetWifiState(bool enable)
+        {
+            WifiManager wifiManager = (WifiManager)_activity.GetSystemService(Context.WifiService);
+
+            if (!wifiManager.IsWifiEnabled)
+            {
+                Log("Wifi is off line...\n");
+                ProgressHandler("Activando wifi", 1);
+                wifiManager.SetWifiEnabled(true);
+                Log("Activating...\n");
+                while (!wifiManager.IsWifiEnabled)
+                {
+                    Log("Waiting a second to retest state...\n");
+                    Thread.Sleep(1000);
+                }
+
+                WifiInfo wifiInfo = wifiManager.ConnectionInfo;
+                string macAddr = wifiInfo.MacAddress;
+            }
+            else
+                Log("Wifi is on line...\n");
+        }
+
+        public void ClientConnect()
+        {
+            if (motivoGEO == 0)
+                LogAndProgress("Conectando....\n", 1);
+
+            _client.Connect();
+        }
+
+        public void _OnClientConnected()
+        {
+            if (_activity != null)
+            {
+                _activity.RunOnUiThread(() =>
+                {
+                    Log("Connected....\n");
+
+                    _client.processCommandDelegate = _OnLoginResponseDelegate;
+                    _client.timeOutExpiredDelegate = _OnConnectionTimeOut;
+
+                    LogAndProgress("Enviando versión de android...\n", 1);
+
+                    Context context = Android.App.Application.Context;
+                    Android.Content.Res.Resources res = context.Resources;
+                    string apkVersion = res.GetString(Resource.String.ApplicationNumberVersion);
+                    int apkStructure = 0; //Convert.ToInt32(res.GetString(Resource.String.ApplicationStructureVersion));
+
+                    //GeoProtocolCommand command = new LogInCommand(_conf.unitNumber, _conf.password, _conf.syncToken, "Android", apkVersion, apkStructure, false,motivoGEO);
+                    GeoProtocolCommand command = new LogInCommand(_conf.unitNumber, _conf.password, _conf.syncToken, androidVers, apkVersion, apkStructure, false, motivoGEO);
+                    _client.EnviaComando(command);
+
+                    //if (retorno)
+                    //{
+                    //    progDiag.Dismiss();
+                    //}
+                });
+            }
+            else // viene del servicio
+            {
+                _client.processCommandDelegate = _OnLoginResponseDelegate;
+                _client.timeOutExpiredDelegate = _OnConnectionTimeOut;
+
+                //LogAndProgress("Enviando versión de android...\n", 1);
+
+                Context context = Android.App.Application.Context;
+                Android.Content.Res.Resources res = context.Resources;
+                string apkVersion = res.GetString(Resource.String.ApplicationNumberVersion);
+                int apkStructure = Convert.ToInt32(res.GetString(Resource.String.ApplicationStructureVersion));
+
+                GeoProtocolCommand command = new LogInCommand(_conf.unitNumber, _conf.password, _conf.syncToken, "Android", apkVersion, apkStructure, false, motivoGEO);
+                _client.EnviaComando(command);
+            }
+        }
+
+        public void _OnClientConnected2()
+        {
+            if (_client != null)
+            {
+                _client.processCommandDelegate = _OnLocationResponseDelegate;
+                _client.timeOutExpiredDelegate = _OnConnectionTimeOut;
+
+                Context context = Android.App.Application.Context;
+                Android.Content.Res.Resources res = context.Resources;
+                string apkVersion = res.GetString(Resource.String.ApplicationNumberVersion);
+                int apkStructure = Convert.ToInt32(res.GetString(Resource.String.ApplicationStructureVersion));
+
+                GeoProtocolCommand command = new LocationCommand(
+                    _conf.unitNumber
+                    , _conf.password
+                    , _conf.syncToken
+                    , "Android"
+                    , apkVersion
+                    , apkStructure, false
+                    , _conf.serverDate
+                    , DateTime.Now
+                    , 0, 0, 1);
+                _client.EnviaComando(command);
+            }
+        }
+
+        public void _OnClientNotConnected()
+        {
+            ShowErrorMessage("No hay conexión con el servidor." + System.Environment.NewLine + "Sincronización cancelada.");
+            _EndSyncProcessConnection();
+        }
+
+        public void _DisconnectClient()
+        {
+            if (_activity != null)
+                _activity.Finish();
+        }
+
+        public void OnClickButton(object s, EventArgs e)
+        {
+            //SetWifiState(true);    
+            ClientConnect();
+        }
+
+        void _EndSyncProcessConnection()
+        {
+            _client.Disconnect();
+            if (EndHandler != null)
+                EndHandler();
+
+            Log("Communication ended...\n");
+        }
+
+        void _FillConfigFromLoginResponseCommand(LogInResponseCommand responseCmd)
+        {
+            Configuration config = _conf;
+            config.idPersonal = responseCmd.GetIdPersonal();
+            config.userName = responseCmd.GetNombrePersonal();
+            config.serverDate = responseCmd.GetFechaServidor();
+            config.tempSyncToken = responseCmd.GetLicense();
+            config.syncToken = responseCmd.GetLicense();
+            _dbContext._database.UpdateAsync(config);
+
+        }
+
+        void _OnLocationResponseDelegate(GeoProtocolCommand command)
+        {
+            if (ProgressHandler != null)
+                ProgressHandler("FIN", 100);
+            _EndSyncProcessConnection();
+        }
+
+        LogInResponseCommand _tempResponse;
+        void _OnLoginResponseDelegate(GeoProtocolCommand command)
+        {
+            if (command.IsType(CommunicationCommands.logInResponseCommandTag))
+            {
+                if (motivoGEO == 0)
+                {
+                    Log("Server acknoledged user...\n");
+                }
+                LogInResponseCommand responseCmd = command as LogInResponseCommand;
+
+                _tempResponse = responseCmd;
+
+                if (responseCmd.GetError() == ErrorCommandType.LOGIN_NewTerminal || responseCmd.GetError() == ErrorCommandType.LOGIN_SupplantedTerminal)
+                {
+                    if (_activity != null)
+                    {
+                        _activity.RunOnUiThread(() =>
+                        {
+                            var db = new AlertDialog.Builder(_activity);
+                            db.SetTitle("Aviso")
+                            .SetMessage(Resource.String.DataLostByLicense)
+                            .SetPositiveButton("Aceptar", _OnStartNewDeviceSync)
+                            .SetNegativeButton("Cancelar", _OnCancelNewDeviceSync)
+                            //.SetIcon(Resource.Drawable.aviso)
+                            .Create().Show();
+                        });
+                    }
+                }
+                else if (motivoGEO == LogInCommand.Motivo.SincronizacionAverias)
+                    _APKNewVersionRequest();
+                else
+                {
+                    //jorge
+                    //_FillConfigFromLoginResponseCommand(responseCmd);
+                    _TellGEOAboutPDAData();
+                }
+            }
+            else if (command.IsType(CommunicationCommands.errorTag))
+            {
+                ErrorCommand errCommand = command as ErrorCommand;
+
+                if (errCommand.ErrorType == ErrorCommandType.LOGIN_LoginFailed)
+                {
+                    ShowErrorMessage("Usuario o contraseña incorrecto");
+                    Log("Usuario o contraseña incorrecto");
+                }
+                else if (errCommand.ErrorType == ErrorCommandType.UnitNotRegistered)
+                {
+                    ShowErrorMessage("El número de unidad del terminal no está registrado");
+                    Log("Error: El número de unidad del terminal no está registrado");
+                }
+                else if (errCommand.ErrorType == ErrorCommandType.SerializationError)
+                {
+                    ShowErrorMessage("Se produjo un error de serialización en el servidor");
+                    Log("Se produjo un error de serialización en el servidor");
+                }
+                else if (errCommand.ErrorType == ErrorCommandType.LOGIN_LicenseError)
+                {
+                    ShowErrorMessage("Superado el número de licencias");
+                    Log("Superado el número de licencias");
+                }
+                else if (errCommand.ErrorType == ErrorCommandType.VersionError)
+                {
+                    ShowErrorMessage("La versión no es compatible con el servidor");
+                    Log("La versión no es compatible con el servidor");
+                }
+                else if (errCommand.ErrorType == ErrorCommandType.LOGIN_SupplantedTerminal)
+                {
+                    ShowErrorMessage("Terminal identificado, pero no se corresponde con la última sincronización");
+                    Log("Terminal identificado, pero no se corresponde con la última sincronización");
+                }
+                else
+                {
+                    ShowErrorMessage("Error desconocido");
+                    Log("Error desconocido");
+                }
+                ErrorHandler();
+                _EndSyncProcessConnection();
+            }
+        }
+
+        void _OnServerResummingConfirmationAsync(GeoProtocolCommand command)
+        {
+            if (command.IsType(CommunicationCommands.logInResponseCommandTag))
+            {
+                Log("Server confirmed update resumming...\n");
+                LogInResponseCommand responseCmd = command as LogInResponseCommand;
+
+                Configuration config = _dbContext._database.Table<Configuration>().FirstOrDefaultAsync().Result;
+                config.idPersonal = responseCmd.GetIdPersonal();
+                config.userName = responseCmd.GetNombrePersonal();
+                config.serverDate = responseCmd.GetFechaServidor();
+                _dbContext._database.UpdateAsync(config);
+
+                _RequestDataFromGeo();
+            }
+            else if (command.IsType(CommunicationCommands.errorTag))
+            {
+                ErrorCommand e = command as ErrorCommand;
+                String s = "Error: " + e.ErrorType + "\n";
+                //ShowInformationMessage(s);
+                Log(s);
+                _EndSyncProcessConnection();
+                ErrorHandler();
+            }
+            else if (command.IsType(CommunicationCommands.endConnectionTag))
+            {
+                String s = "Error: El server no acepto el login/password para CONTINUAR la conversación.\n";
+                ShowInformationMessage(s);
+                Log(s);
+                _EndSyncProcessConnection();
+            }
+        }
+
+        void _OnStartNewDeviceSync(object s, EventArgs e)
+        {
+            Log("Se descartan los datos de este dispositivo y se prosigue con el proceso de sincronización.\n");
+            //_FillConfigFromLoginResponseCommand(_tempResponse);
+            _APKNewVersionRequest();
+        }
+
+        void _OnCancelNewDeviceSync(object o, EventArgs e)
+        {
+            string s = "Se ha cancelado la descarga de la nueva versión de la aplicación. Sincronización cancelada.\n";
+            ShowInformationMessage(s);
+            Log(s);
+            _client.processCommandDelegate = null;
+        }
+
+        //Send a notification about new data in geodroid ready to be sent (Wait for GEO to request)
+        void _TellGEOAboutPDAData()
+        {
+            string s = "Letting know GEO About new data in PDA...\n";
+            Log(s);
+
+            //desactivar el servicio para sincronizar la tabla
+
+            bool a = DBHelper.GetValorConfigurationGEO<bool>(ConfigurationGEO.TP_GEOLOCALIZACION, _dbContext, false);
+
+            //if (a)
+            // Context.s ("GeolocalizacionService"); // servicio normal TODO STOP SERVICE
+
+            PDAToGEODataCommand command = new PDAToGEODataCommand();
+            _client.EnviaDatos(command.GetCommandString());
+            _client.processCommandDelegate = _GEORequestTableCommandHandler;
+        }
+
+        void _GEORequestTableCommandHandler(GeoProtocolCommand command)
+        {
+
+            if (command.IsType(CommunicationCommands.requestTableTag))
+            {
+                TableRequestCommand trc = command as TableRequestCommand;
+                string tableName = trc.GetTableName();
+                LogAndProgress("Enviando tabla " + tableName + "...\n", 0);
+
+                TableSendCommand tsc = null;
+                string data = null;
+
+                data = SerializationCommands.SerializeTable(tableName);
+                if (_conf.syncCompressionEnabled)
+                    tsc = new TableSendCommandZip(tableName, data);
+                else
+                    tsc = new TableSendCommand(tableName, data);
+
+                _client.EnviaDatos(tsc.GetCommandString());
+                _client.processCommandDelegate = _GEORequestTableCommandHandler;
+
+                Log("...And we serve it" + tableName + "...\n");
+            }
+            else if (command.IsType(CommunicationCommands.ackTag))
+            {
+                if (motivoGEO == 0)
+                    Log("GEO Finished requesting tables from PDA...\n");
+
+                _APKNewVersionRequest();
+            }
+            else if (command.IsType(CommunicationCommands.errorTag))
+            {
+                ErrorCommand e = command as ErrorCommand;
+                string s = "Error: " + command.GetType() + "\n";
+
+                if (motivoGEO == 0)
+                    Log(s);
+
+                if (ErrorHandler != null)
+                    ErrorHandler();
+
+                _EndSyncProcessConnection();
+            }
+        }
+
+        //Send a notification about new data in geodroid ready to be sent (Wait for GEO to request)
+        void _RequestDataFromGeo()
+        {
+            if (motivoGEO == LogInCommand.Motivo.SincronizacionCompleta)
+            {
+                ///// Importante!! Este punto de la sincronización es crítico, ya que en el momento en que guardemos el token de sincronización,
+                ///// el servidor debe recibir el mensaje de que lo hemos hecho y confirmarlo también. Si al servidor no le llega el mensaje quedaremos desincronizados.
+                //SQLiteConnection db = new SQLiteConnection(Config.dbPath());
+                LogAndProgress("Limpiando base de datos...\n", 1);
+                //_client.EnviaWaitCommand(); 
+                Config.DropDataBase(_dbContext);
+                //_client.EnviaWaitCommand(); 600/590||585/580 
+                Config.BuildDataBase();
+                //_client.EnviaWaitCommand(); 
+                _FillConfigFromLoginResponseCommand(_tempResponse);
+            }
+            else if (motivoGEO == LogInCommand.Motivo.SincronizacionGeolocalizacion)
+            {
+                LogAndProgress("Limpiando tabla Localización...\n", 1);
+                Config.ResetDatabaseOnlyLocalizacion();
+            }
+
+            Log("Requesting tables data from GEO...\n");
+
+            GEOToPDADataCommand command = new GEOToPDADataCommand();
+            _client.EnviaDatos(command.GetCommandString());
+            _client.processCommandDelegate = _GEOSendTableCommandHandler;
+        }
+
+        async void _BuildTableData<T>(MemoryStream ms) where T : new()
+        {
+            /*List<T> listaEstablecimientos = DataContractSerialization.ReadObject<List<T>>(ms);
+            session.InsertAll<T>(listaEstablecimientos);
+            GeoDroid.DBL.DBHelper.ReMapForeignKeys<T>();*/
+            try
+            {
+                if (motivoGEO == LogInCommand.Motivo.SincronizacionAverias)
+                {
+                    AddNewBreakDownsFromService<T>(ms);
+                    return;
+                }
+                float time = 0;
+                Stopwatch sw = new Stopwatch();
+                Android.Util.Log.Info("Deserialization", "------------- Starting processing of " + typeof(T) + " table");
+                Android.Util.Log.Info("Deseri alization", "Starting deserialization of " + typeof(T));
+                sw.Start();
+
+                ms.Position = 0;
+                using (var reader = new StreamReader(ms, leaveOpen: true))
+                {
+                    string contenido = reader.ReadToEnd();
+                    Android.Util.Log.Info("Deserialization", "Contenido recibido: " + contenido);
+                    ms.Position = 0;
+                }
+
+                List<T> listaItems = DataContractSerialization.ReadObject<List<T>>(ms);
+                sw.Stop();
+                time += sw.Elapsed.Milliseconds / 1000.0f;
+                Android.Util.Log.Info("Deserialization", "Time: " + sw.Elapsed.Milliseconds / 1000.0f);
+                sw.Reset();
+                Android.Util.Log.Info("Deserialization", "Inserting table ");
+                sw.Start();
+
+
+                foreach (var item in listaItems)
+                {
+                    switch (item)
+                    {
+                        case Establecimiento Establecimiento:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Establecimiento);
+                            break;
+                        case MaquinaConceptoRecaudacion MaquinaConceptoRecaudacion:
+                            await _dbContext._database.InsertOrReplaceAsync(item as MaquinaConceptoRecaudacion);
+                            break;
+                        case Maquina Maquina:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Maquina);
+                            break;
+                        case Averia Averia:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Averia);
+                            break;
+                        case AveriaEstado AveriaEstado:
+                            await _dbContext._database.InsertOrReplaceAsync(item as AveriaEstado);
+                            break;
+                        case ConceptoAveria ConceptoAveria:
+                            await _dbContext._database.InsertOrReplaceAsync(item as ConceptoAveria);
+                            break;
+                        case ConceptoGastoEstablecimiento ConceptoGastoEstablecimiento:
+                            await _dbContext._database.InsertOrReplaceAsync(item as ConceptoGastoEstablecimiento);
+                            break;
+                        case ConceptoMotivoMaquinaNoRecaudada ConceptoMotivoMaquinaNoRecaudada:
+                            await _dbContext._database.InsertOrReplaceAsync(item as ConceptoMotivoMaquinaNoRecaudada);
+                            break;
+                        case Incidencia Incidencia:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Incidencia);
+                            break;
+                        case Ruta Ruta:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Ruta);
+                            break;
+                        case TipoDistribucionConceptoRecaudacion TipoDistribucionConceptoRecaudacion:
+                            await _dbContext._database.InsertOrReplaceAsync(item as TipoDistribucionConceptoRecaudacion);
+                            break;
+                        case PatContDetalle PatContDetalle:
+                            await _dbContext._database.InsertOrReplaceAsync(item as PatContDetalle);
+                            break;
+                        case LecturaContador LecturaContador:
+                            await _dbContext._database.InsertOrReplaceAsync(item as LecturaContador);
+                            break;
+                        case LecturaDetalle LecturaDetalle:
+                            await _dbContext._database.InsertOrReplaceAsync(item as LecturaDetalle);
+                            break;
+
+                        case ModuloCaptura ModuloCaptura:
+                            await _dbContext._database.InsertOrReplaceAsync(item as ModuloCaptura);
+                            break;
+                        case GeoDroid.Data.Recaudacion Recaudacion:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Recaudacion);
+                            break;
+                        case DesgloseBruto DesgloseBruto:
+                            await _dbContext._database.InsertOrReplaceAsync(item as DesgloseBruto);
+                            break;
+                        case RecaudacionDetalles RecaudacionDetalles:
+                            await _dbContext._database.InsertOrReplaceAsync(item as RecaudacionDetalles);
+                            break;
+                        case Cambio Cambio:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Cambio);
+                            break;
+                        case Carga Carga:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Carga);
+                            break;
+                        case Prestamo Prestamo:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Prestamo);
+                            break;
+                        case PrestamoRecuperacion PrestamoRecuperacion:
+                            await _dbContext._database.InsertOrReplaceAsync(item as PrestamoRecuperacion);
+                            break;
+                        case ConceptoPrestamo ConceptoPrestamo:
+                            await _dbContext._database.InsertOrReplaceAsync(item as ConceptoPrestamo);
+                            break;
+                        case Empresa Empresa:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Empresa);
+                            break;
+                        case UltimaLecturaRecaudacion UltimaLecturaRecaudacion:
+                            await _dbContext._database.InsertOrReplaceAsync(item as UltimaLecturaRecaudacion);
+                            break;
+                        case ConfigurationGEO ConfigurationGEO:
+                            await _dbContext._database.InsertOrReplaceAsync(item as ConfigurationGEO);
+                            break;
+                        case Localizacion Localizacion:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Localizacion);
+                            break;
+                        case Instalacion Instalacion:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Instalacion);
+                            break;
+                        case MotivoVisitaComercial MotivoVisitaComercial:
+                            await _dbContext._database.InsertOrReplaceAsync(item as MotivoVisitaComercial);
+                            break;
+                        case VisitaComercial VisitaComercial:
+                            await _dbContext._database.InsertOrReplaceAsync(item as VisitaComercial);
+                            break;
+                        case TipoAccionComercial TipoAccionComercial:
+                            await _dbContext._database.InsertOrReplaceAsync(item as TipoAccionComercial);
+                            break;
+                        case MotivoAccionComercial MotivoAccionComercial:
+                            await _dbContext._database.InsertOrReplaceAsync(item as MotivoAccionComercial);
+                            break;
+                        case AccionComercial AccionComercial:
+                            await _dbContext._database.InsertOrReplaceAsync(item as AccionComercial);
+                            break;
+                        case TipoCombustible TipoCombustible:
+                            await _dbContext._database.InsertOrReplaceAsync(item as TipoCombustible);
+                            break;
+                        case Vehiculo Vehiculo:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Vehiculo);
+                            break;
+                        case VehiculoCombustible VehiculoCombustible:
+                            await _dbContext._database.InsertOrReplaceAsync(item as VehiculoCombustible);
+                            break;
+                        case EmpresaCompetidora EmpresaCompetidora:
+                            await _dbContext._database.InsertOrReplaceAsync(item as EmpresaCompetidora);
+                            break;
+                        case Poblacion Poblacion:
+                            await _dbContext._database.InsertOrReplaceAsync(item as Poblacion);
+                            break;
+                        case ModeloMaquina ModeloMaquina:
+                            await _dbContext._database.InsertOrReplaceAsync(item as ModeloMaquina);
+                            break;
+                        case EstablecimientoPotencial EstablecimientoPotencial:
+                            await _dbContext._database.InsertOrReplaceAsync(item as EstablecimientoPotencial);
+                            break;
+                        case EstablecimientoPotencialMaquina EstablecimientoPotencialMaquina:
+                            await _dbContext._database.InsertOrReplaceAsync(item as EstablecimientoPotencialMaquina);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                sw.Stop();
+                time += sw.Elapsed.Milliseconds / 1000.0f;
+                Android.Util.Log.Info("Deserialization", "Time: " + sw.Elapsed.Milliseconds / 1000.0f);
+                Android.Util.Log.Info("Deserialization", "Remaping foreign keys " + typeof(T));
+                sw.Start();
+                Android.Util.Log.Info("Deserialization", "Time: " + sw.Elapsed.Milliseconds / 1000.0f);
+                sw.Stop();
+                time += sw.Elapsed.Milliseconds / 1000.0f;
+                Android.Util.Log.Info("Deserialization", "Total time: " + time + " seconds");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+        }
+
+        private void AddNewBreakDownsFromService<T>(MemoryStream ms)
+        {
+            try
+            {
+                float time = 0;
+
+                Stopwatch sw = new Stopwatch();
+
+                Android.Util.Log.Info("Deserialization", "------------- Starting processing of " + typeof(T) + " table");
+
+                Android.Util.Log.Info("Deserialization", "Starting deserialization of " + typeof(T));
+                sw.Start();
+
+                List<T> listaRegistros = DataContractSerialization.ReadObject<List<T>>(ms);
+                sw.Stop();
+                time += sw.Elapsed.Milliseconds / 1000.0f;
+                Android.Util.Log.Info("Deserialization", "Time: " + sw.Elapsed.Milliseconds / 1000.0f);
+                sw.Reset();
+
+                Android.Util.Log.Info("Deserialization", "Inserting new items in table ");
+                sw.Start();
+
+                List<T> Auxlist = new List<T>();
+                bool existe;
+
+                // recorro las listas para ver los nuevos elementos
+
+                //var map = session.GetMapping(typeof(T));
+                //List<object> inicial = session.Query(map, "SELECT * FROM " + typeof(T).Name, null);
+
+                //if (inicial.Count > 0)
+                //{
+
+                //    foreach (T baseItem in listaRegistros)  // nuevos datos
+                //    {
+                //        existe = false;
+
+                //        T nuevo = (T)(object)baseItem;
+
+                //        foreach (T item in inicial) // datos ya existentes
+                //        {
+                //            if (nuevo.GetType().GetProperty("idGeo").GetValue(nuevo, null).ToString().Equals(item.GetType().GetProperty("idGeo").GetValue(item, null).ToString()))
+                //                existe = true; // conincide
+                //        }
+
+                //        if (!existe)
+                //            Auxlist.Add(baseItem);
+                //    }
+
+                //    session.InsertAll(Auxlist);
+
+                //    /*if (Auxlist.Count > 0 && typeof(T).Name.Equals("Averia"))
+                //        AveriasService.NOTIFICACION = true;
+                //    else
+                //        AveriasService.NOTIFICACION = false;*/ //TODO - Arreglar servicio
+
+                //}
+
+                sw.Stop();
+
+                time += sw.Elapsed.Milliseconds / 1000.0f;
+                Android.Util.Log.Info("Deserialization", "Total time: " + time + " seconds");
+            }
+            catch (Exception ex)
+            {
+                string cad = ex.Message;
+            }
+
+        }
+
+        //Geo Sends a table to the PDA 
+        void _GEOSendTableCommandHandler(GeoProtocolCommand command)
+        {
+            if (command.IsType(CommunicationCommands.sendTableTag) || command.IsType(CommunicationCommands.sendTableZipTag))
+            {
+                TableSendCommand trc = command as TableSendCommand;
+                string tableName = trc.GetTableName();
+                MemoryStream ms = new MemoryStream(DataContractSerialization.ENCODING.GetBytes(trc.GetData()));
+                //Esto debería hacerse solo una vez
+                //SQLiteConnection session = new SQLiteConnection(Config.connectionString());
+                if (motivoGEO == 0)
+                    LogAndProgress("Procesando tabla " + tableName + "...\n", 0);
+
+                try
+                {
+                    switch (tableName)  // TODO Trazearlo cuando se active el servicio de averías.
+                    {
+                        case "Establecimiento":
+                            _BuildTableData<Establecimiento>(ms);
+                            break;
+                        case "MaquinaConceptoRecaudacion":
+                            _BuildTableData<MaquinaConceptoRecaudacion>(ms);
+                            break;
+                        case "Maquina":
+                            _BuildTableData<Maquina>(ms);
+                            break;
+                        case "Averia":
+                            _BuildTableData<Averia>(ms);
+                            break;
+                        case "AveriaEstado":
+                            _BuildTableData<AveriaEstado>(ms);
+                            break;
+                        case "ConceptoAveria":
+                            _BuildTableData<ConceptoAveria>(ms);
+                            break;
+                        case "ConceptoGastoEstablecimiento":
+                            _BuildTableData<ConceptoGastoEstablecimiento>(ms);
+                            break;
+                        case "ConceptoMotivoMaquinaNoRecaudada":
+                            _BuildTableData<ConceptoMotivoMaquinaNoRecaudada>(ms);
+                            break;
+                        //case "GastoEstablecimiento": //No recibimos esta tabla, porque sólo se usa para nuevos gastos
+                        //    _BuildTableData<GastoEstablecimiento>(session, ms);
+                        //    break;
+                        case "Incidencia":
+                            _BuildTableData<Incidencia>(ms);
+                            break;
+                        case "Ruta":
+                            _BuildTableData<Ruta>(ms);
+                            break;
+                        case "TipoDistribucionConceptoRecaudacion":
+                            _BuildTableData<TipoDistribucionConceptoRecaudacion>(ms);
+                            break;
+                        case "PatContDetalle":
+                            _BuildTableData<PatContDetalle>(ms);
+                            break;
+                        case "LecturaContador":
+                            _BuildTableData<LecturaContador>(ms);
+                            break;
+                        case "LecturaDetalle":
+                            _BuildTableData<LecturaDetalle>(ms);
+                            break;
+                        /*case "LecturaDetalleAuto":
+                            _BuildTableData<LecturaDetalleAuto>(session, ms);
+                            break;*/
+                        case "ModuloCaptura":
+                            _BuildTableData<ModuloCaptura>(ms);
+                            break;
+                        case "Recaudacion":
+                            _BuildTableData<Recaudacion>(ms);
+                            break;
+                        case "DesgloseBruto":
+                            _BuildTableData<DesgloseBruto>(ms);
+                            break;
+                        case "RecaudacionDetalles":
+                            _BuildTableData<RecaudacionDetalles>(ms);
+                            break;
+                        case "Cambio":
+                            _BuildTableData<Cambio>(ms);
+                            break;
+                        case "Carga":
+                            _BuildTableData<Carga>(ms);
+                            break;
+                        case "Prestamo":
+                            _BuildTableData<Prestamo>(ms);
+                            break;
+                        case "PrestamoRecuperacion":
+                            _BuildTableData<PrestamoRecuperacion>(ms);
+                            break;
+                        case "ConceptoPrestamo":
+                            _BuildTableData<ConceptoPrestamo>(ms);
+                            break;
+                        case "Empresa":
+                            _BuildTableData<Empresa>(ms);
+                            break;
+                        case "UltimaLecturaRecaudacion":
+                            _BuildTableData<UltimaLecturaRecaudacion>(ms);
+                            break;
+                        case "ConfigurationGEO":
+                            _BuildTableData<ConfigurationGEO>(ms);
+                            break;
+                        case "Localizacion":
+                            _BuildTableData<Localizacion>(ms);
+                            break;
+                        case "Instalacion":
+                            _BuildTableData<Instalacion>(ms);
+                            break;
+                        case "MotivoVisitaComercial":
+                            _BuildTableData<MotivoVisitaComercial>(ms);
+                            break;
+                        case "VisitaComercial":
+                            _BuildTableData<VisitaComercial>(ms);
+                            break;
+                        case "TipoAccionComercial":
+                            _BuildTableData<TipoAccionComercial>(ms);
+                            break;
+                        case "MotivoAccionComercial":
+                            _BuildTableData<MotivoAccionComercial>(ms);
+                            break;
+                        case "AccionComercial":
+                            _BuildTableData<AccionComercial>(ms);
+                            break;
+                        case "TipoCombustible":
+                            _BuildTableData<TipoCombustible>(ms);
+                            break;
+                        case "Vehiculo":
+                            _BuildTableData<Vehiculo>(ms);
+                            break;
+                        case "VehiculoCombustible":
+                            _BuildTableData<VehiculoCombustible>(ms);
+                            break;
+                        case "EmpresaCompetidora":
+                            _BuildTableData<EmpresaCompetidora>(ms);
+                            break;
+                        case "Poblacion":
+                            _BuildTableData<Poblacion>(ms);
+                            break;
+                        case "ModeloMaquina":
+                            _BuildTableData<ModeloMaquina>(ms);
+                            break;
+                        case "EstablecimientoPotencial":
+                            _BuildTableData<EstablecimientoPotencial>(ms);
+                            break;
+                        case "EstablecimientoPotencialMaquina":
+                            _BuildTableData<EstablecimientoPotencialMaquina>(ms);
+                            break;
+                        default:
+                            break;
+                    }
+
+                    _client.EnviaDatos(new ACKCommand().GetCommandString());
+                    if (motivoGEO == 0)
+                        Log("...And PDA acknoledge the table " + tableName + " send ...\n");
+
+                }
+                catch (Exception ex)
+                {
+                    _client.EnviaDatos(new ErrorCommand(ErrorCommandType.SerializationError).ToString());
+
+                    if (motivoGEO == 0)
+                    {
+                        Log("There has been an error deserializing table " + tableName + " and GEO was notified.\n");
+                        Log("The error was: " + ex.Message);
+                    }
+                }
+            }
+            else if (command.IsType(CommunicationCommands.ackTag))
+            {
+                /*command = new GEOToPDADataCommand();
+                _client.EnviaDatos(command.GetCommandString()); 2 to 
+                _client.processCommandDelegate = _GEOSendTableCommandHandler;*/
+
+                if (motivoGEO == 0)
+                    LogAndProgress("Requesting license token.\n", 1);
+                _EndSyncProcessConnection();
+
+            }
+            else if (command.IsType(CommunicationCommands.endConnectionTag))
+            {
+                _client.EnviaDatos(new EndConnectionCommand().GetCommandString());
+
+                string s = "Sincronización completada.\n";
+                if (motivoGEO == 0)
+                    Log(s);
+
+                ShowInformationMessage(s);
+                _EndSyncProcessConnection();
+            }
+            else
+            {
+                if (motivoGEO == 0)
+                    Log("Command invalid.\n");
+                //_EndConnection();//  
+                ErrorHandler();
+                _EndSyncProcessConnection();
+            }
+        }
+
+        void _APKNewVersionRequest()
+        {
+            if (motivoGEO == 0)
+                LogAndProgress("Comprobando actualización.\n", 1);
+
+            NewAPKRequest request = new NewAPKRequest();
+            _client.EnviaDatos(request.GetCommandString());
+            _client.processCommandDelegate = _OnAPKReceived;
+
+        }
+
+        void _OnAPKReceived(GeoProtocolCommand command)
+        {
+            if (command.IsType(CommunicationCommands.newAPKSendTag))
+            {
+                if (motivoGEO == 0)
+                    Log("Received APK. We're about to init install.\n");
+
+                string dbPath = "/sdcard/GeoDroid.apk";
+
+                NewAPKSend apkSend = command as NewAPKSend;
+                if (apkSend.GetData() != "")
+                {
+                    byte[] array = System.Convert.FromBase64String(apkSend.GetData());
+
+                    FileStream fs = new FileStream(dbPath, FileMode.Create, FileAccess.ReadWrite);
+                    BinaryWriter bw = new BinaryWriter(fs);
+                    bw.Write(array);
+                    bw.Close();
+
+                    Log("Creating flag file to continue installation on app install & run.\n");
+                    //File.Create(Config.getFilePath("continue_updating"));
+                    // PackageManagerSupport.InstallApplication(_activity, dbPath);
+                }
+                else
+                {
+                    if (motivoGEO == 0)
+                        Log("There's no new apk available for download.\n");
+
+                    _RequestDataFromGeo();
+                }
+            }
+            else if (command.IsType(CommunicationCommands.ackTag))
+            {
+                //No new version
+                if (motivoGEO == 0)
+                    Log("There does not exist a new version.\n");
+            }
+            else if (command.IsType(CommunicationCommands.errorTag))
+            {
+                ErrorCommand e = command as ErrorCommand;
+                if (motivoGEO == 0)
+                    Log("Error: " + command.GetType() + "\n");
+
+                if (ErrorHandler != null)
+                    ErrorHandler();
+                _EndSyncProcessConnection();
+            }
+        }
+
+        void AddTextFromThread(string s)
+        {
+            //this.RunOnUiThread(() => _AddText(s));
+            _activity.RunOnUiThread(() => _AddText(s));
+
+        }
+
+        void _AddText(string s)
+        {
+            _etLog.Text += s;
+            _etLog.SetSelection(_etLog.Text.Length);
+        }
+
+        void Log(String str)
+        {
+            if (DebugLoginHandler != null)
+                DebugLoginHandler(str);
+        }
+
+        void NotifyProgress(String str, int step)
+        {
+            ProgressHandler(str, step);
+        }
+
+        void LogAndProgress(String str, int step)
+        {
+            Log(str);
+            if (ProgressHandler != null)
+                ProgressHandler(str, step);
+        }
+
+        void ShowInformationMessage(String str)
+        {
+            if (_activity != null)
+            {
+                _activity.RunOnUiThread(() =>
+                {
+                    var db = new AlertDialog.Builder(_activity);
+                    db.SetTitle("Aviso")
+                    //.SetIcon(Resource.Drawable.configuracion_terminal)
+                    .SetMessage(str)
+                    .SetPositiveButton("Aceptar", null as IDialogInterfaceOnClickListener)
+                    //.SetIcon(Resource.Drawable.aviso)
+                    .Create().Show();
+                });
+            }
+        }
+
+        void ShowErrorMessage(String str)
+        {
+            if (_activity != null)
+            {
+                _activity.RunOnUiThread(() =>
+                {
+                    var db = new AlertDialog.Builder(_activity);
+                    db.SetTitle("Aviso")
+                    //.SetIcon(Resource.Drawable.configuracion_terminal)//
+                    .SetMessage(str)
+                    .SetPositiveButton("Aceptar", null as IDialogInterfaceOnClickListener)
+                    //.SetIcon(Resource.Drawable.error)
+                    .Create()
+                    .Show();
+                });
+            }
+        }
+
+
+        /*void ShowErrorDialog()
+        {
+            var db = new AlertDialog.Builder(this);
+            db.SetTitle("Aviso")
+            .SetMessage(Resource.String.welcome)
+            .SetPositiveButton("Aceptar", OnClickDialogNeedsConfig);
+            db.Create().Show();
+        }*/
+
+        public Action<String> DebugLoginHandler { get; set; }
+        public Action<String, int> ProgressHandler { get; set; }
+        public Action EndHandler { get; set; }
+        public Action ErrorHandler { get; set; }
+        public bool IsRunning
+        {
+            get { return _client != null && _client.Conectado; }
+        }
+
+        bool solicitado;
+        LogInCommand.Motivo motivoGEO;
+        GEOClient _client;
+        EditText _etLog;
+        Configuration _conf;
+        Android.App.Activity _activity;
+        ProgressDialog progDiag;
+
+        static bool IsRunningAny = false;
+    }
+#else 
+    class SyncProcess
+    {
+        public void Start(Object pd)
+        {
+
+        }
+    }
+#endif
+
+}
+

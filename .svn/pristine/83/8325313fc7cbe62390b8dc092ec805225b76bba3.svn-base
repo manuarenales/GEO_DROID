@@ -1,0 +1,31 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class MotivoMaquinaNoRecaudada
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        public int idIncidencias { get; set; }
+
+        [ForeignKey("idIncidencias")]
+        public virtual Incidencia incidencia { get; set; }
+
+        public int idConceptoMotivoMaquinaNoRecaudada { get; set; }
+
+        [ForeignKey("idConceptoMotivoMaquinaNoRecaudada")]
+        public virtual ConceptoMotivoMaquinaNoRecaudada conceptoMotivoMaquinaNoRecaudada { get; set; }
+
+
+        [DataMember, MaxLength(2000)]
+        public string comentarios { get; set; }
+    }
+}

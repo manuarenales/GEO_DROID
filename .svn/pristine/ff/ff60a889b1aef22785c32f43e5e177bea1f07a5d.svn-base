@@ -1,0 +1,207 @@
+﻿@page "/utilities"
+@using GEO_DROID.Models
+@using GEO_DROID.Resources
+@using InTheHand.Net.Bluetooth
+@using InTheHand.Net.Sockets
+@using Microsoft.Maui.Controls.PlatformConfiguration
+@using System.Collections.ObjectModel
+@using System.Net.Sockets
+@using System.Text
+@using BlazorBarcodeScanner.ZXing.JS
+@inject TodoItemDatabase todoItemDatabase
+
+
+<div style="display: @(loading ? "block" : "none") ; height:100px; width:100px; " class="spinner-border text-warning"></div>
+@if (devices == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    @if (devicesBL.Count > 0)
+    {
+        <ul class="list-group list-group-flush">
+            @foreach (var devicebl in devicesBL)
+            {
+                <li class="list-group-item d-flex flex-row justify-content-between align-items-center">
+                    <div class="  ">
+                        <span>@devicebl.DeviceAddress </span>
+                        <span>@devicebl.DeviceName</span>
+                        <button @onclick="() => ConectBl(devicebl)">
+                            <span class="@((devicebl.Connected) ? "connected" : "disconnected")">@devicebl.Connected</span>
+                        </button>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+}
+<Div Class="d-flex w-100 p-2">
+    <Button Class="w-90" Color="Color.Primary" @onclick="ONOFFBlue">Buscar por Bluetooth</Button>
+</Div>
+<Div>
+    @if (Connected)
+    {
+        <button @onclick="SendData">Mandar Por Bluetooth</button>
+    }
+</Div>
+
+
+
+@* <BlazorBarcodeScanner.ZXing.JS.BarcodeReader Title="Scan Barcode from Camera"
+                                             StartCameraAutomatically="false"
+                                             ShowStart="true"
+                                             ShowReset="true"
+                                             ShowVideoDeviceList="true"
+                                             VideoWidth="300"
+                                             VideoHeight="200"
+                                             OnBarcodeReceived="LocalReceivedBarcodeText"
+                                             OnErrorReceived="Wat" /> *@
+
+
+<Modal @ref="modalRefSincro">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle> Scaning Devices .... </ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <div class="spinner-border text-warning"></div>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+
+@code {
+    ObservableCollection<DeviceCandidate> devices;
+    IReadOnlyCollection<BluetoothDeviceInfo> devicesBL;
+    private DeviceCandidate newDevice = new DeviceCandidate();
+    private BluetoothClient client;
+    private bool Connected = false;
+    private BluetoothDeviceInfo deviceConected;
+    private string LocalBarcodeText;
+    DateTime SelectedDate { get; set; } = DateTime.Now;
+    DateTime Time { get; set; } = DateTime.Now;
+    DateTime _endDate;
+    bool enabled;
+    bool loading = false;
+    private Modal modalRefSincro;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        devices = new ObservableCollection<DeviceCandidate>(await LoadDevices());
+        devicesBL = new List<BluetoothDeviceInfo>();
+        await Permissions.RequestAsync<BluetoothPermissions>();
+        await Permissions.RequestAsync<Permissions.Camera>();
+        client = new BluetoothClient();
+        _endDate = new DateTime();
+    }
+
+    public async Task<List<DeviceCandidate>> LoadDevices()
+    {
+        return await todoItemDatabase.GetItemsAsync();
+    }
+
+    public async void createDevice()
+    {
+        newDevice.Id = 0;
+        await todoItemDatabase.SaveItemAsync(newDevice);
+        devices = new ObservableCollection<DeviceCandidate>(await LoadDevices());
+        StateHasChanged();
+    }
+
+    public async void Delete(DeviceCandidate device)
+    {
+        await todoItemDatabase.DeleteItemAsync(device);
+        devices = new ObservableCollection<DeviceCandidate>(await LoadDevices());
+        StateHasChanged();
+    }
+
+    public async Task ONOFFBlue()
+    {
+        loading = true;
+
+        await Task.Run(() =>
+        {
+            devicesBL = client.DiscoverDevices();
+        });
+        loading = false;
+        StateHasChanged();
+    }
+
+
+
+    public void ConectBl(BluetoothDeviceInfo device)
+    {
+        try
+        {
+            if (device != null && device.DeviceAddress != null)
+            {
+                client.Connect(device.DeviceAddress, BluetoothService.SerialPort);
+                if (client.Connected)
+                {
+                    Connected = true;
+                    deviceConected = device;
+                    Console.WriteLine("Conectado con éxito al dispositivo Bluetooth.");
+                    StateHasChanged();
+                }
+                else
+                {
+                    Console.WriteLine("No se pudo conectar al dispositivo Bluetooth.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("El dispositivo o la dirección del dispositivo no pueden ser nulos.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al conectar el dispositivo Bluetooth: {ex.Message}");
+        }
+    }
+
+    public async void SendData()
+    {
+        try
+        {
+            if (client.Connected)
+            {
+                NetworkStream stream = client.GetStream();
+                if (stream.CanWrite)
+                {
+                    byte[] byteArray = Encoding.UTF8.GetBytes("lest go , Im alive !!");
+                    await stream.WriteAsync(byteArray, 0, byteArray.Length);
+                    Console.WriteLine("Datos enviados al dispositivo Bluetooth.");
+                }
+                else
+                {
+                    Console.WriteLine("No se puede escribir en el stream del dispositivo Bluetooth.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("El cliente Bluetooth no está conectado.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al enviar datos al dispositivo Bluetooth: {ex.Message}");
+        }
+    }
+
+    private void LocalReceivedBarcodeText(BarcodeReceivedEventArgs args)
+    {
+
+        this.LocalBarcodeText = args.BarcodeText;
+        StateHasChanged();
+    }
+
+    public void Wat(object error)
+    {
+        var sis = error;
+    }
+
+
+}

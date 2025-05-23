@@ -1,0 +1,85 @@
+﻿@using GEO_DROID.Services
+@using System.Globalization;
+ @inject NavigationManager Navigation
+ @inject IStringLocalizer<StringLocalizer> Localizer;
+ @inject SincroService Sincroservice;
+
+
+
+<ul class="list-group list-group-flush">
+    @foreach (ItemList item in MenuItems)
+    {
+        if (@item.ruta == "sincronizacion")
+        {
+            <li class="list-group-item d-flex justify-content-start align-items-lg-center" @onclick="() => ShowSincroModal()">
+                <img class="m-1" src="@item.icon" />
+
+                <span class="m-2 title text-center mt-3 p-2 font-weight-bold"> @Localizer[@item.title] </span>
+
+            </li>
+        }
+        else
+        {
+            <li class="list-group-item d-flex justify-content-start align-items-lg-center" @onclick="() => NavigateTo(item.ruta)">
+                <img class="m-1" src="@item.icon" />
+
+                <span class="m-2 title text-center mt-3 p-2 font-weight-bold"> @Localizer[@item.title] </span>
+
+            </li>
+        }
+    }
+</ul>
+
+<div class="modal" style="display: @(modalVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><img class="m-1" src="/img/alert.png" />Aviso</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Pulse Aceptar para iniciar el proceso de sincronización</p>
+                <div style="display: @(spinnerDisplay ? "block" : "none")" class="spinner-border text-warning"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="HideModal">Cancelar</button>
+                <button type="button" class="btn btn-primary" @onclick="Sincro">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public List<ItemList> MenuItems { get; set; }
+    private bool modalVisible = false;
+    private bool spinnerDisplay = false;
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, false);
+    }
+
+    private void ShowSincroModal()
+    {
+        modalVisible = true;
+    }
+
+    private void HideModal()
+    {
+        modalVisible = false;
+    }
+
+    private async void Sincro()
+    {
+        spinnerDisplay = true;
+        Sincroservice.Sincro();
+        spinnerDisplay = false;
+        HideModal();
+    }
+
+
+}

@@ -1,0 +1,256 @@
+﻿@page "/opciones"
+@using GEO_DROID.Resources
+@using GEO_DROID.Services
+@using GEO_DROID.Store
+@using GEO_DROID.Store.CultureCase
+@using GEO_DROID.Store.Rutas
+@using GeoDroid.Data.Models.DTO
+@using InTheHand.Net
+@using InTheHand.Net.Sockets
+@using System.Text.Json
+@inject NavigationManager Navigation
+@inject IState<CultureState> CultureState;
+@inject IState<AveriaState> AveriaState;
+
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject IDispatcher Dispatcher;
+@inject IState<RutasState> RutasState;
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IJSRuntime JS
+
+@if (RutasState.Value.RutaSelected.Establecimiento is not null)
+{
+    <FluentStack Orientation="Orientation.Vertical" Style="padding: 1rem;  ">
+
+        <!-- Cabecera del Establecimiento -->
+        <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
+            <FluentLabel Typo="Typography.H3">@RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
+        </FluentStack>
+
+
+        <!-- Recaudar -->
+        <FluentCard>
+            <FluentLabel Typo="Typography.H5">@Localizer["recaudar"]</FluentLabel>
+            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 1rem;">
+                <FluentStack Orientation="Orientation.Horizontal">
+                    <img src="img/tienda.png" style="height: 24px;" />
+                    <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
+                </FluentStack>
+                <FluentStack Orientation="Orientation.Horizontal">
+                    <img src="img/recaudador.png" style="height: 24px;" />
+                    <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
+                </FluentStack>
+                <FluentStack Orientation="Orientation.Horizontal">
+                    <img src="img/notas.png" style="height: 24px;" />
+                    <FluentLabel Typo="Typography.H4">B2600.00</FluentLabel>
+                </FluentStack>
+            </FluentStack>
+        </FluentCard>
+
+        <!-- Motivos máquina no recaudada -->
+        <FluentCard>
+            <FluentLabel Typo="Typography.H5">@Localizer["motivosmaquinanorecaudada"]</FluentLabel>
+            <FluentStack Orientation="Orientation.Horizontal">
+                <img src="img/maquina.png" style="height: 24px;" />
+                <FluentLabel Typo="Typography.H4">0</FluentLabel>
+            </FluentStack>
+        </FluentCard>
+
+        <!-- Averías -->
+        <FluentCard @onclick='() => NavigateTo("averias", RutasState.Value.RutaSelected.Establecimiento)' Style="cursor: pointer;">
+            <FluentLabel Typo="Typography.H5">@Localizer["averias"]</FluentLabel>
+            <FluentStack Orientation="Orientation.Horizontal">
+                <img src="img/repare.jpg" style="height: 24px;" />
+                <FluentLabel Typo="Typography.H4">@AveriaState.Value.AveriaCount</FluentLabel>
+            </FluentStack>
+        </FluentCard>
+
+        <!-- Cambios -->
+        <FluentCard>
+            <FluentLabel Typo="Typography.H5">@Localizer["cambios"]</FluentLabel>
+            <FluentStack Orientation="Orientation.Horizontal">
+                <img src="img/monedas.png" style="height: 24px;" />
+                <FluentLabel Typo="Typography.H4">1/0/0</FluentLabel>
+            </FluentStack>
+        </FluentCard>
+
+        <!-- Préstamos -->
+        <FluentCard>
+            <FluentLabel Typo="Typography.H5">@Localizer["prestamos"]</FluentLabel>
+            <FluentStack Orientation="Orientation.Horizontal" Style="gap: 1rem;">
+                <FluentStack Orientation="Orientation.Horizontal">
+                    <img src="img/tienda.png" style="height: 24px;" />
+                    <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
+                </FluentStack>
+                <FluentStack Orientation="Orientation.Horizontal">
+                    <img src="img/manoflecha1.png" style="height: 24px;" />
+                    <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
+                </FluentStack>
+                <FluentStack Orientation="Orientation.Horizontal">
+                    <img src="img/manoflecha2.png" style="height: 24px;" />
+                    <FluentLabel Typo="Typography.H4">0.00</FluentLabel>
+                </FluentStack>
+            </FluentStack>
+        </FluentCard>
+
+        @if (device != null)
+        {
+            <FluentCard>
+                <FluentLabel Typo="Typography.H4">
+                    @device.Connected , @device.DeviceName , @device.DeviceAddress
+                </FluentLabel>
+            </FluentCard>
+        }
+
+    </FluentStack>
+
+    <!-- Botonera inferior el escultor y la guerra de marmol  -->
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+                 Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem;">
+        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="ShowModalTickets">
+            @Localizer["imprimirtickets"]
+        </FluentButton>
+        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="ShowModalInfo">
+            @Localizer["informacion"]
+        </FluentButton>
+    </FluentStack>
+
+
+    @*---------------------------------- MODAL ----------------------------------*@
+    @* <div class="modal-backdrop" style="z-index: 1049; display: @(modalTicketsVisible ? "block" : "none"); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);"></div>
+    <div class="modal show " tabindex="-1" role="dialog" style="display: @(modalTicketsVisible ? "block" : "none")">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+            <div class="modal-content bg-light" style="height: 100%;">
+                <div class="modal-header">
+                    <span class="modal-title Titulo ">Seleccionar ticket</span>
+                    <button type="button" class="close" aria-label="Close" @onclick="HideTicketsModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div> 
+
+            <div class="modal-body" style="overflow-y: auto;">
+            <input class="form-control" placeholder="Buscar" @bind="nameTickets" @oninput="OnNameChangedTickets" />
+            <div class="m-2">
+            <ul class="list-group">
+            @foreach (string item in tickets)
+            {
+            <li class="list-group-item list-group-item-action @(selectedItem == item ? "active" : "")" @onclick="() => TicketSelected(item)">
+            <span>@item</span>
+            </li>
+            }
+            </ul>
+            </div>
+            <div class="d-flex p-1 m-1">
+            <button class="btn btn-info w-100 m-2 p-1" disabled="@DisabledTickets" @onclick="() => ImpresionTicket()">Seleccionar</button>
+            </div>
+            </div>
+
+
+            </div>
+        </div>
+    </div> *@
+    @*---------------------------------- MODAL ----------------------------------*@
+    @*   <div class="modal-backdrop" style="z-index: 1049; display: @(modalInfoVisible ? "block" : "none"); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);"></div>
+    <div class=" modal show " tabindex="-1" role="dialog" style="display: @(modalInfoVisible ? "block" : "none")">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+            <div class="modal-content bg-light " style="height: 100%;">
+                <div class="modal-header">
+                    <span class="modal-title Titulo ">Información del Establecimiento</span>
+                    <button type="button" class="close" aria-label="Close" @onclick="HideInfoModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="m-2">
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <label>Nombre:</label>
+                                <span style="color: blue;">@RutasState.Value.RutaSelected.Establecimiento.nombre</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> *@
+    @*---------------------------------------------------------------------------*@
+    //
+}
+@code {
+
+
+    public bool modalTicketsVisible = false;
+    public bool modalInfoVisible = false;
+    private string nameTickets;
+    public BluetoothDeviceInfo device;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        Dispatcher.Dispatch(new GetAveriasCount(RutasState.Value.RutaSelected.Establecimiento));
+
+    }
+
+    Task OnNameChangedTickets(ChangeEventArgs e)
+    {
+        nameTickets = e.Value.ToString();
+        return Task.CompletedTask;
+    }
+
+    Task OnNameChangedInfo(string value)
+    {
+        return Task.CompletedTask;
+    }
+
+    private void ShowModalTickets()
+    {
+        modalTicketsVisible = true;
+    }
+
+    private void ShowModalInfo()
+    {
+        modalInfoVisible = true;
+    }
+
+    private void NavigateTo(string pageTitle, Establecimiento establecimiento)
+    {
+        Dispatcher.Dispatch(new ChangeEstablecimientoSelectedAction(establecimiento));
+
+        Dispatcher.Dispatch(new NavigationToAction($"/{pageTitle.ToLower()}"));
+    }
+
+    private void HideTicketsModal()
+    {
+        modalTicketsVisible = false;
+    }
+
+    private void HideInfoModal()
+    {
+        modalInfoVisible = false;
+    }
+
+    private EventCallback TicketSelected(string Item)
+    {
+
+        return EventCallback.Empty;
+    }
+
+    private async void ImpresionTicket()
+    {
+
+        PermissionStatus permissionStatus = Permissions.CheckStatusAsync<BluetoothPermissions>().Result;
+        if (permissionStatus == PermissionStatus.Denied)
+        {
+            await Permissions.RequestAsync<BluetoothPermissions>();
+            await Permissions.RequestAsync<Permissions.Camera>();
+        }
+        else
+        {
+
+        }
+    }
+}

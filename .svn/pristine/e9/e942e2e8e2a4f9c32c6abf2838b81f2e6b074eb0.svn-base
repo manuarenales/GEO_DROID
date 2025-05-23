@@ -1,0 +1,153 @@
+﻿@page "/utilities"
+@using BlazorBarcodeScanner.ZXing.JS
+@using GEO_DROID.Resources
+@using GEO_DROID.Services
+@using GeoDroid.Data.Models.DTO
+@using InTheHand.Net
+@using InTheHand.Net.Bluetooth
+@using InTheHand.Net.Sockets
+@using System.Net.Sockets
+@using System.Text
+@inject IJSRuntime JS
+@inject BluetoothServiceManager _BluetoothServiceManager;
+
+@using Microsoft.Maui.Controls.PlatformConfiguration
+@using System.Collections.ObjectModel
+@using System.Text.Json
+
+
+
+<span style="display: @(loading ? "block" : "none"); position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;" class="text-center">
+    <span class="spinner-border text-warning"></span>
+    <span>Loading...</span>
+</span>
+
+
+
+
+@if (devicesBL != null && devicesBL.Count > 0)
+{
+    <ul class="list-group list-group ">
+        @foreach (var devicebl in devicesBL)
+        {
+            <li class="list-group-item d-flex flex-row justify-content-between align-items-center">
+                <div class=" d-flex flex-column justify-content-center align-items-center">
+                    <span>@devicebl.DeviceAddress </span>
+                    <span>@devicebl.DeviceName</span>
+                    <button @onclick="() => ConectBl(devicebl)">
+                        <span class="@((devicebl.Connected) ? "connected" : "disconnected")"> @((devicebl.Connected) ? "Conectado" : "Conectar") </span>
+                    </button>
+                </div>
+            </li>
+        }
+    </ul>
+}
+
+
+<div>
+</div>
+
+<div style="height: 65px;"></div>
+<div Class="row m-2  fixed-bottom mb-3 ">
+    <div Class="col-1">
+    </div>
+    <div Class="col-10 p-1">
+        <button Class="w-40 btn btn-secondary " Color="Color.Primary" @onclick="SearchDevices">Buscar por Bluetooth</button>
+        <button Class="w-40 btn btn-secondary " Color="Color.Primary" @onclick="SendData">Send Data</button>
+    </div>
+    @*<Div Class="col-4 p-1">
+    <Button Class="w-100" Color="Color.Primary" @onclick="ShowSincroModal">Añadir Manualmente</Button>
+    @if (Connected)
+    {
+    <button @onclick="SendData">Mandar Por Bluetooth</button>
+    }
+    </Div> *@
+    <div Class="col-1">
+    </div>
+</div>
+
+@*<BlazorBarcodeScanner.ZXing.JS.BarcodeReader Title="Scan Barcode from Camera" StartCameraAutomatically="false" ShowStart="true" ShowReset="true" ShowVideoDeviceList="true" VideoWidth="300" VideoHeight="200" OnBarcodeReceived="LocalReceivedBarcodeText" OnErrorReceived="Wat" />*@
+@*
+<Modal @ref="modalNewDevice">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Datos de Dispositivo  </ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <form>
+                <div class="form-group">
+                    <label for="exampleInputEmail1">Device address</label>
+                    <input type="text" @bind="newDeviceAddress" class="form-control" id="exampleInputEmail1">
+                </div>
+                <button @onclick="ConnectToDevice" type="submit" class="btn btn-primary">Conectar</button>
+            </form>
+        </ModalBody>
+    </ModalContent>
+</Modal> *@
+
+
+@code {
+    // private DeviceCandidate newDevice = new DeviceCandidate();
+    IReadOnlyCollection<BluetoothDeviceInfo> devicesBL;
+
+    private bool Connected = false;
+    private string newDeviceAddress;
+    private BluetoothDeviceInfo deviceFormModal;
+    private string LocalBarcodeText;
+    bool enabled;
+    bool loading = false;
+    BluetoothAddress address;
+
+    public async Task SearchDevices()
+    {
+        loading = true;
+        devicesBL = await _BluetoothServiceManager.SearchDevices();
+        loading = false;
+        StateHasChanged();
+    }
+
+    public async void ConectBl(BluetoothDeviceInfo device)
+    {
+
+        await _BluetoothServiceManager.ConectBl(device);
+
+
+        if (_BluetoothServiceManager.client.Connected)
+        {
+            // guarso el addres
+            string addressString = device.DeviceAddress.ToString();
+
+            await JS.InvokeVoidAsync("localStorage.setItem", "deviceAddress", addressString);
+
+            address = device.DeviceAddress;
+        }
+        else
+        {
+            Console.WriteLine("No se pudo conectar al dispositivo Bluetooth.");
+        }
+    }
+
+    public async void SendData()
+    {
+        byte[] byteArray = Encoding.UTF8.GetBytes("lest go , Im alive !!");
+        string error = await _BluetoothServiceManager.SendData(byteArray, address);
+        if (String.IsNullOrEmpty(error))
+        {
+
+        }
+    }
+
+    private void LocalReceivedBarcodeText(BarcodeReceivedEventArgs args)
+    {
+        this.LocalBarcodeText = args.BarcodeText;
+        StateHasChanged();
+    }
+
+    public void Wat(object error)
+    {
+        var sis = error;
+    }
+
+
+}

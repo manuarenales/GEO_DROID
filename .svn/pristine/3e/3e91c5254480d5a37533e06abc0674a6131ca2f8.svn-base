@@ -1,0 +1,72 @@
+﻿@using GEO_DROID.Services
+@using System.Globalization;
+ @inject NavigationManager Navigation
+ @inject IStringLocalizer<StringLocalizer> Localizer;
+
+<ul class="list-group list-group-flush">
+    @foreach (ItemList item in MenuItems)
+    {
+        if (@item.title == "Sincronizacion")
+        {
+            <li class="list-group-item d-flex justify-content-start align-items-lg-center" @onclick="() => ShowSincroModal()">
+                <img class="m-1" src="@item.icon" />
+                <h4 class="m-2"> @Localizer[@item.title] </h4>
+            </li>
+        }
+        else
+        {
+            <li class="list-group-item d-flex justify-content-start align-items-lg-center" @onclick="() => NavigateTo(item.ruta)">
+                <img class="m-1" src="@item.icon" />
+                <h4 class="m-2"> @Localizer[@item.title]</h4>
+            </li>
+        }
+    }
+</ul>
+
+<Modal @ref="modalRefSincro">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle><img class="m-1" src="/img/alert.png" />Aviso</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Field>
+                <FieldLabel>Pulse Aceptar para iniciar el proceso de sincronizacion </FieldLabel>
+            </Field>
+            <div style="display : @display ; " class="spinner-border text-warning"></div>
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="@HideModal">Cancelar</Button>
+            <Button Color="Color.Primary" Clicked="@Sincro">Aceptar</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+ @code {
+
+    [Parameter]
+    public List<ItemList> MenuItems { get; set; }
+    private string display = "none";
+    private Modal modalRefSincro;
+
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+
+    private Task ShowSincroModal()
+    {
+        return modalRefSincro.Show();
+    }
+
+    private Task HideModal()
+    {
+        return modalRefSincro.Hide();
+    }
+
+    private void Sincro()
+    {
+        display = "block";
+    }
+}

@@ -1,0 +1,253 @@
+﻿using GEO_DROID.GeoProtocol;
+/* Cambio no fusionado mediante combinación del proyecto 'GEO_DROID (net8.0-windows10.0.22621.0)'
+Antes:
+using System.Security.Cryptography.X509Certificates;
+Después:
+using GEO_DROID.Services.SincroService;
+using System.Security.Cryptography.X509Certificates;
+*/
+using GEO_DROID.Services.SincroService.SincroService.SincroService;
+using GeoDroid.Data;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Text.RegularExpressions;
+
+
+namespace GEO_DROID.Services
+{
+    class GEOClient : TCPNetClientBase
+    {
+        public delegate void ProcessCommandDelegate(GeoProtocol.GeoProtocolCommand command);
+        public delegate void UnknownCommandDelegate();
+        public delegate void TimeOutExpiredDelegate();
+        public GeoDroidDbContext _dbContext;
+        public GEOClient(bool useSSL, bool useClientCertificates, bool useCompression) : base(useSSL, useClientCertificates, useCompression)
+        {
+            _dbContext = new GeoDroidDbContext();
+        }
+
+        override protected X509CertificateCollection GetClientCertificates()
+        {
+            throw new NotImplementedException();
+        }
+
+        new public void Connect()
+        {
+            _stringBuffer.Clear();
+            base.Connect();
+        }
+
+        protected override void OnConnectionResults(object sender, ConnectionResults args)
+        {
+            base.OnConnectionResults(sender, args);
+            if (!_clienteConectadoAndReady)
+                _clientNotConnectedDelegate();
+        }
+
+        new public void Disconnect()
+        {
+            StopTimer(); // GESTIÓN DE TIEMPO DE ESPERA - Desconexión
+            _timer = null; // 
+
+            _stringBuffer.Clear();
+
+            base.Disconnect();
+        }
+
+        bool _CheckUnknownCommand(string s)
+        {
+            bool isUnknownCommand = false;
+
+            GeoProtocol.GeoProtocolCommand command = CommandFactory.CreateCommand(s);
+            if (command.IsType(CommunicationCommands.errorTag))
+            {
+                GeoProtocol.ErrorCommand errorCommand = command as GeoProtocol.ErrorCommand;
+                if (errorCommand.ErrorType == GeoProtocol.ErrorCommandType.UnknownCommand)
+                    isUnknownCommand = true;
+            }
+
+            return isUnknownCommand;
+        }
+
+        protected override void DatosRecibidos(System.Net.Sockets.TcpClient client, byte[] buffer)
+        {
+            lock (_syncLock) //Synched with the time out code 
+            {
+                if (Client.Client.Connected) //Check if the socket is connected because the timeout was reached and externally it was asked to disconnect
+                {
+                    StopTimer(); // GESTIÓN DE TIEMPO DE ESPERA - Datos recibidos 
+
+                    bool commFinished = false;
+
+                    base.DatosRecibidos(client, buffer);
+                    string datosRecibidos = DataContractSerialization.ENCODING.GetString(buffer);
+
+                    _stringBuffer.Append(datosRecibidos);
+
+                    //-1 because endTag does not contains any #
+                    string endTag = _stringBuffer.ToString(_stringBuffer.Length - CommunicationCommands.endTag.Length - GeoProtocolCommand.commandPartsSeparator.Length,
+                        CommunicationCommands.endTag.Length);
+
+                    if (endTag.Equals(CommunicationCommands.endTag))
+                    {
+                        commFinished = true;
+                    }
+
+                    //A new command arrived  
+                    if (commFinished)
+                    {
+                        if (_CheckUnknownCommand(_stringBuffer.ToString()))
+                        {
+                            if (_unknownCommandDelegate != null)
+                                _unknownCommandDelegate();
+                        }
+                        else if (_processCommandDelegate != null)
+                        {
+                            GeoProtocolCommand command = CommandFactory.CreateCommand(_stringBuffer.ToString());
+
+                            if (_dbContext == null)
+                            {
+                                _dbContext = new GeoDroidDbContext();
+                            }
+
+                            List<Configuration> gog = _dbContext.Configuration.ToList();
+                            Configuration ses = gog.FirstOrDefault();
+
+                            var match = Regex.Match(datosRecibidos, @"-\#@@\#-.+?-\#@@\#-.+?-\#@@\#-.+?-\#@@\#-(?<token>[A-F0-9]+)-\#@@\#-");
+                            if (match.Success)
+                            {
+                                ses.syncToken = match.Groups["token"].Value;
+                                ses.tempSyncToken = match.Groups["token"].Value;
+                                _dbContext.SaveChanges();
+                            }
+
+                            _processCommandDelegate(command);
+                        }
+                    }
+                }
+            }
+        }
+
+        public override void EnviaDatos(string datos)
+        {
+            _stringBuffer.Clear();
+            base.EnviaDatos(datos);
+            ResetTimer(); // GESTIÓN DE TIEMPO DE ESPERA - Espero recibir datos
+        }
+
+        public void EnviaWaitCommand()
+        {
+            _stringBuffer.Clear();
+            base.EnviaDatos(new GeoProtocol.WaitCommand().GetCommandString());
+            System.Threading.Thread.Sleep(1000);
+        }
+
+        private void SetTimer()
+        {
+            StopTimer(); // Por si hubiera un temporizador lanzado, primero detenemos
+            if (_timeOutExpiredDelegate != null)
+            {
+                _timer = new System.Timers.Timer();
+                _timer.Interval = _timerInterval;
+                _timer.Elapsed -= _ElapsedHandler;
+                _timer.Elapsed += _ElapsedHandler;
+            }
+            else
+            {
+                _timer = null;
+            }
+        }
+
+        private void ResetTimer()
+        {
+            if (_timer != null)
+            {
+                _timer.Stop();
+                _timer.Start();
+            }
+        }
+
+        private void StopTimer()
+        {
+            if (_timer != null)
+                _timer.Stop();
+        }
+
+        public void EnviaComando(GeoProtocol.GeoProtocolCommand command)
+        {
+            EnviaDatos(command.GetCommandString());
+        }
+
+        private void _ElapsedHandler(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            lock (_syncLock)
+            {
+                StopTimer(); // GESTIÓN DE TIEMPO DE ESPERA - Paramos porque ha expirado el tiempo de espera y actuaremos en consecuencia
+                if (_timeOutExpiredDelegate != null)
+                    _timeOutExpiredDelegate();
+            }
+        }
+
+        bool _clienteConectadoAndReady = false;
+        protected override void OnClienteConectadoAndReady()
+        {
+            base.OnClienteConectadoAndReady();
+            _clienteConectadoAndReady = true;
+            _clientConnectedDelegate();
+        }
+
+        internal void EnviaComando(Commands.GeoProtocolCommand command)
+        {
+            EnviaDatos(command.GetCommandString());
+        }
+
+        public ProcessCommandDelegate processCommandDelegate
+        {
+            set
+            {
+                this._processCommandDelegate = value;
+            }
+            get
+            {
+                return _processCommandDelegate;
+            }
+        }
+
+        public TimeOutExpiredDelegate timeOutExpiredDelegate
+        {
+            set
+            {
+                this._timeOutExpiredDelegate = value;
+                SetTimer(); // GESTIÓN DE TIEMPO DE ESPERA - Tras establecer el delegado llamamos al método que establece el timer
+            }
+        }
+
+        public Action clientConnected
+        {
+            set
+            {
+                this._clientConnectedDelegate = value;
+            }
+        }
+
+        public Action clientNotConnected
+        {
+            set
+            {
+                this._clientNotConnectedDelegate = value;
+            }
+        }
+
+        StringBuilder _stringBuffer = new StringBuilder();
+        ProcessCommandDelegate _processCommandDelegate = null;
+        UnknownCommandDelegate _unknownCommandDelegate = null;
+        TimeOutExpiredDelegate _timeOutExpiredDelegate = null;
+        Action _clientConnectedDelegate = null;
+        Action _clientNotConnectedDelegate = null;
+
+        System.Timers.Timer _timer = null;
+        float _timerInterval = 60000;
+
+        private readonly object _syncLock = new object();
+    }
+}

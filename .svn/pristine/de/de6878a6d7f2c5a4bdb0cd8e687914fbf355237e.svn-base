@@ -1,0 +1,84 @@
+﻿@page "/rutas"
+@using GEO_DROID.Models
+@using GEO_DROID.Services
+ @inject NavigationManager Navigation
+ @inject EstablecimientosService Builder
+ @inject CultureService Cultureservice
+  @inject IStringLocalizer<StringLocalizer> Localizer;
+
+<ul class="list-group">
+    <li class="additem list-group-item d-flex justify-content-start align-items-lg-center" @onclick="() => ShowModal()">
+        <img class="m-1" src="img/add.png" />
+        <h7 class="m-2"> @Localizer["añadirestablecimiento"]</h7>
+    </li>
+    <li class="list-group-item d-flex justify-content-between align-items-lg-center" style="position: relative;">
+        <h8 class="m-2">@FormattedDate(selectedDate)</h8>
+        <img class="m-1" src="img/calendar.png" />
+        <input type="date" @ref="dateInput" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 1;" @bind="selectedDate" />
+    </li>
+</ul>
+
+<GEO_DROID.Shared.Components.EstablecimientosList></GEO_DROID.Shared.Components.EstablecimientosList>
+
+<Modal @ref="modalRef">
+    <ModalContent Size="ModalSize.Fullscreen">
+        <ModalHeader>
+            <ModalTitle> @Localizer["añadirestablecimiento"] </ModalTitle>
+                <CloseButton />
+            </ModalHeader>
+
+            <ModalBody>
+                <TextEdit Placeholder="@Localizer["buscar"]" Text="@name" TextChanged="@OnNameChanged" />
+                <Div Class="m-2">
+                    <ListGroup>
+                        @foreach (Establecimiento item in establecimientos)
+                    {
+                        <ListGroupItem><Span>@item.nombre</Span></ListGroupItem>
+                    }
+                </ListGroup>
+            </Div>
+        </ModalBody>
+
+    </ModalContent>
+</Modal>
+
+@code {
+
+    private ElementReference dateInput;
+    private DateTime selectedDate = DateTime.Now;
+    private Modal modalRef;
+    private string name;
+    private List<Establecimiento> establecimientos = new List<Establecimiento>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cultureservice.CultureChanged += StateHasChanged;
+    }
+
+    Task OnNameChanged(string value)
+    {
+        name = value;
+        establecimientos = Builder.GetEstablecimientos();
+        return Task.CompletedTask;
+    }
+
+    public void AddEstablecimiento()
+    {
+
+    }
+
+    public string FormattedDate(DateTime date)
+    {
+        return $"{date.ToString("dddd, dd")} de {date.ToString("MMMM")}, {date.Year}";
+    }
+
+    private Task ShowModal()
+    {
+        return modalRef.Show();
+    }
+
+    private Task HideModal()
+    {
+        return modalRef.Hide();
+    }
+}

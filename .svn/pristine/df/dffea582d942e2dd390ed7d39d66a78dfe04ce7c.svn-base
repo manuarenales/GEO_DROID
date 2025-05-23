@@ -1,0 +1,35 @@
+﻿@using GEO_DROID.Services
+@using System.Text.RegularExpressions
+@using System;
+@inherits LayoutComponentBase
+
+<div class="page">
+    <main>
+        <div style="height:fit-content;" class="row  bg-dark fixed-top">
+            <NavMenu />
+        </div>
+        <article class="content px-4 " style="margin-top: 42px;">
+            @Body
+        </article>
+        <GEO_DROID.Shared.Components.ConfirmationPopUp />
+        <GEO_DROID.Shared.Components.BlockingSpinner />
+    </main>
+</div>
+@code
+{
+
+
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+    }
+
+    private void OnCultureChanged()
+    {
+        Console.WriteLine("CultureChanged event received, updating component.");
+        StateHasChanged();
+    }
+}

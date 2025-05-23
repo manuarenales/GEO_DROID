@@ -1,0 +1,38 @@
+﻿
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
+
+
+namespace GeoDroid.Data
+{
+    public class Recaudacion
+    {
+        [Key, DataMember]
+        public int id { get; set; }
+        [DataMember]
+        public Decimal bruto { get; set; }
+        [DataMember]
+        public Decimal recaudacion { get; set; }
+        [DataMember]
+        public Decimal netoEmpresa { get; set; }
+        [DataMember]
+        public Decimal netoEstablecimiento { get; set; }
+        [DataMember]
+        public bool arqueoRealizado { get; set; }
+        [DataMember]
+        public Decimal valorArqueo { get; set; }
+        [MaxLength(2000), DataMember]
+        public string observaciones { get; set; }
+        [DataMember]
+        public string comentario { get; set; }
+
+        [ForeignKey("Ruta"), DataMember]
+        public int? idRuta { get; set; }
+        public virtual Ruta? Ruta { get; set; }
+
+        [ForeignKey("Incidencia"), DataMember]
+        public int? idIncidencia { get; set; }
+        public virtual Incidencia? Incidencia { get; set; }
+    }
+}

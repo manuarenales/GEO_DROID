@@ -1,0 +1,23 @@
+﻿
+
+img {
+    height: 5vh;
+    width: 5vh;
+}
+
+itemlist {
+    border: 2px,2px,2px,2px solid;
+    border-color: black;
+}
+
+.additem {
+    background-color: rgb(209, 209, 209);
+}
+
+.title {
+    font-size: 1.2em;
+}
+
+.title2 {
+    font-size: 1em;
+}

@@ -1,0 +1,85 @@
+﻿@* @using GEO_DROID.Services
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Concepto
+@using GEO_DROID.Store.Navegation
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IDispatcher Dispatcher
+@inject IState<AplicacionState> AplicacionState
+@inject IState<ConceptoAveriaState> ConceptoAveriaState
+@inject IState<NavigationState> NavigationState
+
+@if (AplicacionState.Value is not null)
+{
+    <div class="modal-backdrop" style="z-index: 1049; display: @(AplicacionState.Value.modalConceptoAveriaSelecter ? "block" : "none"); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);"></div>
+    <div class="modal show " tabindex="-1" role="dialog" style="display: @(AplicacionState.Value.modalConceptoAveriaSelecter  ? "block" : "none")">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+            <div class="modal-content bg-light" style="height: 100%;">
+                <div class="modal-header">
+                    <span class="modal-title Titulo ">@Localizer["Concepto"]</span>
+                    <button type="button" class="close" aria-label="Close" @onclick="()=>  Dispatcher.Dispatch(new ChangeModalConceptoSelecter(false))">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="overflow-y: auto;">
+                    <input type="text" @bind="Bconcepto" placeholder="Buscar" class="w-100 p-2" @oninput="FilterEstados" />
+                    <div class="m-2" style="height: 80%;  overflow-y: auto;">
+                        <ul class="list-group">
+                            @if (ConceptoAveriaState.Value.ConceptoAveriaListSelecterSelected is not null)
+                            {
+                                @foreach (ConceptoAveria item in ConceptoAveriaState.Value.ConceptoAveriaListSelecterSelected.Where(e => string.IsNullOrEmpty(Bconcepto) || e.descripcion.ToLower().Contains(Bconcepto.ToLower())))
+                                {
+                                    <li class="list-group-item" @onclick='async ()=> {
+                                       ConceptoSelected(item);
+                                    }'><span>@item.descripcion</span></li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+
+
+@code {
+
+
+    private string Bconcepto = "";
+
+    public ConceptoAveria conceptoAveriaSelected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Dispatcher.Dispatch(new GetConceptoAveriaList());
+    }
+
+
+
+    public void FilterEstados(ChangeEventArgs filter)
+    {
+        Bconcepto = filter.Value.ToString();
+    }
+
+    public void ConceptoSelected(ConceptoAveria concepto)
+    {
+        if (NavigationState.Value.CurrentRoute == "averiaform1")
+        {
+            Dispatcher.Dispatch(new ChangeConceptoAveriaSelectedFormAction(concepto));
+            Dispatcher.Dispatch(new ValidateAveriaFormStateConceptoAveria());
+        }
+        else
+        {
+            Dispatcher.Dispatch(new ChangeConceptoAveriaSelectedAction(concepto));
+        }
+        Dispatcher.Dispatch(new ChangeModalConceptoSelecter(false));
+
+    }
+
+}
+ *@

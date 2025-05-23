@@ -1,0 +1,158 @@
+﻿@page "/configuracion"
+@using GEO_DROID.Services
+@using System.Text.Json
+@using InTheHand.Net
+@inject NavigationManager Navigation
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject CultureService Cultureservice
+@inject IJSRuntime JS
+@inject ConfiguracionService ConfiguracionService;
+
+<NavigationLock OnBeforeInternalNavigation=OnLocationChanging />
+
+
+<div class="row">
+    <div class="col-12">
+        <h5>Sincronizacion</h5>
+        <div class="list-group">
+            <div class="list-group-item d-flex flex-column justify-content-start">
+                <span>Nº Unidad</span>
+                <input class="form-control @(NunidadIsValid ? "" : "is-invalid")" type="number" placeholder="Some text value..." @bind="configuracion.unitNumber" />
+                @if (!NunidadIsValid)
+                {
+                    <div class="invalid-feedback">
+                        Please enter a valid unit number.
+                    </div>
+                }
+            </div>
+            <div class="list-group-item d-flex flex-column justify-content-start">
+                <span>Contraseña</span>
+                <input class="form-control @(ContraseñaIsValid ? "" : "is-invalid")" placeholder="Some text value..." @bind="configuracion.password" />
+                @if (!ContraseñaIsValid)
+                {
+                    <div class="invalid-feedback">
+                        Please enter a valid password.
+                    </div>
+                }
+            </div>
+            <div class="list-group-item d-flex flex-column justify-content-start">
+                <span>Servidor GEO</span>
+                <input class="form-control @(ServerIsValid ? "" : "is-invalid")" placeholder="Some text value..." @bind="configuracion.ip" />
+                @if (!ServerIsValid)
+                {
+                    <div class="invalid-feedback">
+                        Please enter a valid GEO server.
+                    </div>
+                }
+            </div>
+            <div class="list-group-item d-flex flex-column justify-content-start">
+                <span>Puerto GEO</span>
+                <input class="form-control @(PuertoIsValid ? "" : "is-invalid")" type="number" placeholder="Some text value..." @bind="configuracion.port" />
+                @if (!PuertoIsValid)
+                {
+                    <div class="invalid-feedback">
+                        Please enter a valid GEO port.
+                    </div>
+                }
+            </div>
+            <div class="list-group-item d-flex justify-content-start align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" @bind="configuracion.syncCompressionEnabled" id="minDatos">
+                    <label class="form-check-label" for="minDatos">Minimizar uso de datos</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 mt-2">
+        <h5>Tickets</h5>
+        <div class="list-group">
+            <div class="list-group-item d-flex flex-column justify-content-start" @onclick='() => NavigateTo("utilities")'>
+                <span>Impresora</span>
+                <span>@MacImpresion </span>
+            </div>
+            <div class="list-group-item d-flex justify-content-start align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" @bind="firmas" id="firmas">
+                    <label class="form-check-label" for="firmas">Imprimir area de firmas</label>
+                </div>
+            </div>
+            <div class="list-group-item d-flex justify-content-start align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" @bind="tiketCopi" id="tiketCopi">
+                    <label class="form-check-label" for="tiketCopi">Imprimir dos copias del tiket</label>
+                </div>
+            </div>
+        </div>
+        <div class=" col-12 p-2 w-100 ">
+            <button type="button" class="btn btn-secondary w-100 p-2" @onclick="Salir">Salir</button>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private bool firmas { get; set; }
+    private bool tiketCopi { get; set; }
+
+    private bool NunidadIsValid { get; set; } = true;
+    private bool ContraseñaIsValid { get; set; } = true;
+    private bool ServerIsValid { get; set; } = true;
+    private bool PuertoIsValid { get; set; } = true;
+    private bool salir = false;
+
+    private string MacImpresion = "No Device";
+
+    private Configuration configuracion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        configuracion = await ConfiguracionService.GetConfiguracionAsync();
+
+        Cultureservice.CultureChanged += StateHasChanged;
+        salir = false;
+    }
+
+    private async void Save()
+    {
+        await ConfiguracionService.SaveConfigurationAsync(configuracion);
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+
+    private bool ValidForm()
+    {
+        NunidadIsValid = configuracion.unitNumber != null;
+        ContraseñaIsValid = !string.IsNullOrWhiteSpace(configuracion.password);
+        ServerIsValid = !string.IsNullOrWhiteSpace(configuracion.ip);
+        PuertoIsValid = configuracion.port > 0 && configuracion.port <= 65535;
+        return NunidadIsValid && ContraseñaIsValid && ServerIsValid && PuertoIsValid;
+    }
+
+    private void OnLocationChanging(LocationChangingContext context)
+    {
+        if (ValidForm())
+        {
+            Save();
+        }
+        else
+        {
+            if (salir) { }
+            else
+            {
+                context.PreventNavigation();
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async void Salir()
+    {
+        salir = true;
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+}
+

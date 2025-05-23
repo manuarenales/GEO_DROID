@@ -1,0 +1,306 @@
+﻿using Android.App;
+using Android.Bluetooth;
+using Android.Content;
+using Android.Locations;
+using BLL;
+using GEO_DROID.Resources.Lib.Comunicacion;
+using Java.Util;
+using Javax.Crypto;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Platforms.Android.Handlers
+{
+
+    public class BluetoothService : Java.Lang.Object, IBluetoothService
+    {
+        private static readonly UUID MY_UUID = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+        private BluetoothSocket _socket;
+        private Stream _inputStream;
+        private Stream _outputStream;
+        public bool Conected;
+        public byte[] buffer;
+        private BluetoothPairingReceiver _pairingReceiver;
+        private string _deviceAddress;
+
+        public BluetoothService()
+        {
+            var context = Platform.CurrentActivity;
+            _pairingReceiver = new BluetoothPairingReceiver(this);
+            var filter = new IntentFilter(BluetoothDevice.ActionPairingRequest);
+            filter.AddAction(BluetoothDevice.ActionBondStateChanged);
+            context.RegisterReceiver(_pairingReceiver, filter);
+        }
+
+        public bool IsDevicePaired(string address)
+        {
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+            var pairedDevices = bluetoothAdapter.BondedDevices;
+            foreach (var device in pairedDevices)
+            {
+                if (device.Address == address)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private bool IsDeviceConnected(string address)
+        {
+            return Conected && _socket != null && _socket.RemoteDevice.Address == address;
+        }
+
+
+        public bool PairDevice(string address, string pin)
+        {
+            if (IsDevicePaired(address))
+            {
+                Console.WriteLine("El dispositivo ya está emparejado");
+                return false;
+            }
+
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+            if (bluetoothAdapter == null)
+            {
+                Console.WriteLine("Bluetooth no está disponible");
+                return false;
+            }
+
+            _deviceAddress = address; // Guardar la dirección del dispositivo 
+            BluetoothDevice device = bluetoothAdapter.GetRemoteDevice(address);
+            try
+            {
+                var pinObject = new Java.Lang.String(pin);
+                var setPinMethod = device.Class.GetMethod("setPin", Java.Lang.Class.FromType(typeof(Java.Lang.String)));
+                setPinMethod.Invoke(device, pinObject);
+
+                // Invocar el método createBond para emparejar el dispositivo
+                var createBondMethod = device.Class.GetMethod("createBond");
+                createBondMethod.Invoke(device);
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error emparejando el dispositivo: " + ex.Message);
+                return false;
+            }
+        }
+
+
+        public void ConnectToDevice(string address)
+        {
+            if (IsDeviceConnected(address))
+            {
+                Console.WriteLine("Ya estás conectado a este dispositivo");
+                return;
+            }
+
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+            if (bluetoothAdapter == null)
+            {
+                Console.WriteLine("Bluetooth no está disponible");
+                return;
+            }
+
+            BluetoothDevice device = bluetoothAdapter.GetRemoteDevice(address);
+
+            try
+            {
+                _socket = device.CreateRfcommSocketToServiceRecord(MY_UUID);
+                _socket.Connect();
+
+                _inputStream = _socket.InputStream;
+                _outputStream = _socket.OutputStream;
+                Console.WriteLine("Conexión establecida");
+                Conected = true;
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error conectando al dispositivo: " + ex.Message);
+            }
+        }
+
+        public void DisconnectDevice()
+        {
+            try
+            {
+                _inputStream?.Close();
+                _outputStream?.Close();
+                _socket?.Close();
+                Console.WriteLine("Dispositivo desconectado");
+                Conected = false;
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error desconectando el dispositivo: " + ex.Message);
+            }
+        }
+        public string ReadData()
+        {
+            try
+            {
+                buffer = new byte[1024];
+                int bytes;
+                StringBuilder data = new StringBuilder();
+
+                while ((bytes = _inputStream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    for (int i = 0; i < buffer.Length; i++)
+                    {
+                        data.Append((char)buffer[i]);
+                    }
+                    if (bytes < buffer.Length)
+                        break; // End of stream
+                }
+
+
+                return data.ToString();
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error leyendo datos: " + ex.Message);
+                return null;
+            }
+        }
+        public void WriteData(string data)
+        {
+            try
+            {
+                byte[] buffer = new byte[13];
+                for (int i = 0; i < data.Length; i++)
+                {
+                    buffer[i] = (byte)data[i];
+                }
+                _outputStream.Write(buffer, 0, buffer.Length);
+
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error enviando datos: " + ex.Message);
+            }
+        }
+        public bool Reconectar(IProgressCallback progreso, string mac)
+        {
+            try
+            {
+                DisconnectDevice();
+                string macAddress = mac;
+                ConnectToDevice(macAddress);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error reconectando el dispositivo: " + ex.Message);
+                return false;
+            }
+        }
+        public bool ConfigurarComunicacion(byte parametros)
+        {
+            try
+            {
+                WriteData(parametros.ToString());
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error configurando la comunicación: " + ex.Message);
+                return false;
+            }
+        }
+        public bool EnviarDatos(StringBuilder datos)
+        {
+            try
+            {
+                WriteData(datos.ToString());
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error enviando datos: " + ex.Message);
+                return false;
+            }
+        }
+        public StringBuilder RecibirDatos(int timeout, int timeout2)
+        {
+            try
+            {
+                var data = ReadData();
+                return new StringBuilder(data);
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error recibiendo datos: " + ex.Message);
+                return null;
+            }
+        }
+        public void LimpiarBuffer()
+        {
+            try
+            {
+                _inputStream?.Flush();
+                Console.WriteLine("Buffer limpiado");
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error limpiando el buffer: " + ex.Message);
+            }
+        }
+    }
+
+
+    public class BluetoothPairingReceiver : BroadcastReceiver
+    {
+        private const string DefaultPin = "1111"; // Tu PIN predeterminado
+        private BluetoothService _bluetoothService;
+
+        public BluetoothPairingReceiver(BluetoothService bluetoothService)
+        {
+            _bluetoothService = bluetoothService;
+        }
+
+        public override void OnReceive(Context context, Intent intent)
+        {
+            string action = intent.Action;
+            if (action == BluetoothDevice.ActionPairingRequest)
+            {
+                BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice);
+
+                // Verificar si el dispositivo ya está emparejado
+                if (_bluetoothService.IsDevicePaired(device.Address))
+                {
+                    Console.WriteLine("El dispositivo ya está emparejado");
+                    // Intentar conectar directamente si ya está emparejado
+                    _bluetoothService.ConnectToDevice(device.Address);
+                    return;
+                }
+
+                string pin = DefaultPin;
+                try
+                {
+                    // Configurar el PIN usando reflexión
+                    var pinObject = new Java.Lang.String(pin);
+                    var setPinMethod = device.Class.GetMethod("setPin", Java.Lang.Class.FromType(typeof(Java.Lang.String)));
+                    setPinMethod.Invoke(device, pinObject);
+
+                    // Invocar el método createBond para emparejar el dispositivo
+                    var createBondMethod = device.Class.GetMethod("createBond");
+                    createBondMethod.Invoke(device);
+
+                    // Llamar a ConnectToDevice después de emparejarse
+                    _bluetoothService.ConnectToDevice(device.Address);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error emparejando el dispositivo: " + ex.Message);
+                }
+            }
+        }
+    }
+
+
+
+}

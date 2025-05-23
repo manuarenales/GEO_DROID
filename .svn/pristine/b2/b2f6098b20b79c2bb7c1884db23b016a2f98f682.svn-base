@@ -1,0 +1,64 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace GeoDroid.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class NewModels : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "Configuration",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    unitNumber = table.Column<int>(type: "INTEGER", nullable: false),
+                    password = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    ip = table.Column<string>(type: "TEXT", maxLength: 15, nullable: false),
+                    port = table.Column<int>(type: "INTEGER", maxLength: 5, nullable: false),
+                    printerMAC = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    syncToken = table.Column<string>(type: "TEXT", maxLength: 1, nullable: false),
+                    tempSyncToken = table.Column<string>(type: "TEXT", maxLength: 1, nullable: false),
+                    printSignature = table.Column<bool>(type: "INTEGER", nullable: false),
+                    printTwoCopies = table.Column<bool>(type: "INTEGER", nullable: false),
+                    idPersonal = table.Column<int>(type: "INTEGER", nullable: false),
+                    userName = table.Column<string>(type: "TEXT", nullable: false),
+                    serverDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    syncCompressionEnabled = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Configuration", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ConfigurationGEO",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    codigo = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    valor = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ConfigurationGEO", x => x.id);
+                });
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "Configuration");
+
+            migrationBuilder.DropTable(
+                name: "ConfigurationGEO");
+        }
+    }
+}

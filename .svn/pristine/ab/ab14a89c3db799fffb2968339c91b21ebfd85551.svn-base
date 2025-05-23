@@ -1,0 +1,15 @@
+﻿
+
+img {
+    height: 10vh;
+    width: 10vh;
+}
+
+itemlist {
+    border: 2px,2px,2px,2px solid;
+    border-color: black;
+}
+
+.title {
+    font-size: 1.6em;
+}

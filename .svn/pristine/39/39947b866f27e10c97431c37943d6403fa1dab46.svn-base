@@ -1,0 +1,11 @@
+﻿.bluetext {
+    color: blue;
+}
+
+option:not(:first-of-type) {
+    color: blue;
+}
+
+select {
+    color: blue;
+}

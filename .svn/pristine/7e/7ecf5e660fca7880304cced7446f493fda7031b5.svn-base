@@ -1,0 +1,25 @@
+﻿
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    [DataContract]
+    public class ConceptoPrestamo
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+
+        [MaxLength(10)]
+        public string codigo { get; set; }
+        [MaxLength(50)]
+        public string descripcion { get; set; }
+        public bool fondoPerdido { get; set; }
+        public bool cargasHopper { get; set; }
+        public bool activoEnTerminales { get; set; }
+    }
+}

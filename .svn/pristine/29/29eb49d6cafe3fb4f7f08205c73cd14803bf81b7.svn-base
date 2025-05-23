@@ -1,0 +1,104 @@
+﻿@using GEO_DROID.Models
+@using GEO_DROID.Services
+@using Blazorise.Components
+@inject MaquinaService MaquinaServce
+
+<Validation Validator="ValidationRule.IsNotEmpty">
+    <Div Class=" d-flex flex-column justify-content-start  " @onclick='() => ShowModal( )'>
+        <label>
+            Maquina
+        </label>
+        @if (maquinaAveria != null)
+        {
+            <TextEdit Style="color: blue" @bind-Text="@maquinaAveria.codigo">
+                <ValidationSuccess>Name is good.</ValidationSuccess>
+            </TextEdit>
+
+        }
+        else
+        {
+            <TextEdit>
+                <ValidationSuccess>Name is good.</ValidationSuccess>
+                <ValidationError>Enter valid name!</ValidationError>
+            </TextEdit>
+        }
+    </Div>
+</Validation>
+
+<Modal @ref="modalMaquina" style="height:80%;">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Maquina</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <input class="w-100" @bind="Bmaquina" />
+            <ul class="list-group list-group-flush">
+                @foreach (Maquina maquina in maquinas.Where(m => Bmaquina == "" || m.codigo.Contains(Bmaquina)))
+                {
+                    <li class="list-group-item " @onclick="() =>SetMaquinaAveria(maquina)">
+                        <span class=""> @maquina.codigo </span> /  <span class=""> @maquina.descripcionDistribucion </span>
+                    </li>
+                }
+            </ul>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+
+@code {
+    [Parameter]
+    public Maquina maquinaAveria { get; set; }
+    [Parameter]
+    public EventCallback<Maquina> maquinaAveriaChanged { get; set; }
+    [Parameter]
+    public EventCallback OnValueChanged { get; set; }
+    [Parameter]
+    public int idEstablecimiento { get; set; }
+
+    public List<Maquina> maquinas = new List<Maquina>();
+    private string Bmaquina = "";
+    private Modal modalMaquina;
+    private bool IsIdMaquinaValid { get; set; } = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (idEstablecimiento == 0)
+        {
+            maquinas = await MaquinaServce.Getmaquinas();
+        }
+        else
+        {
+            maquinas = await MaquinaServce.GetmaquinasByEstablecimiento(idEstablecimiento);
+        }
+        maquinas = await MaquinaServce.Getmaquinas();
+    }
+
+    private Task ShowModal()
+    {
+        return modalMaquina.Show();
+    }
+
+    private void SetMaquinaAveria(Maquina maquina)
+    {
+        // maquinaAveria = maquina;
+        maquinaAveriaChanged.InvokeAsync(maquina);
+        OnValueChanged.InvokeAsync();
+        modalMaquina.Hide();
+    }
+
+    void ValidateMaquina(ValidatorEventArgs e)
+    {
+        if (maquinaAveria == null)
+        {
+            e.Status = ValidationStatus.Error;
+            e.ErrorText = "Selecciona una máquina.";
+        }
+        else
+        {
+            e.Status = ValidationStatus.Success;
+        }
+    }
+
+}

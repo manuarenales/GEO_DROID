@@ -1,0 +1,57 @@
+﻿@inject NavigationManager Navigation
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="  d-flex align-items-center ">
+        <h1 class="navbar-brand" href="">@UpdatePageTitle()</h1>
+    </div>
+</div>
+
+@code {
+    private string pageTitle = "GeoDroid 1.29.55"; // Título predeterminado
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += HandleLocationChange;
+        UpdatePageTitle(); // Llama al método para establecer el título inicial
+    }
+
+    // Método para actualizar el título de la página según la ruta actual
+    private string UpdatePageTitle()
+    {
+        var currentPage = Navigation.Uri;
+        var pageTitle = "GeoDroid 1.29.55"; // Título predeterminado
+
+        if (currentPage.EndsWith("/rutas", StringComparison.OrdinalIgnoreCase))
+        {
+            pageTitle = "Rutas";
+        }
+        else if (currentPage.EndsWith("/informaciongeneral", StringComparison.OrdinalIgnoreCase))
+        {
+            pageTitle = "Informacion General";
+        }
+        else if (currentPage.EndsWith("/vehiculos", StringComparison.OrdinalIgnoreCase))
+        {
+            pageTitle = "Vehiculos";
+        }
+        else if (currentPage.EndsWith("/sincronizacion", StringComparison.OrdinalIgnoreCase))
+        {
+            pageTitle = "Sincronizacion";
+        }
+        else if (currentPage.EndsWith("/ajustes", StringComparison.OrdinalIgnoreCase))
+        {
+            pageTitle = "Ajustes";
+        }
+        else if (currentPage.EndsWith("/opcionesEstablecimiento", StringComparison.OrdinalIgnoreCase))
+        {
+            pageTitle = "Gestion Establecimiento";
+        }
+        return pageTitle;
+    }
+
+    // Método manejador de evento para actualizar el título cuando cambia la ubicación
+    private void HandleLocationChange(object sender, LocationChangedEventArgs args)
+    {
+        UpdatePageTitle(); // Llama al método para actualizar el título
+        StateHasChanged(); // Notifica a Blazor que el estado ha cambiado y necesita actualizarse
+    }
+}
+

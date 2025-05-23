@@ -1,0 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Localizacion
+    {
+        [Key]
+        public int id { get; set; }
+        public int idTerminal { get; set; }
+
+        [MaxLength(50)]
+        public string fechaHora { get; set; }
+
+        public double latitud { get; set; }
+
+        public double longitud { get; set; }
+
+        public int estado { get; set; }
+    }
+}

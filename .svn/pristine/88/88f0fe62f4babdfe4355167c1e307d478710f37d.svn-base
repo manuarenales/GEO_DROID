@@ -1,0 +1,109 @@
+﻿@page "/rutas";
+@using GEO_DROID.Services;
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Rutas
+@using IDispatcher = Fluxor.IDispatcher;
+
+@inject NavigationManager Navigation;
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject IState<RutasState> rutasState;
+@inject IDispatcher Dispatcher ;
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+<div class=" row  border mb-2 ">
+    <div class="col-12 col-sm-12  col-md-6 col-lg-6 additem ">
+        <div class="row " @onclick="() => Addestablecimiento()">
+            <div class=" p-2 col-3 col-sm-3 col-md-2 col-lg-2  d-flex justify-content-center align-items-center">
+                <img src="img/add.png" class="img-fluid " style="max-height: 3em ; " />
+            </div>
+
+            <div class=" col-9 col-sm-9 col-md-10 col-lg-10 d-flex justify-content-center align-items-center">
+                <span class="m-1 SubTitulo font-weight-bold"> @Localizer["añadirestablecimiento"]</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-12  col-md-6 col-lg-6 ">
+        <div class=" row border position-relative">
+            <div class="col-9 col-sm-9 col-md-10 col-lg-10 d-flex justify-content-center align-items-center">
+                <span class="m-1 font-weight-bold SubTitulo ">@FormattedDate(selectedDate)</span>
+            </div>
+
+            <div class="p-2 col-3 col-sm-3 col-md-2 col-lg-2  d-flex justify-content-center align-items-center ">
+                <img src="img/calendar.png" class="img-fluid" style="max-height: 3em ; " />
+            </div>
+            <input type="date" @ref="dateInput"
+                   style=" position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 1;"
+                   @bind="selectedDate" />
+        </div>
+    </div>
+
+</div>
+
+@if (rutasState.Value.RutasListSelected is not null)
+{
+    @foreach (Ruta ruta in rutasState.Value.RutasListSelected)
+    {
+        <div class="row border overflow-auto " @onclick='() => NavigateTo("opciones" , ruta )'>
+            <div class="col-8">
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-6 ">
+                        <span class="m-2 TextoGrande "> @ruta.Establecimiento.nombre</span>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-6 d-flex justify-content-start align-items-center ">
+                        <img src="img/maquinaJuego.jpg" class="img-fluid p-1 " style="max-height: 3em ; " />
+                        <img src="img/repare.jpg" class="img-fluid p-1 " style="max-height: 3em ; max-width: 3em; min-width : 3em; min-height: 3em;" />
+                        <img src="img/flechas.jpg" class="img-fluid p-1 " style="max-height: 3em ; max-width: 3em; min-width : 3em; min-height: 3em;" />
+                        <img src="img/recaudo.jpg" class="img-fluid p-1 " style="max-height: 3em ; max-width: 3em; min-width : 3em; min-height: 3em;" />
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-4 d-flex  justify-content-center align-items-center  ">
+                <GEO_DROID.Shared.Components.Otros.Recaudacion CodigoEstablecimiento="@ruta.Establecimiento.codigo"></GEO_DROID.Shared.Components.Otros.Recaudacion>
+            </div>
+        </div>
+    }
+
+    <GEO_DROID.Shared.Components.Selecter.EstablecimientoSelecter />
+}
+
+
+@code {
+
+    private ElementReference dateInput;
+    private DateTime selectedDate = DateTime.Now;
+
+    bool modalVisible = false;
+    private List<Ruta> establecimientosList = new List<Ruta>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Dispatcher.Dispatch(new GetRutasListByDate(selectedDate));
+    }
+
+    private void NavigateTo(string pageTitle, Ruta ruta)
+    {
+        Dispatcher.Dispatch(new ChangeRutaSelectedAction(ruta));
+        Dispatcher.Dispatch(new NavigationToAction($"/{pageTitle.ToLower()}"));
+    }
+
+    private async void DeleteItem(Establecimiento establecimiento)
+    {
+        StateHasChanged();
+    }
+
+    public string FormattedDate(DateTime date)
+    {
+        return $"{date.ToString("dddd, dd")} de {date.ToString("MMMM")}, {date.Year}";
+    }
+
+    private void Addestablecimiento()
+    {
+        //Dispatcher.Dispatch(new ChangeEstablecimientoSelecterType);
+        Dispatcher.Dispatch(new ChangeModalEstablecimientoSelecter(true));
+    }
+
+}

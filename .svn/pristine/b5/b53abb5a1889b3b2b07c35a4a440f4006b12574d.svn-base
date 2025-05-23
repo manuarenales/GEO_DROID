@@ -1,0 +1,41 @@
+﻿@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Spinner
+@inject IState<SpinnerState> SpinnerState
+@inject IDispatcher Dispatcher
+
+@if (SpinnerState.Value?.IsVisible == true)
+{
+    <div class="modal-backdrop"
+         style="z-index: 1049; display: @(SpinnerState.Value.IsVisible ? "block" : "none");
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);">
+    </div>
+
+    <div class="modal" style="z-index: 1050; display: @(SpinnerState.Value.IsVisible ? "block" : "none")">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="Titulo font-weight-bold">
+                        @SpinnerState.Value.Title
+                    </span>
+                </div>
+                <div class="modal-body">
+                    <p class="TextoGrande">
+                        @SpinnerState.Value.Message
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-center align-items-center w-100">
+                        <div class="spinner-border" role="status">
+                            <span class="sr-only">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+  
+}

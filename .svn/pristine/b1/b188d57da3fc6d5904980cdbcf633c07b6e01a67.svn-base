@@ -1,0 +1,30 @@
+﻿
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace GEO_DROID.Models
+{
+    public class Incidencia
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        public int idRutaRecaudaciones { get; set; }
+        public DateTime fecha { get; set; }
+        public DateTime fechaAlta { get; set; }
+
+
+        /////////////////////////////////////////////////////
+
+        public int idMaquinas { get; set; }
+
+        /////////////////////////////////////////////////////
+        [ForeignKey("idMaquinas")]
+        public virtual Maquina maquina { get; set; }
+
+        /////////////////////////////////////////////////////
+
+
+    }
+}

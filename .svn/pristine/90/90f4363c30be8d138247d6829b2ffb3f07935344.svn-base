@@ -1,0 +1,494 @@
+﻿@page "/averiaform1/{averiaid:int}/{establecimiento:int}"
+
+@using GEO_DROID.Services
+@using System.Text.Json
+@using GeoDroid.Data.Models
+@using Microsoft.EntityFrameworkCore
+
+@inject AveriasService _AveriasService
+@inject CargaService _CargaService
+@inject LecturaContadorService _LecturaContadorService
+@inject LecturaContadorDetalleService _LecturaContadorDetalleService
+
+@inject NavigationManager Navigation
+@inject CultureService Cultureservice
+
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IJSRuntime JS
+
+<NavigationLock OnBeforeInternalNavigation=OnLocationChanging />
+
+@if (AveriaView)
+{
+    <form class="w-100 content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start scrollableForm " needs-validation>
+        <div class="row w-100 bg-dark ">
+            <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
+                <span style="color:white" class="SubTitulo">Detalles</span>
+            </div>
+        </div>
+        <div class="row w-100  ">
+            <div class="col-12 w-100 border">
+                <GEO_DROID.Shared.Components.Selecter.MaquinasSelecter @bind-maquinaAveria="@averia.Incidencia.idMaquinas" Changed="HandleMaquinaAveriaChanged" idEstablecimiento="@establecimiento" IsValid="@IsIdMaquinaValid">
+                </GEO_DROID.Shared.Components.Selecter.MaquinasSelecter>
+            </div>
+            <div class="col-12 w-100 border">
+                <GEO_DROID.Shared.Components.Selecter.ConceptoSelecter @bind-conceptoAveria="@averia.idConceptos" Changed="HandleConceptoAveriaChanged" idEstablecimiento="@establecimiento" IsValid="@IsIdConceptoValid">
+                </GEO_DROID.Shared.Components.Selecter.ConceptoSelecter>
+            </div>
+            <div class="col-12 w-100 border">
+                <GEO_DROID.Shared.Components.Selecter.EstadoSelecter @bind-estadoAveria="@averia.idAveriaEstados" Changed="HandleEstadoAveriaChanged" idEstablecimiento="@establecimiento" IsValid="@IsIdEstadoValid">
+                </GEO_DROID.Shared.Components.Selecter.EstadoSelecter>
+            </div>
+        </div>
+        <div class="row w-100  ">
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start pl-3 ">
+                <span>Descripción</span>
+                <textarea oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="bluetext mb-1 auto-expand" style=" min-height:1.5em ;" @bind="averia.observaciones" placeholder="Comentarios"></textarea>
+            </div>
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start pl-3 ">
+                <span>Detalle</span>
+                <textarea oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="bluetext mb-1 auto-expand" style=" min-height:1.5em ;" @bind="averia.detalle" placeholder="Detalle"></textarea>
+            </div>
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start pl-3">
+                <span>Comentarios</span>
+                <textarea oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="bluetext mb-1 auto-expand " style=" min-height:1.5em ; " @bind="averia.comentarios" placeholder="Comentarios"></textarea>
+            </div>
+        </div>
+
+        <div class="row w-100 bg-dark">
+            <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center">
+                <span style="color:white" class="subtitle">Acciones</span>
+            </div>
+        </div>
+        <div class="row w-100 border ">
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start" @onclick='() => NavigateToCarga()'>
+                <span class="fs-6">Realizar carga</span>
+                @if (carga != null)
+                {
+                    <span class="bluetext">Realizada @carga.cargaEmpresa / @carga.recuperacionEmpresa </span>
+                }
+                else
+                {
+                    <span class="bluetext">No realizada</span>
+                }
+            </div>
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start" @onclick='() => NavigateToLecturaInicial()'>
+                <span class="fs-6">Lectura inicial de contadores</span>
+                @if (realizadaIni)
+                {
+                    <span class="bluetext">Realizada </span>
+                    @*  @foreach (LecturaDetalle lec in lecturasdetalle)
+            {
+            <span class="bluetext"> @lec.valorAntes  </span>
+            } *@
+                }
+                else
+                {
+                    <span class="bluetext">No realizada</span>
+                }
+
+            </div>
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start" @onclick='() => NavigateToLecturaFinal()'>
+                <span class="fs-6">Lectura final contadores</span>
+                @if (realizadaFin)
+                {
+                    <span class="bluetext">Realizada </span>
+                    @*  @foreach (LecturaDetalle lec in lecturasdetalle)
+            {
+            <span class="bluetext"> @lec.valor  </span>
+            } *@
+                }
+                else
+                {
+                    <span class="bluetext">No realizada</span>
+                }
+            </div>
+        </div>
+    </form>
+
+    <div class="row m-1 fixed-bottom ">
+        <div class="col-4 p-1">
+            <button style="overflow-wrap: break-word; " type="button" class="btn btn-secondary w-100" @onclick="GuardarAveria">Guardar</button>
+        </div>
+        <div class="col-4 p-1">
+            <button style="overflow-wrap: break-word; " type="button" class="btn btn-secondary w-100" disabled="@((averiaid == -1))" @onclick="EliminarAveria">Eliminar</button>
+        </div>
+        <div class="col-4 p-1">
+            <button style="overflow-wrap: break-word; " type="button" class="btn btn-secondary w-100" @onclick='() => NavigateTo("averias/" + establecimiento)'>Cancelar</button>
+        </div>
+    </div>
+
+}
+else if (CargaView)
+{
+    <GEO_DROID.Shared.Components.Forms.CargaForm ParameterCarga="@carga" idAveria="@averia.id" idEstablecimiento="@establecimiento" idMaquinas="@averia.Incidencia.idMaquinas" Changed=HandleCargaChanged></GEO_DROID.Shared.Components.Forms.CargaForm>
+}
+else if (LecturaInicialContadores)
+{
+    <GEO_DROID.Shared.Components.Forms.LecturaInicialContadoresForm @bind-Modified="@realizadaIni" ParameterLecturasDetalle="@lecturasdetalle" idIncidencia="@averia.Incidencia.id" idAveria="@averia.id" idMaquinas="@averia.Incidencia.idMaquinas" Changed=HandleLecturaInicialChanged> </GEO_DROID.Shared.Components.Forms.LecturaInicialContadoresForm>
+}
+else if (LecturaFinalContadores)
+{
+    <GEO_DROID.Shared.Components.Forms.LecturaFinalContadores @bind-Modified="@realizadaFin" ParameterLecturasDetalle="@lecturasdetalle" idIncidencia="@averia.Incidencia.id" idAveria="@averia.id" idMaquinas="@averia.Incidencia.idMaquinas" Changed=HandleLecturaFinalChanged></GEO_DROID.Shared.Components.Forms.LecturaFinalContadores>
+}
+
+@code {
+
+    [Parameter]
+    public int averiaid { get; set; }
+    [Parameter]
+    public int establecimiento { get; set; }
+    [Parameter]
+    public bool fromcarga { get; set; }
+
+    private string title = "";
+    private Averia averia;
+    private Carga carga;
+
+    private LecturaContador lecturaContador;
+
+    private List<LecturaDetalle> lecturasdetalle;
+
+    private bool ActiveTeclado = false;
+
+    private bool IsIdMaquinaValid { get; set; } = true;
+    private bool IsIdConceptoValid { get; set; } = true;
+    private bool IsIdEstadoValid { get; set; } = true;
+
+    private bool realizadaIni { get; set; } = false;
+    private bool realizadaFin { get; set; } = false;
+
+    private bool modalDescripción { get; set; } = false;
+    private bool modalDetalle { get; set; } = false;
+    private bool modalComentario { get; set; } = false;
+
+    private bool AveriaView = true;
+    private bool CargaView = false;
+    private bool LecturaInicialContadores = false;
+    private bool LecturaFinalContadores = false;
+
+    private bool margin = false;
+
+
+    private async void OnLocationChanging(LocationChangingContext context)
+    {
+        if (context.TargetLocation.Contains("averias"))
+        {
+
+        }
+        else if (context.TargetLocation.Contains("opciones"))
+        {
+            context.PreventNavigation();
+            if (AveriaView)
+            {
+                NavigateTo("averias/" + establecimiento);
+            }
+            else
+            {
+                AveriaView = true;
+                CargaView = false;
+                if (carga != null)
+                {
+                    Carga cargass = await _CargaService.GetCargaByAveriaId(averiaid);
+                    if (cargass != null)
+                    {
+                        _CargaService.Reload(carga);
+                    }
+                    else
+                    {
+                        carga = null;
+                    }
+                }
+            }
+        }
+        else if (context.TargetLocation.Contains("averiaform"))
+        {
+            NavigateTo("averias/" + establecimiento);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (averiaid == -1)
+        {
+            title = "Añadir Averia";
+            averia = new Averia();
+            averia.Incidencia = new Incidencia();
+        }
+        else
+        {
+            title = "Editando Averia";
+            averia = await _AveriasService.GetAveriaById(averiaid);
+            carga = await _CargaService.GetCargaByAveriaId(averiaid);
+            lecturaContador = await _LecturaContadorService.GetLecturaContadorByIncidenciaId(averia.idIncidencias);
+
+            if (lecturaContador != null)
+            {
+                lecturasdetalle = await _LecturaContadorDetalleService.GetLecturaDetalleByLecturaContadorAsync(lecturaContador.id);
+            }
+
+            if (lecturasdetalle != null)
+            {
+                foreach (LecturaDetalle item in lecturasdetalle)
+                {
+                    if (item.valor != 0)
+                    {
+                        realizadaFin = true;
+                    }
+                    if (item.valorAntes != 0)
+                    {
+                        realizadaIni
+                         = true;
+                    }
+                }
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+        await JS.InvokeVoidAsync("initializeAutoExpandTextAreas");
+
+    }
+
+    private async Task HandleMaquinaAveriaChanged(int idmaquina)
+    {
+        IsIdMaquinaValid = idmaquina > 0;
+        await JS.InvokeVoidAsync("initializeAutoExpandTextAreas");
+    }
+
+    private async Task HandleConceptoAveriaChanged(int? idconcepto)
+    {
+        IsIdConceptoValid = idconcepto > 0;
+    }
+
+    private async Task HandleEstadoAveriaChanged(int? idestado)
+    {
+        IsIdEstadoValid = idestado > 0;
+    }
+
+    private async Task HandleCargaChanged(Carga carga)
+    {
+        this.carga = carga;
+        AveriaView = true;
+        CargaView = false;
+    }
+
+    private async Task HandleLecturaInicialChanged(List<LecturaDetalle> lecturasDetalle)
+    {
+        this.lecturasdetalle = lecturasDetalle;
+        AveriaView = true;
+        LecturaInicialContadores = false;
+        LecturaFinalContadores = false;
+
+    }
+
+    private async Task HandleLecturaFinalChanged(List<LecturaDetalle> lecturasDetalle)
+    {
+        this.lecturasdetalle = lecturasDetalle;
+        AveriaView = true;
+        LecturaFinalContadores = false;
+        LecturaInicialContadores = false;
+
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, true);
+    }
+
+    private void NavigateToCarga()
+    {
+        if (averia.Incidencia.idMaquinas > 0)
+        {
+            AveriaView = false;
+            LecturaFinalContadores = false;
+            LecturaInicialContadores = false;
+
+            CargaView = true;
+        }
+    }
+
+    private void NavigateToLecturaInicial()
+    {
+        if (averia.Incidencia.idMaquinas > 0)
+        {
+            AveriaView = false;
+            LecturaFinalContadores = false;
+            LecturaInicialContadores = true;
+
+            CargaView = false;
+        }
+    }
+
+    private void NavigateToLecturaFinal()
+    {
+        if (averia.Incidencia.idMaquinas > 0)
+        {
+            AveriaView = false;
+            LecturaFinalContadores = true;
+            LecturaInicialContadores = false;
+
+            CargaView = false;
+        }
+    }
+
+    public async void EliminarAveria()
+    {
+        int resp = await _AveriasService.DeleteAveriaAsync(averia);
+
+        NavigateTo("averias/" + establecimiento);
+    }
+
+    public async void GuardarAveria()
+    {
+        if (ValidateForm())
+        {
+            if (averiaid == -1)
+            {
+                try
+                {
+                    await _AveriasService.CreateAveria(averia);
+                    if (carga != null)
+                    {
+                        carga.idIncidencia = averia.idIncidencias;
+                        carga.idAverias = averia.id;
+                        await _CargaService.SaveAveriaAsync(carga);
+                    }
+                    if (lecturasdetalle != null)
+                    {
+                        if (this.lecturaContador == null)
+                        {
+                            this.lecturaContador = new LecturaContador();
+                            this.lecturaContador.idIncidencias = averia.idIncidencias;
+                            await _LecturaContadorService.SaveLecturaAsync(this.lecturaContador);
+                        }
+                        // tenemos iniciales pero no finales  (copio de valorantes a valor)
+                        foreach (LecturaDetalle lectura in lecturasdetalle)
+                        {
+                            lectura.idLecturaContadores = lecturaContador.id;
+                            if (lectura.valorAntes > 0 && lectura.valor == 0)
+                            {
+                                lectura.valor = lectura.valorAntes;
+
+                            }
+                            //lectura.patContDetalle = null;
+                            await _LecturaContadorDetalleService.SaveLecturasContadorDetalle(lectura);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
+            else
+            {
+                try
+                {
+                    await _AveriasService.UpdateAveria(averia);
+                    if (carga != null)
+                    {
+                        carga.idIncidencia = averia.idIncidencias;
+                        carga.idAverias = averia.id;
+                        await _CargaService.SaveAveriaAsync(carga);
+                    }
+                    if (lecturasdetalle != null)
+                    {
+                        if (this.lecturaContador == null)
+                        {
+                            this.lecturaContador = new LecturaContador();
+                            this.lecturaContador.idIncidencias = averia.idIncidencias;
+                            await _LecturaContadorService.SaveLecturaAsync(lecturaContador);
+                        }
+
+                        foreach (LecturaDetalle lectura in lecturasdetalle)
+                        {
+                            lectura.idLecturaContadores = lecturaContador.id;
+                            if (lectura.valorAntes > 0 && lectura.valor == 0)
+                            {
+                                lectura.valor = lectura.valorAntes;
+
+                            }
+                            //lectura.patContDetalle = null;
+                            await _LecturaContadorDetalleService.SaveLecturasContadorDetalle(lectura);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
+            NavigateTo("averias/" + establecimiento);
+
+        }
+    }
+
+    public bool ValidateForm()
+    {
+        // Validar que se haya seleccionado una máquina
+        IsIdMaquinaValid = averia.Incidencia.idMaquinas > 0;
+
+        // Validar que se haya seleccionado un concepto
+        IsIdConceptoValid = averia.idConceptos > 0;
+
+        // Validar que se haya seleccionado un estado
+        IsIdEstadoValid = averia.idAveriaEstados > 0;
+
+        // Actualizar la interfaz de usuario para mostrar los errores de validación
+        StateHasChanged();
+
+        // Devolver true si todos los campos requeridos están completos
+        return IsIdMaquinaValid && IsIdConceptoValid && IsIdEstadoValid;
+    }
+
+    public async void GuardarCarga()
+    {
+        AveriaView = true;
+        CargaView = false;
+        LecturaInicialContadores = false;
+        LecturaFinalContadores = false;
+    }
+
+    public async void CancelarCarga()
+    {
+        AveriaView = true;
+        CargaView = false;
+        LecturaInicialContadores = false;
+        LecturaFinalContadores = false;
+    }
+
+    private void ShowModalDescripción()
+    {
+        modalDescripción = true;
+    }
+
+    private void HideModalDescripción()
+    {
+        modalDescripción = false;
+    }
+
+    private void HideModalDetalle()
+    {
+        modalDetalle = false;
+    }
+
+    private void ShowModalDetalle()
+    {
+        modalDetalle = true;
+    }
+
+    private void HideModalComentario()
+    {
+        modalComentario = false;
+    }
+
+    private void ShowModaComentario()
+    {
+        modalComentario = true;
+    }
+
+}

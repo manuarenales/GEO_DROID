@@ -1,0 +1,50 @@
+﻿//using GeoDroid.Data;
+
+//namespace GEO_DROID.Services
+//{
+//    public class MaquinaService
+//    {
+
+//        public MaquinaService()
+//        {
+
+//        }
+
+//        public async Task<List<Maquina>> GetMaquinasAsync()
+//        {
+//            return await _dbContext.Maquinas.Include(m => m.establecimiento).ToListAsync();
+//        }
+
+//        public async Task<Maquina> GetMaquinaById(int id)
+//        {
+//            return await _dbContext.Maquinas.Where(a => a.id == id).FirstOrDefaultAsync();
+//        }
+
+//        public async Task<int> SaveMaquinaAsync(Maquina item)
+//        {
+//            var existingMaquina = await _dbContext.Maquinas.FirstOrDefaultAsync(m => m.id == item.id);
+//            if (existingMaquina != null)
+//            {
+//                _dbContext.Maquinas.Update(item);
+//            }
+//            else
+//            {
+//                _dbContext.Maquinas.Add(item);
+//            }
+//            return await _dbContext.SaveChangesAsync();
+//        }
+
+
+//        public async Task<int> DeleteMaquinaAsync(Maquina item)
+//        {
+//            _dbContext.Maquinas.Remove(item);
+//            return await _dbContext.SaveChangesAsync();
+//        }
+
+//        public async Task<List<Maquina>> GetMaquinasByEstablecimientoAsync(int idEstablecimiento)
+//        {
+//            return await _dbContext.Maquinas.Where(m => m.establecimiento.id == idEstablecimiento).ToListAsync();
+//        }
+
+//    }
+//}

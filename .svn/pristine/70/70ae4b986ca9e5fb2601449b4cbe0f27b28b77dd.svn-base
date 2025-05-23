@@ -1,0 +1,187 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace GeoDroid.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class PatronesContadores : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "LecturaContadores",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: true),
+                    idIncidencias = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LecturaContadores", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_LecturaContadores_Incidencias_idIncidencias",
+                        column: x => x.idIncidencias,
+                        principalTable: "Incidencias",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LecturasContadoresAuto",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idIncidencias = table.Column<int>(type: "INTEGER", nullable: false),
+                    tipoLecturaContadores = table.Column<int>(type: "INTEGER", nullable: false),
+                    valor = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LecturasContadoresAuto", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_LecturasContadoresAuto_Incidencias_idIncidencias",
+                        column: x => x.idIncidencias,
+                        principalTable: "Incidencias",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PatronesContador",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PatronesContador", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PatronesContadoresDetalle",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: true),
+                    tipoContadores = table.Column<string>(type: "TEXT", nullable: false),
+                    valorPaso = table.Column<decimal>(type: "TEXT", nullable: false),
+                    tipoBasico = table.Column<int>(type: "INTEGER", nullable: false),
+                    tipoProtocolos = table.Column<int>(type: "INTEGER", nullable: false),
+                    orden = table.Column<int>(type: "INTEGER", nullable: false),
+                    idPatronContador = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PatronesContadoresDetalle", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_PatronesContadoresDetalle_PatronesContador_idPatronContador",
+                        column: x => x.idPatronContador,
+                        principalTable: "PatronesContador",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LecturasDetalle",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    idGeo = table.Column<int>(type: "INTEGER", nullable: true),
+                    idLecturaContadores = table.Column<int>(type: "INTEGER", nullable: false),
+                    idPatContDetalles = table.Column<int>(type: "INTEGER", nullable: false),
+                    valor = table.Column<long>(type: "INTEGER", nullable: false),
+                    valorAntes = table.Column<long>(type: "INTEGER", nullable: false),
+                    tieneAjuste = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LecturasDetalle", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_LecturasDetalle_LecturaContadores_idLecturaContadores",
+                        column: x => x.idLecturaContadores,
+                        principalTable: "LecturaContadores",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_LecturasDetalle_PatronesContadoresDetalle_idPatContDetalles",
+                        column: x => x.idPatContDetalles,
+                        principalTable: "PatronesContadoresDetalle",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Maquinas_idPatronContadores",
+                table: "Maquinas",
+                column: "idPatronContadores");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LecturaContadores_idIncidencias",
+                table: "LecturaContadores",
+                column: "idIncidencias");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LecturasContadoresAuto_idIncidencias",
+                table: "LecturasContadoresAuto",
+                column: "idIncidencias");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LecturasDetalle_idLecturaContadores",
+                table: "LecturasDetalle",
+                column: "idLecturaContadores");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_LecturasDetalle_idPatContDetalles",
+                table: "LecturasDetalle",
+                column: "idPatContDetalles");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PatronesContadoresDetalle_idPatronContador",
+                table: "PatronesContadoresDetalle",
+                column: "idPatronContador");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Maquinas_PatronesContador_idPatronContadores",
+                table: "Maquinas",
+                column: "idPatronContadores",
+                principalTable: "PatronesContador",
+                principalColumn: "id",
+                onDelete: ReferentialAction.Cascade);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Maquinas_PatronesContador_idPatronContadores",
+                table: "Maquinas");
+
+            migrationBuilder.DropTable(
+                name: "LecturasContadoresAuto");
+
+            migrationBuilder.DropTable(
+                name: "LecturasDetalle");
+
+            migrationBuilder.DropTable(
+                name: "LecturaContadores");
+
+            migrationBuilder.DropTable(
+                name: "PatronesContadoresDetalle");
+
+            migrationBuilder.DropTable(
+                name: "PatronesContador");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Maquinas_idPatronContadores",
+                table: "Maquinas");
+        }
+    }
+}

@@ -1,0 +1,28 @@
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
+
+
+namespace GeoDroid.Data
+{
+    public class Ruta
+    {
+
+        public int id { get; set; }
+        public DateTime fecha { get; set; }
+
+        [ForeignKey("idEstablecimiento")]
+        public int idEstablecimiento { get; set; }
+        public virtual Establecimiento Establecimiento { get; set; }
+        public bool bloqueada { get; set; }
+    }
+
+    [DataContract(Name = "Ruta")]
+    class Ruta_V1
+    {
+        public int id { get; set; }
+        public DateTime fecha { get; set; }
+        public int idEstablecimiento { get; set; }
+        [ForeignKey("idEstablecimiento")]
+        public virtual Establecimiento Establecimiento { get; set; }
+    }
+}

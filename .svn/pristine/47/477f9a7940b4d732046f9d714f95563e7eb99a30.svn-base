@@ -1,0 +1,102 @@
+﻿using GeoDroid.Data;
+using Microsoft.EntityFrameworkCore;
+
+
+namespace GEO_DROID.Services
+{
+    public class CargaService
+    {
+        private readonly GeoDroidDbContext _dbContext;
+
+        public CargaService()
+        {
+            _dbContext = new GeoDroidDbContext();
+        }
+
+        public async Task<List<Carga>> GetCargasAsync()
+        {
+            return await _dbContext.Cargas.ToListAsync();
+        }
+
+        public Carga GetCargaById(int id)
+        {
+            return _dbContext.Cargas
+            .Where(a => a.id == id)
+            .FirstOrDefault();
+        }
+
+        public async Task<Carga> SaveAveriaAsync(Carga item)
+        {
+            Carga exist = await _dbContext.Cargas.FirstOrDefaultAsync(e => e.id == item.id);
+            try
+            {
+                if (exist != null)
+                {
+                    _dbContext.Cargas.Update(item);
+                }
+                else
+                {
+                    _dbContext.Cargas.Add(item);
+                }
+                await _dbContext.SaveChangesAsync();
+                await _dbContext.Entry(item).ReloadAsync();
+                return item;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+        }
+
+        public async Task<int> DeleteAveriaAsync(Carga item)
+        {
+            _dbContext.Cargas.Remove(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<Carga> GetCargaByAveriaId(int idAveria)
+        {
+            return await _dbContext.Cargas.Where(c => c.Averia.id == idAveria)
+                .Include(a => a.Incidencia)
+                .ThenInclude(i => i.maquina)
+                .ThenInclude(i => i.establecimiento)
+                .Include(a => a.Averia).FirstOrDefaultAsync();
+        }
+
+        public async Task<int> UpdateCarga(Carga carga)
+        {
+            try
+            {
+                _dbContext.Cargas.Update(carga);
+                return await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+
+        }
+
+        public async Task<int> CreateCarga(Carga carga)
+        {
+            try
+            {
+                _dbContext.Cargas.Add(carga);
+                return await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+
+        }
+
+        public void Reload(Carga carga)
+        {
+            _dbContext.Entry(carga).Reload();
+        }
+    }
+}

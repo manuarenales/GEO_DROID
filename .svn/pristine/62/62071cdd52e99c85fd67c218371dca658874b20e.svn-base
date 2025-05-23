@@ -1,0 +1,31 @@
+﻿using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Ruta
+    {
+        [PrimaryKey, AutoIncrement]
+        public int id { get; set; }
+        public DateTime fecha { get; set; }
+        //[DataMember, ForeingKeyIdGeo(typeof(Establecimiento))]
+        public int idEstablecimiento { get; set; }
+        public bool bloqueada { get; set; }
+    }
+
+    [DataContract(Name = "Ruta")]
+    class Ruta_V1
+    {
+        [PrimaryKey, AutoIncrement]
+        public int id { get; set; }
+        public DateTime fecha { get; set; }
+        //[ForeingKeyIdGeo(typeof(Establecimiento))]
+        public int idEstablecimiento { get; set; }
+
+    }
+}

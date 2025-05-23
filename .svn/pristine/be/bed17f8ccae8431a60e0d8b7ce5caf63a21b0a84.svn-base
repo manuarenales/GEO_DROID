@@ -1,0 +1,184 @@
+﻿using GEO_DROID.Resources;
+using GEO_DROID.Resources.PrinterResources;
+using GeoDroid.Data;
+using InTheHand.Net;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.Text;
+
+namespace GEO_DROID.Services
+{
+    public class TicketsService
+    {
+        private BluetoothServiceManager _BluetoothServiceManager;
+        private EstablecimientosService _EstablecimientosService;
+        private AveriasService _AveriasService;
+        private CargaService _CargaService;
+        public TicketsService()
+        {
+            PermissionStatus permissionStatus = Permissions.CheckStatusAsync<BluetoothPermissions>().Result;
+            if (permissionStatus == PermissionStatus.Denied)
+            {
+                Permissions.RequestAsync<BluetoothPermissions>();
+                Permissions.RequestAsync<Permissions.Camera>();
+            }
+            else { _BluetoothServiceManager = new BluetoothServiceManager(); }
+            _EstablecimientosService = new EstablecimientosService();
+            _AveriasService = new AveriasService();
+            _CargaService = new CargaService();
+        }
+
+        public List<string> getTiketsList(int id)
+        {
+            List<string> list = new List<string>();
+            list.Add("Averias");
+            list.Add("Rec. Totales");
+            list.Add("Recaudacion con desglose");
+            list.Add("Rec. Reducido");
+            list.Add("Rec. Detallado");
+            list.Add("Rec. Detallado Contadores");
+            list.Add("Rec. Superdetallado");
+            return list;
+        }
+
+        public async void PrintAveriasFromEstablecimiento(int idEstablecimientos, BluetoothAddress address)
+        {
+            Establecimiento establecimiento = await _EstablecimientosService.GetEstablecimientoById(idEstablecimientos);
+            List<Averia> averias = _AveriasService.GetAveriasByEstablecimiento(idEstablecimientos).ToList();
+
+            StringBuilder dataToDisplay = new StringBuilder();
+
+            // Añadir información del establecimiento
+            dataToDisplay.AppendLine(PadRight(establecimiento.nombre + " / " + establecimiento.codigo, 32));
+            dataToDisplay.AppendLine(PadRight("----------- Averias -----------", 32));
+
+            // Añadir información de averías
+
+            foreach (Averia averia in averias)
+            {
+                Carga carga = await _CargaService.GetCargaByAveriaId(averia.id);
+                dataToDisplay.AppendLine(PadRight("Maquina: " + averia.Incidencia.maquina.descripcionDistribucion, 32));
+                dataToDisplay.AppendLine(PadRight("Estado: " + averia.AveriaEstado.descripcion, 32));
+
+                if (carga != null)
+                {
+                    dataToDisplay.AppendLine(PadRight("Carga: cargaEmpresa -> " + carga.cargaEmpresa, 32));
+                    dataToDisplay.AppendLine(PadRight("ajusteEmpresa -> " + carga.ajusteEmpresa, 32));
+                }
+            }
+
+            dataToDisplay.AppendLine($"{(char)27}{(char)30}");
+
+
+
+            dataToDisplay.AppendLine($"{(char)27}@");
+
+            byte[] byteArray = Encoding.UTF8.GetBytes(dataToDisplay.ToString());
+
+            await _BluetoothServiceManager.SendData(byteArray, address);
+        }
+
+        public async void PrintAveriasFromEstablecimiento2(int idEstablecimientos, BluetoothAddress address)
+        {
+            Establecimiento establecimiento = await _EstablecimientosService.GetEstablecimientoById(idEstablecimientos);
+            List<Averia> averias = _AveriasService.GetAveriasByEstablecimiento(idEstablecimientos).ToList();
+
+            List<TicketLine> Ticket = new List<TicketLine>();
+
+            var nombreCodigoLines = WrapText("Establecimiento : " + establecimiento.nombre + " / " + establecimiento.codigo, 32);
+
+            foreach (var line in nombreCodigoLines)
+            {
+                Ticket.Add(new TicketLine(line).Bold().Underline().Align("center"));
+            }
+
+            Ticket.Add(new TicketLine("----------- Averias -----------").Bold().Align("center"));
+
+            foreach (Averia averia in averias)
+            {
+                Carga carga = await _CargaService.GetCargaByAveriaId(averia.id);
+
+                var maquinaLines = WrapText("Maquina: " + averia.Incidencia.maquina.descripcionDistribucion, 32);
+                foreach (var line in maquinaLines)
+                {
+                    Ticket.Add(new TicketLine(line).Bold().Align("left"));
+                }
+
+                var estadoLines = WrapText("Estado: " + averia.AveriaEstado.descripcion, 32);
+                foreach (var line in estadoLines)
+                {
+                    Ticket.Add(new TicketLine(line).Bold().Align("left"));
+                }
+
+                foreach (var line in estadoLines)
+                {
+                    TicketsService.WrapText(line.TrimEnd(), 34);
+                }
+
+                if (carga != null)
+                {
+                    var cargaEmpresaLines = WrapText("Carga: cargaEmpresa -> " + carga.cargaEmpresa, 32);
+                    foreach (var line in cargaEmpresaLines)
+                    {
+                        Ticket.Add(new TicketLine(line).Bold().Align("left"));
+                    }
+
+                    var ajusteEmpresaLines = WrapText("AjusteEmpresa -> " + carga.ajusteEmpresa, 32);
+                    foreach (var line in ajusteEmpresaLines)
+                    {
+                        Ticket.Add(new TicketLine(line).Bold().Align("left"));
+                    }
+                }
+                Ticket.Add(new TicketLine($"--------------------").Align("center"));
+            }
+            Ticket.Add(new TicketLine("").Align("center"));
+            Ticket.Add(new TicketLine("").Align("center"));
+            Ticket.Add(new TicketLine("").Align("center"));
+            _BluetoothServiceManager.SendData2(Ticket, address);
+
+        }
+
+
+        public static List<string> WrapText(string text, int maxLineLength)
+        {
+            var words = text.Split(' ');
+            var wrappedLines = new List<string>();
+            var currentLine = new StringBuilder();
+
+            foreach (var word in words)
+            {
+                if (currentLine.Length + word.Length + 1 <= maxLineLength)
+                {
+                    if (currentLine.Length > 0)
+                    {
+                        currentLine.Append(" ");
+                    }
+                    currentLine.Append(word);
+                }
+                else
+                {
+                    wrappedLines.Add(currentLine.ToString());
+                    currentLine.Clear();
+                    currentLine.Append(word);
+                }
+            }
+            if (currentLine.Length > 0)
+            {
+                wrappedLines.Add(currentLine.ToString());
+            }
+
+            return wrappedLines;
+        }
+
+
+        private string PadRight(string input, int length)
+        {
+            if (input.Length >= length)
+            {
+                return input.Substring(0, length);
+            }
+            return input.PadRight(length);
+        }
+
+
+    }
+}

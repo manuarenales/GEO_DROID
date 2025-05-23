@@ -1,0 +1,295 @@
+﻿@page "/averiaform1/{averiaid:int}/{establecimiento:int}"
+
+@using GEO_DROID.Services
+@using System.Text.Json
+@using Microsoft.EntityFrameworkCore
+
+@inject AveriasService _AveriasService
+@inject CargaService _CargaService
+
+
+@inject NavigationManager Navigation
+@inject CultureService Cultureservice
+
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IJSRuntime JS
+
+<NavigationLock OnBeforeInternalNavigation=OnLocationChanging />
+
+@**@
+@if (AveriaView)
+{
+    <form class="w-100 content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start " needs-validation>
+        <div class="row w-100 bg-dark ">
+            <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
+                <span style="color:white" class="SubTitulo">Detalles</span>
+            </div>
+        </div>
+        <div class="row w-100  ">
+            <div class="col-12 w-100 border">
+                <GEO_DROID.Shared.Components.Selecter.MaquinasSelecter @bind-maquinaAveria="@averia.incidencia.idMaquinas" Changed="HandleMaquinaAveriaChanged" idEstablecimiento="@establecimiento" IsValid="@IsIdMaquinaValid">
+                </GEO_DROID.Shared.Components.Selecter.MaquinasSelecter>
+            </div>
+            <div class="col-12 w-100 border">
+                <GEO_DROID.Shared.Components.Selecter.ConceptoSelecter @bind-conceptoAveria="@averia.idConceptos" Changed="HandleConceptoAveriaChanged" idEstablecimiento="@establecimiento" IsValid="@IsIdConceptoValid">
+                </GEO_DROID.Shared.Components.Selecter.ConceptoSelecter>
+            </div>
+            <div class="col-12 w-100 border">
+                <GEO_DROID.Shared.Components.Selecter.EstadoSelecter @bind-estadoAveria="@averia.idAveriaEstados" Changed="HandleEstadoAveriaChanged" idEstablecimiento="@establecimiento" IsValid="@IsIdEstadoValid">
+                </GEO_DROID.Shared.Components.Selecter.EstadoSelecter>
+            </div>
+        </div>
+        <div class="row w-100 ">
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>Descripción</span>
+                <textarea oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="bluetext mb-1" style="height:2em; min-height: fit-content ; " @bind="averia.observaciones" placeholder="Comentarios"></textarea>
+            </div>
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>Detalle</span>
+                <textarea oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="bluetext mb-1" style="height:2em; min-height: fit-content ;" @bind="averia.detalle" placeholder="Detalle"></textarea>
+            </div>
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>Comentarios</span>
+                <textarea oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="bluetext mb-1" style="height:2em; min-height: fit-content ;" @bind="averia.comentarios" placeholder="Comentarios"></textarea>
+
+            </div>
+        </div>
+        <div class="row w-100 bg-dark">
+            <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center">
+                <span style="color:white" class="subtitle">Acciones</span>
+            </div>
+        </div>
+        <div class="row w-100 border ">
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start" @onclick='() => NavigateToCarga()'>
+                <span class="fs-6">Realizar carga</span>
+                @if (carga != null)
+                {
+                    <span class="bluetext">Realizada @carga.cargaEmpresa / @carga.recuperacionEmpresa </span>
+                }
+                else
+                {
+                    <span class="bluetext">No realizada</span>
+                }
+            </div>
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span class="fs-6">Lectura inicial de contadores</span>
+                <span class="bluetext">No realizada</span>
+            </div>
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span class="fs-6">Lectura final contadores</span>
+                <span class="bluetext">No realizada</span>
+            </div>
+        </div>
+    </form>
+
+    <div class="w-100 bg-red" style="height:8vw;"></div>
+
+    <div class="row m-1 fixed-bottom ">
+        <div class="col-4 p-1">
+            <button style="overflow-wrap: break-word; " type="button" class="btn btn-secondary w-100" @onclick="GuardarAveria">Guardar</button>
+        </div>
+        <div class="col-4 p-1">
+            <button style="overflow-wrap: break-word; " type="button" class="btn btn-secondary w-100" disabled="@((averiaid == -1))" @onclick="EliminarAveria">Eliminar</button>
+        </div>
+        <div class="col-4 p-1">
+            <button style="overflow-wrap: break-word; " type="button" class="btn btn-secondary w-100" @onclick='() => NavigateTo("averias/" + establecimiento)'>Cancelar</button>
+        </div>
+    </div>
+}
+else if (CargaView)
+{
+    <GEO_DROID.Shared.Components.Forms.CargaForm ParameterCarga="@carga" idAveria="@averia.id" idEstablecimiento="@establecimiento" idMaquinas="@averia.incidencia.idMaquinas" Changed=HandleCargaChanged></GEO_DROID.Shared.Components.Forms.CargaForm>
+}
+
+
+@code {
+
+    [Parameter]
+    public int averiaid { get; set; }
+    [Parameter]
+    public int establecimiento { get; set; }
+    [Parameter]
+    public bool fromcarga { get; set; }
+
+    private string title = "";
+    private Averia averia;
+    private Carga carga;
+
+    private bool IsIdMaquinaValid { get; set; } = true;
+    private bool IsIdConceptoValid { get; set; } = true;
+    private bool IsIdEstadoValid { get; set; } = true;
+
+    private bool AveriaView = true;
+    private bool CargaView = false;
+
+    private async void OnLocationChanging(LocationChangingContext context)
+    {
+        if (context.TargetLocation.Contains("averias"))
+        {
+
+        }
+        else if (context.TargetLocation.Contains("opciones"))
+        {
+            context.PreventNavigation();
+            if (AveriaView)
+            {
+                NavigateTo("averias/" + establecimiento);
+            }
+            else
+            {
+                AveriaView = true;
+                CargaView = false;
+                if (carga != null)
+                {
+                    Carga cargass = await _CargaService.GetCargaByAveriaId(averiaid);
+                    if (cargass != null)
+                    {
+                        _CargaService.Reload(carga);
+                    }
+                    else
+                    {
+                        carga = null;
+                    }
+                }
+            }
+        }
+        else if (context.TargetLocation.Contains("averiaform"))
+        {
+            NavigateTo("averias/" + establecimiento);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (averiaid == -1)
+        {
+            title = "Añadir Averia";
+            averia = new Averia();
+            averia.incidencia = new Incidencia();
+        }
+        else
+        {
+            title = "Editando Averia";
+            averia = await _AveriasService.GetAveriaById(averiaid);
+            carga = await _CargaService.GetCargaByAveriaId(averiaid);
+        }
+    }
+
+    private async Task HandleMaquinaAveriaChanged(int idmaquina)
+    {
+        IsIdMaquinaValid = idmaquina > 0;
+    }
+
+    private async Task HandleConceptoAveriaChanged(int idconcepto)
+    {
+        IsIdConceptoValid = idconcepto > 0;
+    }
+
+    private async Task HandleEstadoAveriaChanged(int idestado)
+    {
+        IsIdEstadoValid = idestado > 0;
+    }
+
+    private async Task HandleCargaChanged(Carga carga)
+    {
+        this.carga = carga;
+        AveriaView = true;
+        CargaView = false;
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, true);
+    }
+
+    private void NavigateToCarga()
+    {
+        if (averia.incidencia.idMaquinas > 0)
+        {
+            AveriaView = false;
+            CargaView = true;
+        }
+    }
+
+    public async void EliminarAveria()
+    {
+        int resp = await _AveriasService.DeleteAveriaAsync(averia);
+
+        NavigateTo("averias/" + establecimiento);
+    }
+
+    public async void GuardarAveria()
+    {
+        if (ValidateForm())
+        {
+            if (averiaid == -1)
+            {
+                try
+                {
+                    await _AveriasService.CreateAveria(averia);
+                    if (carga != null)
+                    {
+                        carga.idIncidencia = averia.idIncidencias;
+                        carga.idAverias = averia.id;
+                        await _CargaService.SaveAveriaAsync(carga);
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+            else
+            {
+                try
+                {
+                    await _AveriasService.UpdateAveria(averia);
+                    if (carga != null)
+                    {
+                        carga.idIncidencia = averia.idIncidencias;
+                        carga.idAverias = averia.id;
+                        await _CargaService.SaveAveriaAsync(carga);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
+            NavigateTo("averias/" + establecimiento);
+
+        }
+    }
+
+    public bool ValidateForm()
+    {
+        // Validar que se haya seleccionado una máquina
+        IsIdMaquinaValid = averia.incidencia.idMaquinas > 0;
+
+        // Validar que se haya seleccionado un concepto
+        IsIdConceptoValid = averia.idConceptos > 0;
+
+        // Validar que se haya seleccionado un estado
+        IsIdEstadoValid = averia.idAveriaEstados > 0;
+
+        // Actualizar la interfaz de usuario para mostrar los errores de validación
+        StateHasChanged();
+
+        // Devolver true si todos los campos requeridos están completos
+        return IsIdMaquinaValid && IsIdConceptoValid && IsIdEstadoValid;
+    }
+
+    public async void GuardarCarga()
+    {
+        AveriaView = true;
+        CargaView = false;
+    }
+
+    public async void CancelarCarga()
+    {
+
+        AveriaView = true;
+        CargaView = false;
+    }
+
+}

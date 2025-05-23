@@ -1,0 +1,32 @@
+﻿using Fluxor;
+using GeoDroid.Data;
+using GeoDroid.Data.SQL;
+using IDispatcher = Fluxor.IDispatcher;
+
+namespace GEO_DROID.Store.Maquinas
+{
+    public class MaquinasEffects
+    {
+        private readonly GeoDroidDatabase _database;
+
+        public MaquinasEffects(GeoDroidDatabase database)
+        {
+            _database = database;
+        }
+
+        [EffectMethod]
+        public async Task GetMaquinasList(GetMaquinasList action, IDispatcher dispatcher)
+        {
+            try
+            {
+                List<Maquina> maquinas = await _database._database.Table<Maquina>().ToListAsync();
+                dispatcher.Dispatch(new ChangeMaquinasListForSelecter(maquinas));
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+    }
+}

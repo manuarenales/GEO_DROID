@@ -1,0 +1,91 @@
+﻿@inject NavigationManager Navigation
+@inject IJSRuntime JS
+<div class="col-xs-5 col-sm-5 col-md-3 col-6 ">
+    <div class="row h-100">
+        <div class="col-4 h-100 w-100 @(isHomePage ? "d-none" : " d-flex justify-content-start align-items-center ") " @onclick="GoBack">
+            <img src="img/backarrow.svg" alt="Alternate Text" style="height:3em; width:100% ;  filter: invert(100%);" />
+        </div>
+        <div class="@(isHomePage ? "col-12 " : "col-7 ") h-100 w-100 d-flex justify-content-start align-items-center mb-1 ms-2">
+            <span style="color:white; text-align:center" class="mt-1 Titulo">@UpdatePageTitle()</span>
+        </div>
+    </div>
+</div>
+<div class="col-xs-2 col-sm-2 col-md-5 col-2   ">
+</div>
+<div class="col-xs-2 col-sm-2 col-md-1 col-1 d-flex align-content-center justify-content-end  ">
+</div>
+<div class=" col-3 d-flex align-content-center justify-content-end  ">
+    <Idioma></Idioma>
+</div>
+
+
+@code {
+    private string pageTitle = "GeoDroid";  
+    private bool isHomePage = false;
+    private string currentPage;
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += HandleLocationChange;
+        UpdatePageTitle();
+    }
+
+    // Método para actualizar el título de la página según la ruta actua
+    private string UpdatePageTitle()
+    {
+        currentPage = Navigation.Uri;
+        var pageTitle = "GeoDroid"; // Título predeterminado
+
+        if (currentPage.EndsWith("/", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = true;
+        }
+        else if (currentPage.EndsWith("/rutas", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Rutas";
+        }
+        else if (currentPage.EndsWith("/informaciongeneral", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Informacion General";
+        }
+        else if (currentPage.EndsWith("/vehiculos", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Vehiculos";
+        }
+        else if (currentPage.EndsWith("/sincronizacion", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Sincronizacion";
+        }
+        else if (currentPage.EndsWith("/ajustes", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Ajustes";
+        }
+        else if (currentPage.EndsWith("/opcionesEstablecimiento", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Gestion Establecimiento";
+        }
+        return pageTitle;
+    }
+
+    // Método manejador de evento para actualizar el título cuando cambia la ubicación
+    private void HandleLocationChange(object sender, LocationChangedEventArgs args)
+    {
+        UpdatePageTitle(); // Llama al método para actualizar el título
+        StateHasChanged(); // Notifica a Blazor que el estado ha cambiado y necesita actualizarse
+
+    }
+
+    private async void GoBack()
+    {
+        // depndiendo de la currentPage.
+        await JS.InvokeVoidAsync("history.back");
+
+    }
+
+}
+

@@ -1,0 +1,50 @@
+﻿@using GEO_DROID.Services
+@using System.Text.RegularExpressions
+@using System;
+ @inherits LayoutComponentBase
+@inject CustomNavigationManager navigation
+
+<div class="page  ">
+    <main>
+        <div style="height:fit-content;" class="row  bg-dark fixed-top">
+            <NavMenu />
+        </div>
+
+        <article class="content px-4 " style="margin-top: 42px;">
+            @Body
+        </article>
+    </main>
+</div>
+@code
+{
+    [Inject]
+    private NavigationManager MyNavigationManager { get; set; }
+
+    private string Url;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        MyNavigationManager.LocationChanged += OnLocationChanges;
+        Url = MyNavigationManager.Uri;
+    }
+
+    private void OnLocationChanges(object sender, LocationChangedEventArgs e)
+    {
+        if (Url.Contains("averiaform1/") && e.Location.Contains("opciones"))
+        {
+            System.Text.RegularExpressions.Match match = Regex.Match(e.Location, @"opciones/(\d+)");
+            if (match.Success)
+            {
+                string id = match.Groups[1].Value;
+                MyNavigationManager.NavigateTo("averias/" + id);
+
+            }
+        }
+        else
+        {
+            Url = e.Location;
+        }
+        StateHasChanged();
+    }
+}

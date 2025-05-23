@@ -1,0 +1,50 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GeoDroid.Data.Models
+{
+    public class GastoEstablecimiento
+    {
+        [Key]
+        public int id { get; set; }
+        [DataMember]
+        public DateTime fecha { get; set; }
+
+        [ForeignKey("Empresa")]
+        public int idEmpresas { get; set; }
+        public virtual Empresa Empresa { get; set; }
+
+        [DataMember]
+        public int idPersonal { get; set; }
+        [DataMember]
+        public decimal baseImponible { get { return Math.Round(total / (1 + (pctIva / 100)), 2, MidpointRounding.AwayFromZero); } set { } }
+        [DataMember]
+        public decimal pctIva { get; set; }
+        [DataMember]
+        public decimal iva { get { return total - baseImponible; } set { } }
+        [DataMember]
+        public decimal total { get; set; }
+        [DataMember, MaxLength(2000)]
+        public string comentarios { get; set; }
+
+        [ForeignKey("ConceptoGastoEstablecimiento")]
+        public int idConceptoGastoEstablecimiento { get; set; }
+        public virtual ConceptoGastoEstablecimiento ConceptoGastoEstablecimiento { get; set; }
+
+
+        [ForeignKey("Establecimiento")]
+        public int idEstablecimiento { get; set; }
+        public virtual Establecimiento Establecimiento { get; set; }
+
+
+        [DataMember, MaxLength(2000)]
+        public string descripcion { get; set; }
+    }
+}

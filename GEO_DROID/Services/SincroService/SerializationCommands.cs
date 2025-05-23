@@ -1,0 +1,66 @@
+﻿using GeoDroid.Data;
+using System.Collections;
+using System.Reflection;
+using System.Text;
+
+namespace GEO_DROID.Services.SincroService
+{
+    public class SerializationCommands
+    {
+        private static IList GetLista(Type tipo)
+        {
+            Type listDataType = typeof(List<>).MakeGenericType(tipo);
+            IList lista = (IList)Activator.CreateInstance(listDataType);
+            //string s = Config.connectionString();
+            //SQLiteConnection db = new SQLiteConnection(Config.connectionString());
+            //Por defecto la tabla toma el nombre del tipo
+            string tableName = tipo.Name;
+            //Si implementamos IModel, la tabla toma el nombre definido en la clase (propiedad TableName)
+            //if (typeof(IModel).IsAssignableFrom(tipo))
+            //{
+            //    object o = Activator.CreateInstance(tipo);
+            //    tableName = ((IModel)o).TableName;
+            //}
+            //var map = db.GetMapping(tipo);
+            //List<object> listaAux = db.Query(map, "SELECT * FROM " + tableName, null);
+            // Hay que recorrer la lista y asignarla a nuestra lista de tipo generic porque Query devuelve una lista de objects
+            //for (int i = 0; i < listaAux.Count; i++)
+            //{
+            //    lista.Add(listaAux[i]);
+            //}
+            return lista;
+        }
+
+        public static MemoryStream GetDatos(Type tipo)
+        {
+            MemoryStream ms = new MemoryStream();
+            IList obj = GetLista(tipo);
+            DataContractSerialization.WriteObject(ms, obj);
+            return ms;
+        }
+
+        private static Type GetTypeFromTable(string tableName)
+        {
+            string ns = typeof(Maquina).Namespace;
+            Assembly assembly = typeof(Maquina).Assembly;
+            Type type = assembly.GetType(ns + "." + tableName);
+            return type;
+        }
+
+        public static string SerializeTable(string tableName)
+        {
+            string data = "";
+            try
+            {
+                Type type = GetTypeFromTable(tableName);
+                MemoryStream ms = GetDatos(type);
+                data = Encoding.UTF8.GetString(ms.ToArray());
+            }
+            catch
+            {
+
+            }
+            return data;
+        }
+    }
+}

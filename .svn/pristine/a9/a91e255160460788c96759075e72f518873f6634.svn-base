@@ -1,0 +1,41 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GeoDroid.Data.Models
+{
+    public class PrestamoRecuperacion
+    {
+        [Key]
+        public int id { get; set; }
+
+        /// <summary>
+        /// 0 when new insertion in mobile device
+        /// </summary>
+        [DataMember]
+        public int idGeo { get; set; }
+
+        [ForeignKey("Prestamo")]
+        public int idPrestamos { get; set; }
+        public virtual Prestamo Prestamo { get; set; }
+
+        [DataMember]
+        public DateTime fecha { get; set; }
+        [DataMember]
+        public int idPersonalRecuperacion { get; set; }
+        [DataMember]
+        public decimal importe { get; set; }
+        [DataMember]
+        public string comentarios { get; set; }
+        [DataMember]
+        public int idRuta { get; set; }
+        [DataMember]
+        public int idCarga { get; set; } //Carga que provocó esta recuperación de prestamo automática
+    }
+}

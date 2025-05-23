@@ -1,0 +1,18 @@
+﻿using Fluxor;
+using GeoDroid.Data;
+
+
+namespace GEO_DROID.Store.EstablecimientoState
+{
+    [FeatureState]
+    public record EstablecimientoState
+    {
+        private EstablecimientoState() { }
+
+        public Establecimiento EstablecimientoSelected { get; init; }
+
+        public List<Establecimiento> EstablecimientoListSelected { get; init; }
+
+        public List<Establecimiento> EstablecimientoListSelecterSelected { get; init; }
+    }
+}

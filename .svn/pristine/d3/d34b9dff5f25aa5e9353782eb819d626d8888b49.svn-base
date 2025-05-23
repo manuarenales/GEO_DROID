@@ -1,0 +1,105 @@
+﻿@using GEO_DROID.Models
+@using GEO_DROID.Services
+ @inject EstadoAveriaService estadoAveriaService
+
+
+
+<div Class=" d-flex flex-column justify-content-start" @onclick="() => ShowModal()">
+    <label class="form-label">
+        Estado
+    </label>
+    @if (estadoAveria != null)
+    {
+        <input class="form-control @(IsValid ? "" : "is-invalid")" Style="color: blue" @bind="@estadoAveria.descripcion" readonly ontouchstart="" />
+    }
+    else
+    {
+        <input class="form-control @(IsValid ? "" : "is-invalid")" readonly ontouchstart="" />
+    }
+    @if (!IsValid)
+    {
+        <div class="invalid-feedback">
+            Please choose a valid Estate.
+        </div>
+    }
+
+</div>
+
+
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalEstadoVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Estado</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideModalEstado">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input class="form-control mb-2" @bind="Bestado" placeholder="Estado" @oninput="FilterEstados" />
+                <div class="m-2" style="height: 80%;  overflow-y: auto;">
+                    <ul class="list-group">
+                        @foreach (AveriaEstado estado in estados.Where(e => string.IsNullOrEmpty(Bestado) || e.descripcion.ToLower().Contains(Bestado.ToLower())))
+                        {
+                            <li class="list-group-item" @onclick="() => SetConceptoAveria(estado)">
+                                <span>@estado.descripcion</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    [Parameter]
+    public AveriaEstado estadoAveria { get; set; }
+    [Parameter]
+    public EventCallback<AveriaEstado> estadoAveriaChanged { get; set; }
+    [Parameter]
+    public EventCallback<AveriaEstado> Changed { get; set; }
+    [Parameter]
+    public int idEstablecimiento { get; set; }
+    [Parameter]
+    public bool IsValid { get; set; } = true;
+
+
+    private string Bestado = "";
+    private bool IsIdEstadoValid { get; set; } = true;
+    public List<AveriaEstado> estados = new List<AveriaEstado>();
+    private bool modalEstadoVisible = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        estados = await estadoAveriaService.GetEstadosAsync();
+    }
+
+    private void ShowModal()
+    {
+        modalEstadoVisible = true;
+    }
+
+    private void HideModalEstado()
+    {
+        modalEstadoVisible = false;
+
+    }
+
+    private void SetConceptoAveria(AveriaEstado estado)
+    {
+        estadoAveriaChanged.InvokeAsync(estado);
+        Changed.InvokeAsync(estado);
+        HideModalEstado();
+    }
+
+    public void FilterEstados(ChangeEventArgs filter)
+    {
+        Bestado = filter.Value.ToString();
+    }
+
+
+}

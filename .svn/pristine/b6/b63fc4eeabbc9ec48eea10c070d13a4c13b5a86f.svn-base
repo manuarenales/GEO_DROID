@@ -1,0 +1,40 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GeoDroid.Data.Models
+{
+    public class EstablecimientoPotencial
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        [DataMember, MaxLength(50)]
+        public string nombre { get; set; }
+        [DataMember, MaxLength(100)]
+        public string direccion { get; set; }
+
+        [ForeignKey("Poblacion")]
+        public int idPoblacion { get; set; }
+        public virtual Poblacion Poblacion { get; set; }
+
+        [DataMember, MaxLength(10)]
+        public string codigoPostal { get; set; }
+        [DataMember, MaxLength(20)]
+        public string telefono1 { get; set; }
+        [DataMember, MaxLength(20)]
+        public string telefono2 { get; set; }
+        [DataMember]
+        public int idComercial { get; set; }
+        [DataMember]
+        public DateTime fechaModificacion { get; set; }
+        [DataMember, MaxLength(2000)]
+        public string comentarios { get; set; }
+    }
+}

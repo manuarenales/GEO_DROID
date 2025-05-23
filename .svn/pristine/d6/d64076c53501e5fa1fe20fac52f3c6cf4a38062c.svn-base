@@ -1,0 +1,27 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class PrestamoRecuperacion
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        public DateTime fecha { get; set; }
+        public int idPersonalRecuperacion { get; set; }
+        public decimal importe { get; set; }
+        public string comentarios { get; set; }
+        public int idRuta { get; set; }
+        public int idCarga { get; set; }
+        public int idPrestamos { get; set; }
+
+        [ForeignKey("idPrestamos")]
+        public virtual Prestamo prestamo { get; set; }
+    }
+}

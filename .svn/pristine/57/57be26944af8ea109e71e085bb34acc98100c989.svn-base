@@ -1,0 +1,61 @@
+﻿using GeoDroid.Data;
+using Microsoft.EntityFrameworkCore;
+
+
+namespace GEO_DROID.Services
+{
+    public class CargaService
+    {
+        private readonly GeoDroidDbContext _dbContext;
+
+        public CargaService(GeoDroidDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public async Task<List<Carga>> GetCargasAsync()
+        {
+            return await _dbContext.Cargas.ToListAsync();
+        }
+
+        public async Task<Carga> GetCargaById(int id)
+        {
+            return await _dbContext.Cargas
+            .Where(a => a.id == id)
+            .FirstOrDefaultAsync();
+        }
+
+        public async Task<Carga> SaveAveriaAsync(Carga item)
+        {
+            var exist = await _dbContext.Cargas.FirstOrDefaultAsync(e => e.id == item.id);
+            try
+            {
+                if (exist != null)
+                {
+                    _dbContext.Cargas.Update(item);
+                }
+                else
+                {
+                    _dbContext.Cargas.Add(item);
+                }
+                await _dbContext.SaveChangesAsync();
+                // Cargar la entidad actualizada desde la base de datos para obtener las propiedades generadas
+                await _dbContext.Entry(item).ReloadAsync();
+
+                return item;
+            }
+            catch (Exception ex)
+            {
+                // Manejo del error
+                throw;
+            }
+        }
+
+        public async Task<int> DeleteAveriaAsync(Carga item)
+        {
+            _dbContext.Cargas.Remove(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+    }
+}

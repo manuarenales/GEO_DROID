@@ -1,0 +1,60 @@
+﻿using GEO_DROID.DataAccess;
+using GEO_DROID.Models;
+using Microsoft.EntityFrameworkCore;
+using SQLite;
+using System.Text.Json;
+
+
+namespace GEO_DROID.Services
+{
+    public class EstablecimientosService
+    {
+        private readonly GeoDroidDbContext _dbContext;
+
+        public EstablecimientosService(GeoDroidDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public async Task<List<Establecimiento>> GetEstablecimientosAsync()
+        {
+            return await _dbContext.Establecimientos.ToListAsync();
+        }
+
+        public async Task<Establecimiento> GetEstablecimientoById(int id)
+        {
+            return await _dbContext.Establecimientos
+            .Where(a => a.id == id)
+            .FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveEstablecimientoAsync(Establecimiento item)
+        {
+            _dbContext.Establecimientos.Add(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<int> DeleteEstablecimientoAsync(Establecimiento item)
+        {
+            _dbContext.Establecimientos.Remove(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public List<string> getTiketsList(int id)
+        {
+            List<string> list = new List<string>();
+
+            list.Add("Rec. Totales");
+            list.Add("Recaudacion con desglose");
+            list.Add("Rec. Reducido");
+            list.Add("Rec. Detallado");
+            list.Add("Rec. Detallado Contadores");
+            list.Add("Rec. Superdetallado");
+
+            return list;
+        }
+
+
+
+    }
+}

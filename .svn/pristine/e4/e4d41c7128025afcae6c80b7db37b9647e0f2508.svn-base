@@ -1,0 +1,68 @@
+﻿@using GEO_DROID.Services
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.AveriaEstado
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IDispatcher Dispatcher
+@inject IState<AplicacionState> AplicacionState
+@inject IState<AveriaEstadoState> AveriaEstadoState
+
+
+
+@if (AplicacionState.Value is not null)
+{
+    <div class="modal-backdrop" style="z-index: 1049; display: @(AplicacionState.Value.modalEstadoSelecter ? "block" : "none"); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);"></div>
+    <div class="modal show " tabindex="-1" role="dialog" style="display: @(AplicacionState.Value.modalEstadoSelecter ? "block" : "none")">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+            <div class="modal-content bg-light" style="height: 100%;">
+                <div class="modal-header">
+                    <span class="modal-title Titulo ">Estado</span>
+                    <button type="button" class="close" aria-label="Close" @onclick="()=>  Dispatcher.Dispatch(new ChangeModalAveriaestadoSelecter(false))">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="overflow-y: auto;">
+                    <input class="form-control mb-2" @bind="Bestado" placeholder="Estado" @oninput="FilterEstados" />
+                    <div class="m-2" style="height: 80%;  overflow-y: auto;">
+                        <ul class="list-group">
+                            @if (AveriaEstadoState.Value.AveriaEstadoListSelecterSelected is not null)
+                            {
+                                @foreach (AveriaEstado estado in AveriaEstadoState.Value.AveriaEstadoListSelecterSelected.Where(e => string.IsNullOrEmpty(Bestado) || e.descripcion.ToLower().Contains(Bestado.ToLower())))
+                                {
+                                    <li class="list-group-item" @onclick='async ()=> {
+                                        Dispatcher.Dispatch(new ChangeAveriaEstadoSelectedAction(estado));
+                                        Dispatcher.Dispatch(new ChangeModalAveriaestadoSelecter(false));
+                                    }'>
+                                        <span>@estado.descripcion</span>
+                                    </li>
+                                }
+                            }
+
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+
+@code {
+    private string Bestado = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Dispatcher.Dispatch(new GetAveriaEstadoList());
+
+    }
+    public void FilterEstados(ChangeEventArgs filter)
+    {
+        Bestado = filter.Value.ToString();
+    }
+
+
+}

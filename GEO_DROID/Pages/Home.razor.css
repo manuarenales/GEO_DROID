@@ -1,0 +1,6 @@
+﻿.overlay {
+    width: 100000px;
+    height: 100000px;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040; /* Debe estar por debajo del modal */
+}

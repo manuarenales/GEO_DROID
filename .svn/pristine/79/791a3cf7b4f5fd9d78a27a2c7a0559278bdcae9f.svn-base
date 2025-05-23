@@ -1,0 +1,67 @@
+﻿using GeoDroid.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace GEO_DROID.Services
+{
+    public class AveriasService : IDisposable
+    {
+
+        private readonly GeoDroidDbContext _dbContext;
+
+
+        public AveriasService()
+        {
+            _dbContext = new GeoDroidDbContext();
+        }
+
+        public IQueryable<Averia> GetAveriasAsync()
+        {
+            return _dbContext.Averias.AsQueryable().AsNoTracking();
+        }
+
+
+        public IQueryable<Averia> GetAveriasByEstablecimiento(int establecimientoId)
+        {
+            return _dbContext.Averias.Where(a => a.incidencia.maquina.idestablecimientos == establecimientoId)
+                .Include(a => a.incidencia)
+                .Include(a => a.incidencia.maquina)
+                .Include(a => a.averiaEstado)
+                .AsQueryable();
+        }
+
+
+        public async Task<Carga> GetCarga(int averiaId)
+        {
+            var sis = await _dbContext.Cargas.Where(a => a.idAverias == averiaId).FirstOrDefaultAsync();
+            return sis;
+        }
+
+        public async Task<Averia> GetAveriaById(int id)
+        {
+            return await _dbContext.Averias
+            .Include(a => a.averiaEstado)
+            .Include(a => a.concepto)
+            .Include(a => a.incidencia)
+            .Include(a => a.incidencia.maquina)
+            .Where(a => a.id == id)
+            .FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveAveriaAsync(Averia item)
+        {
+            await _dbContext.SaveChangesAsync();
+            return 1;
+        }
+
+        public async Task<int> DeleteAveriaAsync(Averia item)
+        {
+            _dbContext.Averias.Remove(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public void Dispose()
+        {
+            _dbContext.Dispose();
+        }
+    }
+}

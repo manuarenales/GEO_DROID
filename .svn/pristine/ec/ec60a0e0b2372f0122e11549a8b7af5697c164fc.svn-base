@@ -1,0 +1,15 @@
+﻿
+
+img {
+    height: 40px;
+    width: 40px;
+}
+
+itemlist {
+    border: 2px,2px,2px,2px solid;
+    border-color: black;
+}
+
+.additem {
+    background-color: rgb(209, 209, 209);
+}

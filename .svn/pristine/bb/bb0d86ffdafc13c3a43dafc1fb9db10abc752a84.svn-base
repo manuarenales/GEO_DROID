@@ -1,0 +1,54 @@
+﻿
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
+
+
+namespace GeoDroid.Data
+{
+    public class Maquina
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+
+        public string? codigo { get; set; }
+        public int pctEstablecimiento { get; set; }
+        public DateTime fechaUltimoArqueo { get; set; }
+        public decimal ultimoArqueo { get; set; }
+        public decimal arqueoEstablecido { get; set; }
+        public decimal diferenciaArqueo { get; set; }
+        public decimal redondeoValor { get; set; }
+        public bool redondeoParaEmpresa { get; set; }
+        public DateTime fechaUltimaRecaudacion { get; set; }
+        public decimal empresaSaldo { get; set; }
+        public decimal establecimientoSaldo { get; set; }
+        public int protocolosMaquinas { get; set; }
+
+        public int idInstalaciones { get; set; }
+        public int idPatronContadores { get; set; }
+        public DateTime fechaInstalacion { get; set; }
+        public int idTipoDistribucion { get; set; }
+
+        [MaxLength(50)]
+        public string? descripcionDistribucion { get; set; }
+
+        [MaxLength(10)]
+        public string? modeloMaquina { get; set; }
+
+        [MaxLength(50)]
+        public string? password { get; set; }
+        [MaxLength(20)]
+        public string? permiso { get; set; }
+        [DataMember]
+        public int idEmpresas { get; set; }
+
+        [ForeignKey("establecimiento")]
+        public int idestablecimientos { get; set; }
+        public virtual Establecimiento establecimiento { get; set; }
+
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public virtual ICollection<Averia> Averias { get; set; }
+    }
+}

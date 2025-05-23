@@ -1,0 +1,64 @@
+﻿
+using GEO_DROID.Models;
+using SQLite;
+
+
+namespace GEO_DROID.Resources
+{
+    public class TodoItemDatabase
+    {
+        SQLiteAsyncConnection Database;
+
+        public TodoItemDatabase()
+        {
+        }
+
+        async Task Init()
+        {
+            if (Database is not null)
+                return;
+            try
+            {
+                Database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
+                var result = await Database.CreateTableAsync<DeviceCandidate>();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+        }
+        public async Task<List<DeviceCandidate>> GetItemsAsync()
+        {
+            await Init();
+            return await Database.Table<DeviceCandidate>().ToListAsync();
+        }
+
+
+        public async Task<DeviceCandidate> GetItemAsync(int id)
+        {
+            await Init();
+            return await Database.Table<DeviceCandidate>().Where(i => i.Id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveItemAsync(DeviceCandidate item)
+        {
+            await Init();
+            DeviceCandidate device = await Database.Table<DeviceCandidate>().Where(i => i.Id == item.Id).FirstOrDefaultAsync();
+
+            if (device != null)
+                return await Database.UpdateAsync(device);
+            else
+                return await Database.InsertAsync(item);
+        }
+
+        public async Task<int> DeleteItemAsync(DeviceCandidate item)
+        {
+            await Init();
+            // await Database.DropTableAsync<DeviceCandidate>();
+            var yes = await Database.Table<DeviceCandidate>().DeleteAsync(i => i.Id == item.Id);
+            return yes;
+        }
+
+    }
+}

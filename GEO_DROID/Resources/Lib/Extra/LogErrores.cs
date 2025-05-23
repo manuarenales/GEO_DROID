@@ -1,0 +1,67 @@
+﻿
+#if ANDROID 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Java.IO;
+using IOException = Java.IO.IOException;
+
+namespace GEO_DROID.Resources.Lib.Extra
+{
+    public class LogErrores
+    {
+        public static void appendLog(String text)
+        {
+            appendLog("?", text);
+        }
+        public static void appendLog(String form, String text)
+        {
+            Java.IO.File logFile = new Java.IO.File(System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), "err.txt"));
+
+            if (!logFile.Exists())
+            {
+                try
+                {
+                    logFile.CreateNewFile();
+                }
+                catch (IOException e)
+                {
+                    e.PrintStackTrace();
+                }
+            }
+            else if (5 < (logFile.Length() / 1024f) / 1024f)
+            {
+                //Si el fichero es mayor de 5 megas, creamos uno nuevo
+                try
+                {
+                    logFile.Delete();
+                    logFile.CreateNewFile();
+                }
+                catch (IOException e)
+                {
+                    e.PrintStackTrace();
+                }
+            }
+            try
+            {
+                //Sacamos mensaje en consola además de escribirlo en fichero de texto
+                System.Console.WriteLine(text);
+
+                text = DateTime.Now.ToString() + " - " + form + " - " + text;
+
+                //true para poder concatenar texto
+                BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
+                buf.Append(text);
+                buf.NewLine();
+                buf.Close();
+
+            }
+            catch (IOException e)
+            {
+                e.PrintStackTrace();
+            }
+        }
+    }
+}
+#endif

@@ -1,0 +1,158 @@
+﻿@using GEO_DROID.Services
+@inject AveriasService _AveriaService ;
+@inject EstablecimientosService _EstablecimientosService;
+@inject MaquinaService _MaquinaService;
+@inject CargaService _CargaService;
+
+<form class="w-100 content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start " needs-validation>
+    <div class="row w-100 bg-dark ">
+        <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
+
+            @if (carga.incidencia != null)
+            {
+                @if (carga.incidencia.maquina.establecimiento != null)
+                {
+                    <span style="color:white" class="SubTitulo">@carga.incidencia.maquina.establecimiento.nombre</span>
+                }
+            }
+            else
+            {
+                @if (maquina.establecimiento != null)
+                {
+                    <span style="color:white" class="SubTitulo">@maquina.establecimiento.nombre</span>
+                }
+            }
+        </div>
+        <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
+            @if (carga != null)
+            {
+                @if (carga.incidencia != null)
+                {
+                    @if (carga.incidencia.maquina != null)
+                    {
+                        <span style="color:white" class="SubTitulo">@carga.incidencia.maquina.descripcionDistribucion</span>
+                    }
+                }
+                else
+                {
+                    @if (maquina != null)
+                    {
+                        <span style="color:white" class="SubTitulo">@maquina.descripcionDistribucion</span>
+                    }
+                }
+
+            }
+        </div>
+    </div>
+    @if (carga != null)
+    {
+        <div class="row w-100 ">
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>Carga</span>
+                <input @bind="carga.cargaEmpresa" type="number" class="mb-1" />
+            </div>
+
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>Recuperacion </span>
+                <input @bind="carga.recuperacionEmpresa" type="number" class="mb-1" />
+            </div>
+        </div>
+    }
+</form>
+
+<div class="w-100 bg-red" style="height:8vw;"></div>
+
+<div class="row m-1 fixed-bottom  ">
+    <div class="col-6 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="GuardarCarga ">Guardar</button>
+    </div>
+    <div class="col-6 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="CancelarCarga ">Cancelar </button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int idMaquinas { get; set; }
+
+    [Parameter]
+    public int idEstablecimiento { get; set; }
+
+    [Parameter]
+    public int idIncidencia { get; set; }
+
+    [Parameter]
+    public int idAveria { get; set; }
+
+    [Parameter]
+    public EventCallback<Carga> Changed { get; set; }
+
+    [Parameter]
+    public Carga ParameterCarga { get; set; }
+
+    public Carga carga;
+
+    public Maquina maquina;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (ParameterCarga == null)
+        {
+            if (idAveria > 0)
+            {
+                carga = await _CargaService.GetCargaByAveriaId(idAveria);
+                if (carga == null)
+                {
+                    carga = new Carga();
+                    carga.idAverias = idAveria;
+                    maquina = await _MaquinaService.GetMaquinaById(idMaquinas);
+                }
+            }
+            else
+            {
+                //estoy creando la averia desde 0 añadiendo la carga;
+                carga = new Carga();
+                maquina = await _MaquinaService.GetMaquinaById(idMaquinas);
+            }
+        }
+        else
+        {
+            carga = ParameterCarga;
+            maquina = await _MaquinaService.GetMaquinaById(idMaquinas);
+        }
+
+    }
+
+    public async void GuardarCarga()
+    {
+        await Changed.InvokeAsync(carga);
+    }
+
+    public async void CancelarCarga()
+    {
+        if (idAveria > 0)
+        {
+            if (carga.id > 0)
+            {
+                _CargaService.Reload(carga);
+            }
+            else
+            {
+                carga = null;
+            }
+            await Changed.InvokeAsync(carga);
+        }
+        else
+        {
+            carga = null;
+            await Changed.InvokeAsync(carga);
+        }
+
+    }
+
+    public async void SaveCarga(Averia averia)
+    {
+
+    }
+}

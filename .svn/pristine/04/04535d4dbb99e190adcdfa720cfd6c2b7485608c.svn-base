@@ -1,0 +1,32 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
+
+namespace GEO_DROID.Models
+{
+    public class Carga
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        public decimal cargaEmpresa { get; set; }
+        public decimal cargaEstablecimiento { get; set; }
+        public decimal recuperacionEmpresa { get; set; }
+        public decimal recuperacionEstablecimiento { get; set; }
+        public decimal ajusteEmpresa { get; set; }
+        public decimal ajusteEstablecimiento { get; set; }
+        public decimal saldoEmpresaChanged { get; set; }
+        public decimal saldoEstablecimientoChanged { get; set; }
+
+        public int idAverias { get; set; }
+
+        /////////////////////////////////////////////////////
+        public int idIncidencia { get; set; }
+        /////////////////////////////////////////////////////
+        [ForeignKey("idIncidencia")]
+        public virtual Incidencia Incidencia { get; set; }
+
+        /////////////////////////////////////////////////////
+    }
+}

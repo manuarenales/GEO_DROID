@@ -1,0 +1,92 @@
+﻿@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject ConceptoAveriaService conceptoAveriaService
+
+
+<Validation Validator="ValidationRule.IsNotEmpty">
+    <Div Class=" d-flex flex-column justify-content-start" @onclick="() => ShowModal()">
+        <label>
+            Concepto
+        </label>
+        @if (conceptoAveria != null)
+        {
+            <TextEdit Style="color: blue" @bind-Text="@conceptoAveria.descripcion">
+                <ValidationSuccess>Name is good.</ValidationSuccess>
+            </TextEdit>
+
+        }
+        else
+        {
+            <TextEdit>
+                <ValidationSuccess>Name is good.</ValidationSuccess>
+                <ValidationError>Enter valid name!</ValidationError>
+            </TextEdit>
+        }
+    </Div>
+</Validation>
+
+<Modal @ref="modalConcepto" style="height:80%;">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Concepto</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <input class="w-100" @bind="Bconcepto" />
+            <ul class="list-group list-group-flush">
+                @foreach (ConceptoAveria concepto in conceptos.Where(c => Bconcepto == "" || c.descripcion.Contains(Bconcepto)))
+                {
+                    <li class="list-group-item " @onclick="() =>SetConceptoAveria(concepto)">
+                        <span class=""> @concepto.descripcion </span>
+                    </li>
+                }
+            </ul>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+@code {
+    [Parameter]
+    public ConceptoAveria conceptoAveria { get; set; }
+    [Parameter]
+    public EventCallback<ConceptoAveria> conceptoAveriaChanged { get; set; }
+  
+    private string Bconcepto = "";
+    private Modal modalConcepto;
+    private bool IsIdConceptoValid { get; set; } = true;
+    public List<ConceptoAveria> conceptos = new List<ConceptoAveria>();
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        conceptos = await conceptoAveriaService.Getconceptos();
+    }
+
+    private Task ShowModal()
+    {
+        return modalConcepto.Show();
+    }
+
+    private void SetConceptoAveria(ConceptoAveria concepto)
+    {
+        // maquinaAveria = maquina;
+        conceptoAveriaChanged.InvokeAsync(concepto);
+        StateHasChanged();
+        modalConcepto.Hide();
+    }
+
+    void ValidateConcepto(ValidatorEventArgs e)
+    {
+        if (conceptoAveria == null)
+        {
+            e.Status = ValidationStatus.Error;
+            e.ErrorText = "Selecciona una máquina.";
+        }
+        else
+        {
+            e.Status = ValidationStatus.Success;
+        }
+    }
+
+}

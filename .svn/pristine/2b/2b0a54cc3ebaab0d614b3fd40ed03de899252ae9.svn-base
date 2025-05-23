@@ -1,0 +1,98 @@
+﻿using GEO_DROID.Resources;
+using GeoDroid.Data;
+using GeoDroid.Data.Models.DTO;
+using InTheHand.Net.Bluetooth;
+using InTheHand.Net.Sockets;
+using Microsoft.Maui.Controls;
+using Newtonsoft.Json;
+using System.Net.Sockets;
+
+
+namespace GEO_DROID.Services
+{
+    public class BluetoothServiceManager
+    {
+        public BluetoothClient client;
+        public BluetoothDeviceInfo deviceConected;
+        public GeoDroidDbContext _dbContext;
+        public ulong _deviceConectedAddess;
+
+        public BluetoothServiceManager()
+        {
+            Permissions.RequestAsync<BluetoothPermissions>();
+            Permissions.RequestAsync<Permissions.Camera>();
+            client = new BluetoothClient();
+            _dbContext = new GeoDroidDbContext();
+        }
+
+        public async Task<IReadOnlyCollection<BluetoothDeviceInfo>> SearchDevices()
+        {
+            return await Task.Run(() =>
+             {
+                 return client.DiscoverDevices();
+             });
+        }
+
+        public async Task<bool> ConectBl(BluetoothDeviceInfo device)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    client.Connect(device.DeviceAddress, BluetoothService.SerialPort);
+                    deviceConected = device;
+
+
+                });
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public async Task<string> SendData(byte[] byteArray, ulong adderss)
+        {
+            try
+            {
+                client.Connect(adderss, BluetoothService.SerialPort);
+
+                if (client.Connected)
+                {
+                    NetworkStream stream = client.GetStream();
+                    if (stream.CanWrite)
+                    {
+                        await Task.Run(async () =>
+                        {
+                            await stream.WriteAsync(byteArray, 0, byteArray.Length);
+                            return String.Empty;
+                        });
+                        return String.Empty;
+                    }
+                    else
+                    {
+                        return "No se puede escribir en el stream del dispositivo Bluetooth.";
+                    }
+                }
+                else
+                {
+                    return "El cliente Bluetooth no está conectado.";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Error al enviar datos al dispositivo Bluetooth: {ex.Message}";
+            }
+        }
+
+
+        public void SaveConectedDevice(BluetoothDeviceInfo device)
+        {
+            BluetoothDeviceInfoDTO conected = new BluetoothDeviceInfoDTO();
+            string adress = JsonConvert.SerializeObject(conected);
+            conected.DeviceAddress = adress;
+
+        }
+    }
+}

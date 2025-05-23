@@ -1,0 +1,48 @@
+﻿
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
+
+namespace GeoDroid.Data
+{
+
+
+    public class Averia
+    {
+        public Averia()
+        {
+            observaciones = "";
+        }
+
+        ////////////////////////////////////////////////////////////////////
+
+        [ForeignKey("concepto")]
+        public int idConceptos { get; set; }
+        public virtual ConceptoAveria concepto { get; set; }
+
+        [ForeignKey("incidencia")]
+        public int idIncidencias { get; set; }
+        public virtual Incidencia incidencia { get; set; }
+
+        [ForeignKey("averiaEstado")]
+        public int idAveriaEstados { get; set; }
+        public virtual AveriaEstado averiaEstado { get; set; }
+
+        ////////////////////////////////////////////////////////////////////
+
+        [Key]
+        public int id { get; set; }
+        public int? idGeo { get; set; }
+        public int? idPersonal { get; set; }
+        public string? observaciones { get; set; }
+        public string? detalle { get; set; }
+        public string? comentarios { get; set; }
+        public DateTime? fechaFin { get; set; }
+        public DateTime? fechaModificacion { get; set; }
+        public byte[]? foto { get; set; }
+        public string? estado { get; set; }
+
+    }
+}
+

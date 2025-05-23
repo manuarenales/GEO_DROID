@@ -1,0 +1,10 @@
+﻿.bluetext {
+    color: blue;
+}
+
+
+
+.content {
+    height: 84vh;
+    max-height: fit-content;
+}

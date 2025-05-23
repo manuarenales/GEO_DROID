@@ -1,0 +1,457 @@
+﻿using Android.Bluetooth;
+using Android.Content;
+using Android.Runtime;
+using BLL;
+using Bumptech.Glide.Load.Resource.Bytes;
+using InTheHand.Net.Bluetooth;
+using Java.Util;
+using Javax.Crypto;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using static BLL.LeerInfoMaquina.ModuloBluetooth;
+using GEO_DROID.Platforms.Android.Handlers;
+using BLL.LeerInfoMaquina;
+
+namespace GEO_DROID.Platforms.Android.Handlers
+{
+
+    public class BluetoothServiceBroker : Java.Lang.Object, IBluetoothService
+    {
+        private static readonly UUID MY_UUID = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+        private BluetoothSocket _socket;
+        private Stream _inputStream;
+        private Stream _outputStream;
+        public bool Conected = false;
+        public List<byte> buffer = new List<byte>();
+        private BluetoothPairingReceiver _pairingReceiver;
+        public bool Paired;
+        public string _deviceAddress;
+        public string _mac;
+        public string _pin;
+        public string Error;
+        protected const int MAX_TIMEOUT = 60000; //60 segundos
+        public List<List<byte>> _register = new List<List<byte>>();
+
+        public BluetoothServiceBroker(string mac, TipoDispositivoBTEnum tipoDispositivo, string pin)
+        {
+            var context = Platform.CurrentActivity;
+            _pairingReceiver = new BluetoothPairingReceiver(this);
+            var filter = new IntentFilter(BluetoothDevice.ActionPairingRequest);
+            filter.AddAction(BluetoothDevice.ActionBondStateChanged);
+            context.RegisterReceiver(_pairingReceiver, filter);
+            _mac = mac;
+            _pin = pin;
+        }
+        public bool IsDevicePaired(string address)
+        {
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+            var pairedDevices = bluetoothAdapter.BondedDevices;
+            foreach (var device in pairedDevices)
+            {
+                if (device.Address == address)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        private bool IsDeviceConnected(string address)
+        {
+
+            return _socket != null && _socket.IsConnected && _socket != null && _socket.RemoteDevice.Address == address;
+        }
+        public bool PairDevice()
+        {
+            if (IsDevicePaired(_mac))
+            {
+                Console.WriteLine("El dispositivo ya está emparejado");
+                Paired = true;
+                return false;
+            }
+
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+            if (bluetoothAdapter == null)
+            {
+                Console.WriteLine("Bluetooth no está disponible");
+                return false;
+            }
+
+            _deviceAddress = _mac; // Guardar la dirección del dispositivo  
+            BluetoothDevice device = bluetoothAdapter.GetRemoteDevice(_mac);
+            try
+            {
+                byte[] pinBytes = Encoding.UTF8.GetBytes(_pin);
+
+                // Usar JNIEnv para interactuar con el método nativo
+                IntPtr pinArray = JNIEnv.NewArray(pinBytes);
+                IntPtr deviceClass = JNIEnv.GetObjectClass(device.Handle);
+                IntPtr setPinMethod = JNIEnv.GetMethodID(deviceClass, "setPin", "([B)Z");
+
+                JValue[] args = new JValue[] { new JValue(pinArray) };
+                JNIEnv.CallBooleanMethod(device.Handle, setPinMethod, args);
+
+                // Invocar el método createBond para emparejar el dispositivo
+                IntPtr createBondMethod = JNIEnv.GetMethodID(deviceClass, "createBond", "()Z");
+                JNIEnv.CallBooleanMethod(device.Handle, createBondMethod);
+
+                JNIEnv.DeleteLocalRef(pinArray);
+                JNIEnv.DeleteLocalRef(deviceClass);
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error emparejando el dispositivo: " + ex.Message);
+                return false;
+            }
+        }
+        public bool Conectar(IProgressCallback progres)
+        {
+            if (IsDeviceConnected(_mac))
+            {
+                Console.WriteLine("Ya estás conectado a este dispositivo");
+                return true;
+            }
+
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+            if (bluetoothAdapter == null)
+            {
+                Console.WriteLine("Bluetooth no está disponible");
+                return false;
+            }
+
+            BluetoothDevice device = bluetoothAdapter.GetRemoteDevice(_mac);
+
+            try
+            {
+                _socket = device.CreateRfcommSocketToServiceRecord(MY_UUID);
+                _socket.Connect();
+
+                _inputStream = _socket.InputStream;
+                Task.Run(() => StartReading());
+                _outputStream = _socket.OutputStream;
+                return true;
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error conectando al dispositivo: " + ex.Message);
+                return false;
+            }
+        }
+        public bool DisconnectDevice(IProgressCallback callback)
+        {
+            try
+            {
+                _inputStream?.Close();
+                _outputStream?.Close();
+                _socket?.Close();
+                LimpiarBuffer();
+                Console.WriteLine("Dispositivo desconectado");
+                Conected = false;
+                return true;
+            }
+            catch (IOException ex)
+            {
+                return false;
+            }
+        }
+        public void WriteData(string data)
+        {
+            try
+            {
+                byte[] buffer = new byte[data.Length];
+                for (int i = 0; i < data.Length; i++)
+                {
+                    buffer[i] = (byte)data[i];
+                }
+                _outputStream.Write(buffer, 0, buffer.Length);
+
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error enviando datos: " + ex.Message);
+            }
+        }
+        public bool Reconectar(IProgressCallback progreso, string mac)
+        {
+            try
+            {
+                DisconnectDevice();
+                string macAddress = mac;
+                ConnectToDevice(macAddress);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error reconectando el dispositivo: " + ex.Message);
+                return false;
+            }
+        }
+        public bool ConfigurarComunicacion(byte parametros)
+        {
+            try
+            {
+                WriteData(parametros.ToString());
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error configurando la comunicación: " + ex.Message);
+                return false;
+            }
+        }
+        public bool EnviarDatos(StringBuilder datos)
+        {
+            try
+            {
+                WriteData(datos.ToString());
+                Thread.Sleep(200);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error enviando datos: " + ex.Message);
+                return false;
+            }
+        }
+        public StringBuilder RecibirDatos()
+        {
+            try
+            {
+                return RecibirDatos(0, 0);
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error leyendo datos: " + ex.Message);
+                return null;
+            }
+        }
+        public void LimpiarBuffer()
+        {
+            try
+            {
+                buffer.Clear();
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error limpiando el buffer: " + ex.Message);
+            }
+        }
+        public bool IsReady()
+        {
+            if (_socket != null && _outputStream != null && _inputStream != null)
+            {
+                if (_outputStream.CanWrite && _inputStream.CanRead)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public string Estado()
+        {
+            return "";
+        }
+        public void ConnectToDevice(string address)
+        {
+            if (IsDeviceConnected(_mac))
+            {
+                Console.WriteLine("Ya estás conectado a este dispositivo");
+
+            }
+
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+            if (bluetoothAdapter == null)
+            {
+                Console.WriteLine("Bluetooth no está disponible");
+
+            }
+
+            BluetoothDevice device = bluetoothAdapter.GetRemoteDevice(address);
+
+            try
+            {
+                _socket = device.CreateRfcommSocketToServiceRecord(MY_UUID);
+                _socket.Connect();
+                _inputStream = _socket.InputStream;
+                _outputStream = _socket.OutputStream;
+
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error conectando al dispositivo: " + ex.Message);
+
+            }
+        }
+        public string ReadData()
+        {
+
+            var dataCopy = buffer.ToArray();
+            buffer.Clear();
+            return Encoding.ASCII.GetString(dataCopy);
+
+        }
+        private async void StartReading()
+        {
+            while (_socket.IsConnected)
+            {
+                try
+                {
+                    byte[] dattoapedn = new byte[20];
+                    int datareaded = _inputStream.Read(dattoapedn);
+
+                    for (int i = 0; i < datareaded; i++)
+                    {
+                        this.buffer.Add(dattoapedn[i]);
+                    }
+
+                }
+                catch (IOException ex)
+                {
+                    Console.WriteLine("Error leyendo datos: " + ex.Message);
+                    break;
+                }
+            }
+        }
+        public StringBuilder RecibirDatos(int timeout, int timeout2)
+        {
+            try
+            {
+                StringBuilder ret = new StringBuilder();
+                int lenRecibido = 0;
+                List<byte> data = new List<byte>();
+
+                // CACHO DE ESPERA
+                if (timeout > 0)
+                {
+                    int tiempoEspera = GetTime(timeout); ;
+                    int tiempoEsperaLimite = GetTime(MAX_TIMEOUT);
+
+                    //if (timeout2 == 0)
+                    //    timeout2 = timeout / 2;
+
+                    // Mientras no se cumpla el tiempo de espera voy comprobando la longitud de datos que entran
+                    while (!IsTimeOut(tiempoEspera) && !IsTimeOut(tiempoEsperaLimite))
+                    {
+                        Thread.Sleep(10);
+                        if (buffer != null && buffer.Count > 0)
+                        {
+                            //Thread.Sleep(50);
+
+                            // Si hay cambios en el tamaño de datos recibidos reajusto el tiempo
+                            if ((lenRecibido != buffer.Count))
+                                tiempoEspera = GetTime((int)(timeout2));
+
+                            lenRecibido = buffer.Count;
+                        }
+                    }
+                }
+
+                if (timeout2 == 0)
+                    Thread.Sleep(200);
+
+                // CACHO DE VER QUE HA LLEGADO
+                if (buffer != null)
+                    lenRecibido = buffer.Count;
+                // Asigno para devolver tantos datos como hayan llegado antes de cumplirse el timeout
+                for (int i = 0; i < lenRecibido; i++)
+                {
+                    ret.Append((char)buffer[i]);
+                    data.Add(buffer[i]);
+
+                }
+                this._register.Add(data);
+
+                Thread.Sleep(10);
+
+                return ret;
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Error leyendo datos: " + ex.Message);
+                return null;
+            }
+        }
+        public void DisconnectDevice()
+        {
+            try
+            {
+                _inputStream?.Close();
+                _outputStream?.Close();
+                _socket?.Close();
+                LimpiarBuffer();
+                Console.WriteLine("Dispositivo desconectado");
+                Conected = false;
+
+            }
+            catch (IOException ex)
+            {
+
+            }
+        }
+        private int GetTime(int t)
+        {   // Devuelve el valor de tiempo en que se cumple el timeout
+            return Environment.TickCount + t;
+        }
+        private bool IsTimeOut(int t)
+        {
+            return (Environment.TickCount >= t);
+        }
+    }
+
+    public class BluetoothPairingReceiver : BroadcastReceiver
+    {
+      
+        private BluetoothServiceBroker _bluetoothService;
+        public BluetoothPairingReceiver(BluetoothServiceBroker bluetoothService)
+        {
+            _bluetoothService = bluetoothService;
+        }
+        public override void OnReceive(Context context, Intent intent)
+        {
+            string action = intent.Action;
+            if (action == BluetoothDevice.ActionPairingRequest)
+            {
+                BluetoothDevice device = (BluetoothDevice)intent.GetParcelableExtra(BluetoothDevice.ExtraDevice);
+
+                // Verificar si el dispositivo ya está emparejado
+                if (_bluetoothService.IsDevicePaired(device.Address))
+                {
+                    Console.WriteLine("El dispositivo ya está emparejado");
+                    _bluetoothService.ConnectToDevice(device.Address);
+                    return;
+                }
+
+                try
+                {
+                    // Configurar el PIN usando reflexión
+                    byte[] pinBytes = Encoding.UTF8.GetBytes(_bluetoothService._pin);
+
+                    // Usar JNIEnv para interactuar con el método nativo
+                    IntPtr pinArray = JNIEnv.NewArray(pinBytes);
+                    IntPtr deviceClass = JNIEnv.GetObjectClass(device.Handle);
+                    IntPtr setPinMethod = JNIEnv.GetMethodID(deviceClass, "setPin", "([B)Z");
+
+                    JValue[] args = new JValue[] { new JValue(pinArray) };
+                    JNIEnv.CallBooleanMethod(device.Handle, setPinMethod, args);
+
+                    // Invocar el método createBond para emparejar el dispositivo
+                    IntPtr createBondMethod = JNIEnv.GetMethodID(deviceClass, "createBond", "()Z");
+                    JNIEnv.CallBooleanMethod(device.Handle, createBondMethod);
+
+                    JNIEnv.DeleteLocalRef(pinArray);
+                    JNIEnv.DeleteLocalRef(deviceClass);
+
+                    _bluetoothService.Paired = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error emparejando el dispositivo: " + ex.Message);
+                }
+            }
+
+        }
+    }
+}

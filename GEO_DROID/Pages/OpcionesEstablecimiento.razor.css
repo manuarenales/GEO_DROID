@@ -1,0 +1,11 @@
+﻿
+
+img {
+    height: 2em;
+    width: 2em;
+}
+
+.content {
+    height: 80vh;
+    max-height: fit-content;
+}

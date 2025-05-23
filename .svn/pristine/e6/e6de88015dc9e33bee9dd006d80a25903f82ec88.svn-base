@@ -1,0 +1,15 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class RecaudacionEstablecimientoDTO
+    {
+        public Guid establecimientoID { get; set; }
+        public string codigoEstablecimiento { get; set; }
+        public double recaudacion { get; set; }
+    }
+}

@@ -1,0 +1,68 @@
+﻿using GEO_DROID.Models;
+using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services
+{
+    public class MaquinaService
+    {
+        SQLiteAsyncConnection Database;
+
+        public MaquinaService()
+        {
+            Init();
+        }
+
+        async Task Init()
+        {
+            if (Database is not null)
+                return;
+            try
+            {
+                Database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
+                var result = await Database.CreateTableAsync<Maquina>();
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+        }
+
+        public async Task<List<Maquina>> Getmaquinas()
+        {
+            return await Database.Table<Maquina>().ToListAsync();
+        }
+
+        public async Task<int> DeleteMaquinaAsync(Maquina item)
+        {
+            var yes = await Database.Table<Maquina>().DeleteAsync(i => i.id == item.id);
+            return yes;
+        }
+
+        public async Task<int> SaveMaquinaAsync(Maquina item)
+        {
+            Maquina device = await Database.Table<Maquina>().Where(i => i.id == item.id).FirstOrDefaultAsync();
+
+            if (device != null)
+            {
+                return await Database.UpdateAsync(item);
+            }
+            else
+            {
+                return await Database.InsertAsync(item);
+            }
+        }
+
+        public async Task<Maquina> GetMaquinaByIdAsync(int id)
+        {
+
+            return await Database.Table<Maquina>().Where(i => i.id == id).FirstOrDefaultAsync();
+        }
+
+
+    }
+}

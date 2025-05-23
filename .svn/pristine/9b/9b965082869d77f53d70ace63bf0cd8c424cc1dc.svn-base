@@ -1,0 +1,170 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+
+namespace BLL.LeerInfoMaquina
+{
+    public /*internal*/ abstract class Comunicacion : IDisposable
+    {
+        protected IProgressCallback _callback;
+        protected bool _disposed = false;
+
+        protected const int MAX_TIMEOUT = 60000; //60 segundos
+        protected StringBuilder _bufferLectura = new StringBuilder(); // Buffer de lectura
+
+
+
+        protected string _error;
+        public string Error
+        {
+            get { return _error; }
+        }
+
+        //public delegate void RefrescaEstadoDelegate(string texto);
+        public ModuloBluetooth.RefrescaEstadoDelegate _refrescaEstadoDelegado;
+        private string _estadoCon;
+        public string EstadoCon
+        {
+            get { return _estadoCon; }
+            set
+            {
+                _estadoCon = value;
+                if (this._refrescaEstadoDelegado != null)
+                {
+                    try
+                    {
+                        _refrescaEstadoDelegado.Invoke(_estadoCon);
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        public void SetCallBackMessage(string message)
+        {
+            EstadoCon = message;
+            if (this._callback != null)
+                _callback.SetText(_estadoCon);
+        }
+        public void IncrementaCallback(int incremento)
+        {
+            if (_callback != null)
+                _callback.StepTo(incremento);
+        }
+
+        public ModuloBluetooth.RefrescaEstadoDelegate RefrescaEstadoDel
+        {
+            get { return _refrescaEstadoDelegado; }
+            set { _refrescaEstadoDelegado = value; }
+        }
+
+        public abstract bool Conectar(IProgressCallback callback);
+        public bool Conectar()
+        {
+            return Conectar(null);
+        }
+        public abstract bool Desconectar(IProgressCallback callback);
+        public bool Desconectar()
+        {
+            return Desconectar(null);
+        }
+        public abstract bool IsReady();
+        public abstract string Estado();
+        public abstract bool EnviarDatos(StringBuilder datos);
+
+        protected StringBuilder RecibirDatos()
+        {
+            return RecibirDatos(0, 0);
+        }
+
+        public StringBuilder RecibirDatos(int timeout)
+        {
+            return RecibirDatos(timeout, 0);
+        }
+
+        public StringBuilder RecibirDatos(int timeout, int timeout2)
+        {
+            StringBuilder ret = new StringBuilder();
+            int lenRecibido = 0;
+
+            // CACHO DE ESPERA
+            if (timeout > 0)
+            {
+                int tiempoEspera = GetTime(timeout);
+                int tiempoEsperaLimite = GetTime(MAX_TIMEOUT);
+
+                //if (timeout2 == 0)
+                //    timeout2 = timeout / 2;
+
+                // Mientras no se cumpla el tiempo de espera voy comprobando la longitud de datos que entran
+                while (!IsTimeOut(tiempoEspera) && !IsTimeOut(tiempoEsperaLimite))
+                {
+                    Thread.Sleep(10);
+                    if (_bufferLectura != null && _bufferLectura.Length > 0)
+                    {
+                        //Thread.Sleep(50);
+
+                        // Si hay cambios en el tamaño de datos recibidos reajusto el tiempo
+                        if ((lenRecibido != _bufferLectura.Length))
+                            tiempoEspera = GetTime((int)(timeout2));
+
+                        lenRecibido = _bufferLectura.Length;
+                    }
+                }
+            }
+
+            if (timeout2 == 0)
+                Thread.Sleep(200);
+
+            // CACHO DE VER QUE HA LLEGADO
+            if (_bufferLectura != null)
+                lenRecibido = _bufferLectura.Length;
+            // Asigno para devolver tantos datos como hayan llegado antes de cumplirse el timeout
+            for (int i = 0; i < lenRecibido; i++)
+                ret.Append((char)_bufferLectura[i]);
+            Thread.Sleep(10);
+
+            return ret;
+        }
+
+        public void LimpiarBuffer()
+        {
+            _bufferLectura.Length = 0;
+        }
+
+        private int GetTime(int t)
+        {   // Devuelve el valor de tiempo en que se cumple el timeout
+            return Environment.TickCount + t;
+        }
+
+        private bool IsTimeOut(int t)
+        {
+            return (Environment.TickCount >= t);
+        }
+
+        ~Comunicacion()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this._disposed)
+            {
+                if (disposing)
+                {
+                    // Libero todo lo que he manejado
+                }
+
+                _disposed = true;
+            }
+        }
+    }
+}

@@ -1,0 +1,55 @@
+﻿
+using IDispatcher = Fluxor.IDispatcher;
+using GEO_DROID.Services.SincroService;
+using Fluxor;
+using Microsoft.AspNetCore.Components;
+using GEO_DROID.Store.Confirmation;
+
+namespace GEO_DROID.Store.Application
+{
+    public class AplicacionEffects
+    {
+        private SyncProcess _sincroService;
+        private readonly NavigationManager _navigationManager;
+        private readonly IState<ConfirmationState> confirmationState;
+
+        public AplicacionEffects(SyncProcess sincroservice, IState<ConfirmationState> ConfirmationState, NavigationManager navigationManager)
+        {
+            _sincroService = sincroservice;
+            confirmationState = ConfirmationState;
+            _navigationManager = navigationManager;
+        }
+
+        [EffectMethod]
+        public async Task SincroRequestAsync(SincronizationAction action, IDispatcher dispatcher)
+        {
+            try
+            {
+                bool confirmed = await dispatcher.ShowConfirmationAsync("Sincronización", "¿Estás seguro de que deseas sincronizar?");
+
+                if (confirmed)
+                {
+                    // Mostrar el spinner 
+                    dispatcher.Dispatch(new ShowSpinnerAction("Sincronización", "Sincronizando con el servidor..."));
+                    // Esperar un momento para permitir que la UI se actualice
+                    await Task.Delay(50);
+                    // Ejecutar la sincronización en segundo plano
+                    await Task.Run(async () =>
+                    {
+                        await _sincroService.StartAsync(null);
+                        // Ocultar el spinner después de terminar
+                        dispatcher.Dispatch(new HideSpinnerAction());
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                dispatcher.Dispatch(new HideSpinnerAction());
+            }
+        }
+
+
+
+    }
+}

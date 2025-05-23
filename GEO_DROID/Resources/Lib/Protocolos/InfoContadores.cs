@@ -1,0 +1,678 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Text;
+
+namespace BLL.LeerInfoMaquina
+{
+    public class InfoContadores
+    {
+        public enum Contador
+        {
+            Entradas = 0
+            , Salidas = 1
+            , Billetes = 2
+            , Test = 3
+            , Cajon = 4
+            , PagosManuales = 5
+            , Billetes5 = 10
+            , Billetes10 = 11
+            , Billetes20 = 12
+            , Billetes50 = 13
+            , Mecanico1 = 20
+            , Mecanico2 = 21
+            , Mecanico3 = 22
+            , Mecanico4 = 23
+            , CajonMonedas020 = 30
+            , CajonMonedas050 = 31
+            , CajonMonedas100 = 32
+            , CajonMonedas200 = 33
+            , Auxiliar1 = 40
+            , Auxiliar2 = 41
+            , Auxiliar3 = 42
+            , Auxiliar4 = 43
+            , Auxiliar5 = 44
+            , Auxiliar6 = 45
+            , Partidas1 = 51
+            , Partidas2 = 52
+            , Partidas3 = 53
+            , TicketIN = 60
+            , TicketOUT = 61
+            , NULO = -1
+        };
+
+        private StringBuilder _buffer;
+        //private int[] _contadores = new int[20];
+        private Dictionary<Contador, long> _contadores = new Dictionary<Contador, long>();
+
+        private bool _soloMecanicos = false;
+        public bool SoloMecanicos
+        {
+            get { return _soloMecanicos; }
+            set { _soloMecanicos = value; }
+        }
+
+        public long Entradas
+        {
+            get { return GetValorContador(Contador.Entradas); }
+            set { SetValorContador(Contador.Entradas, value); }
+        }
+
+        public long Salidas
+        {
+            get { return GetValorContador(Contador.Salidas); }
+            set { SetValorContador(Contador.Salidas, value); }
+        }
+
+        public long Test
+        {
+            get { return GetValorContador(Contador.Test); }
+            set { SetValorContador(Contador.Test, value); }
+        }
+
+        public long Billetes
+        {
+            get { return GetValorContador(Contador.Billetes); }
+            set { SetValorContador(Contador.Billetes, value); }
+        }
+
+        public long Cajon
+        {
+            get { return GetValorContador(Contador.Cajon); }
+            set { SetValorContador(Contador.Cajon, value); }
+        }
+
+        public long PagosManuales
+        {
+            get { return GetValorContador(Contador.PagosManuales); }
+            set { SetValorContador(Contador.PagosManuales, value); }
+        }
+
+        public long Billetes5
+        {
+            get { return GetValorContador(Contador.Billetes5); }
+            set { SetValorContador(Contador.Billetes5, value); }
+        }
+
+        public long Billetes10
+        {
+            get { return GetValorContador(Contador.Billetes10); }
+            set { SetValorContador(Contador.Billetes10, value); }
+        }
+
+        public long Billetes20
+        {
+            get { return GetValorContador(Contador.Billetes20); }
+            set { SetValorContador(Contador.Billetes20, value); }
+        }
+
+        public long Billetes50
+        {
+            get { return GetValorContador(Contador.Billetes50); }
+            set { SetValorContador(Contador.Billetes50, value); }
+        }
+
+        public long Mecanico1
+        {
+            get { return GetValorContador(Contador.Mecanico1); }
+            set { SetValorContador(Contador.Mecanico1, value); }
+        }
+
+        public long Mecanico2
+        {
+            get { return GetValorContador(Contador.Mecanico2); }
+            set { SetValorContador(Contador.Mecanico2, value); }
+        }
+
+        public long Mecanico3
+        {
+            get { return GetValorContador(Contador.Mecanico3); }
+            set { SetValorContador(Contador.Mecanico3, value); }
+        }
+
+        public long Mecanico4
+        {
+            get { return GetValorContador(Contador.Mecanico4); }
+            set { SetValorContador(Contador.Mecanico4, value); }
+        }
+
+        public long CajonMonedas020
+        {
+            get { return GetValorContador(Contador.CajonMonedas020); }
+            set { SetValorContador(Contador.CajonMonedas020, value); }
+        }
+
+        public long CajonMonedas050
+        {
+            get { return GetValorContador(Contador.CajonMonedas050); }
+            set { SetValorContador(Contador.CajonMonedas050, value); }
+        }
+
+        public long CajonMonedas100
+        {
+            get { return GetValorContador(Contador.CajonMonedas100); }
+            set { SetValorContador(Contador.CajonMonedas100, value); }
+        }
+
+        public long CajonMonedas200
+        {
+            get { return GetValorContador(Contador.CajonMonedas200); }
+            set { SetValorContador(Contador.CajonMonedas200, value); }
+        }
+
+        public long Auxiliar1
+        {
+            get { return GetValorContador(Contador.Auxiliar1); }
+            set { SetValorContador(Contador.Auxiliar1, value); }
+        }
+
+        public long Auxiliar2
+        {
+            get { return GetValorContador(Contador.Auxiliar2); }
+            set { SetValorContador(Contador.Auxiliar2, value); }
+        }
+
+        public long Auxiliar3
+        {
+            get { return GetValorContador(Contador.Auxiliar3); }
+            set { SetValorContador(Contador.Auxiliar3, value); }
+        }
+
+        public long Auxiliar4
+        {
+            get { return GetValorContador(Contador.Auxiliar4); }
+            set { SetValorContador(Contador.Auxiliar4, value); }
+        }
+
+        public long Auxiliar5
+        {
+            get { return GetValorContador(Contador.Auxiliar5); }
+            set { SetValorContador(Contador.Auxiliar5, value); }
+        }
+
+        public long Auxiliar6
+        {
+            get { return GetValorContador(Contador.Auxiliar6); }
+            set { SetValorContador(Contador.Auxiliar6, value); }
+        }
+
+        public long Partidas1
+        {
+            get { return GetValorContador(Contador.Partidas1); }
+            set { SetValorContador(Contador.Partidas1, value); }
+        }
+
+        public long Partidas2
+        {
+            get { return GetValorContador(Contador.Partidas2); }
+            set { SetValorContador(Contador.Partidas2, value); }
+        }
+
+        public long Partidas3
+        {
+            get { return GetValorContador(Contador.Partidas3); }
+            set { SetValorContador(Contador.Partidas3, value); }
+        }
+
+        public long TicketIN
+        {
+            get { return GetValorContador(Contador.TicketIN); }
+            set { SetValorContador(Contador.TicketIN, value); }
+        }
+
+        public long TicketOUT
+        {
+            get { return GetValorContador(Contador.TicketOUT); }
+            set { SetValorContador(Contador.TicketOUT, value); }
+        }
+
+        public StringBuilder Buffer
+        {
+            get { return _buffer; }
+            set { _buffer = value; }
+        }
+
+        public StringBuilder BufferHex
+        {
+            get
+            {
+                StringBuilder sb = new StringBuilder();
+
+                int len = 0;
+                if (_buffer != null)
+                    len = _buffer.Length;
+                byte[] caracteres = new byte[len];
+                for (int i = 0; i < len; i++)
+                {
+                    caracteres[i] = (byte)_buffer[i];
+                    if (caracteres[i] < 16)
+                        sb.Append("0");
+                    sb.Append(caracteres[i].ToString("x").ToUpper());
+                }
+                return sb;
+            }
+        }
+
+        public long this[Contador contador]
+        {
+            get { return GetValorContador((int)contador); }
+            set { SetValorContador((int)contador, value); }
+        }
+
+        public static Contador GetContador(int indice)
+        {
+            if (Enum.IsDefined(typeof(Contador), indice))
+                return (Contador)indice;
+            else
+                return Contador.NULO;
+        }
+
+        public InfoContadores()
+        {
+        }
+
+        private long GetValorContador(int indice)
+        {
+            return GetValorContador(GetContador(indice));
+        }
+        private long GetValorContador(Contador c)
+        {
+            return GetValorContador(c, -1);
+        }
+        private long GetValorContador(Contador c, long valorNoExiste)
+        {
+            long valor = valorNoExiste;
+            if (_contadores.ContainsKey(c))
+                valor = _contadores[c];
+            return valor;
+        }
+
+        private void SetValorContador(Contador c, long valor)
+        {
+            if (_contadores.ContainsKey(c))
+                _contadores[c] = valor;
+            else
+                _contadores.Add(c, valor);
+        }
+        private void SetValorContador(int indice, long valor)
+        {
+            SetValorContador(GetContador(indice), valor);
+        }
+
+        public void AutoSetBilletes()
+        {
+            Billetes = 0;
+            if (Billetes5 > 0) Billetes = Billetes + Billetes5;
+            if (Billetes10 > 0) Billetes = Billetes + Billetes10;
+            if (Billetes20 > 0) Billetes = Billetes + Billetes20;
+            if (Billetes50 > 0) Billetes = Billetes + Billetes50;
+        }
+
+        public bool MergeMecanicos(InfoContadores info)
+        {
+            /// || (info.Mecanico1 == -1 && info.Mecanico2 == -1 && info.Mecanico3 == -1 && info.Mecanico4 == -1) 
+            if (info != null)
+            {
+                this.Mecanico1 = info.Mecanico1;
+                this.Mecanico2 = info.Mecanico2;
+                this.Mecanico3 = info.Mecanico3;
+                this.Mecanico4 = info.Mecanico4;
+                return true;
+            }
+            return false;
+        }
+
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            string sep = "\t";
+            if (_contadores.ContainsKey(Contador.Entradas))
+            {
+                sb.Append("ENTRADAS:" + sep + _contadores[Contador.Entradas] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Salidas))
+            {
+                sb.Append("SALIDAS:" + sep + _contadores[Contador.Salidas] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Mecanico1))
+            {
+                sb.Append("MEC.1:" + sep + _contadores[Contador.Mecanico1] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Mecanico2))
+            {
+                sb.Append("MEC.2:" + sep + _contadores[Contador.Mecanico2] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Mecanico3))
+            {
+                sb.Append("MEC.3:" + sep + _contadores[Contador.Mecanico3] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Mecanico4))
+            {
+                sb.Append("MEC.4:" + sep + _contadores[Contador.Mecanico4] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.PagosManuales))
+            {
+                sb.Append("PAGOS MANUALES:" + sep + _contadores[Contador.PagosManuales] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Test))
+            {
+                sb.Append("TEST:" + sep + _contadores[Contador.Test] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Billetes))
+            {
+                sb.Append("BILLETES:" + sep + _contadores[Contador.Billetes] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Cajon))
+            {
+                sb.Append("CAJON:" + sep + _contadores[Contador.Cajon] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Billetes5))
+            {
+                sb.Append("BILL.5€:" + sep + _contadores[Contador.Billetes5] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Billetes10))
+            {
+                sb.Append("BILL.10€:" + sep + _contadores[Contador.Billetes10] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Billetes20))
+            {
+                sb.Append("BILL.20€:" + sep + _contadores[Contador.Billetes20] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Billetes50))
+            {
+                sb.Append("BILL.50€:" + sep + _contadores[Contador.Billetes50] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.CajonMonedas020))
+            {
+                sb.Append("CAJ.0,20€:" + sep + _contadores[Contador.CajonMonedas020] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.CajonMonedas050))
+            {
+                sb.Append("CAJ.0,50€:" + sep + _contadores[Contador.CajonMonedas050] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.CajonMonedas100))
+            {
+                sb.Append("CAJ.1€:" + sep + _contadores[Contador.CajonMonedas100] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.CajonMonedas200))
+            {
+                sb.Append("CAJ.2€:" + sep + _contadores[Contador.CajonMonedas200] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar1))
+            {
+                sb.Append("AUX_1:" + sep + _contadores[Contador.Auxiliar1] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar2))
+            {
+                sb.Append("AUX_2:" + sep + _contadores[Contador.Auxiliar2] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar3))
+            {
+                sb.Append("AUX_3:" + sep + _contadores[Contador.Auxiliar3] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar4))
+            {
+                sb.Append("AUX_4:" + sep + _contadores[Contador.Auxiliar4] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar5))
+            {
+                sb.Append("AUX_5:" + sep + _contadores[Contador.Auxiliar5] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar6))
+            {
+                sb.Append("AUX_6:" + sep + _contadores[Contador.Auxiliar6] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Partidas1))
+            {
+                sb.Append("PARTIDAS_1:" + sep + _contadores[Contador.Partidas1] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Partidas2))
+            {
+                sb.Append("PARTIDAS_2:" + sep + _contadores[Contador.Partidas2] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.Partidas3))
+            {
+                sb.Append("PARTIDAS_3:" + sep + _contadores[Contador.Partidas3] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.TicketIN))
+            {
+                sb.Append("TICKET_IN:" + sep + _contadores[Contador.TicketIN] + "\r\n");
+            }
+            if (_contadores.ContainsKey(Contador.TicketOUT))
+            {
+                sb.Append("TICKET_OUT:" + sep + _contadores[Contador.TicketOUT] + "\r\n");
+            }
+            //Enumerator e = _contadores..GetEnumerator();
+            //e.
+            //for (int i = 0; i < _contadores.Count; i++)
+            //{
+            //    sb.Append("(CONTADOR " + i + ":" + _contadores[i] + ")");
+            //}
+            return sb.ToString();
+        }
+
+        //public override string ToString()
+        //{
+        //    StringBuilder sb = new StringBuilder();
+        //    if (_contadores.ContainsKey(CONTADOR_ENTRADAS))
+        //    {
+        //        sb.Append("ENTRADAS:" + _contadores[CONTADOR_ENTRADAS] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_SALIDAS))
+        //    {
+        //        sb.Append("SALIDAS:" + _contadores[CONTADOR_SALIDAS] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_MECANICO_1))
+        //    {
+        //        sb.Append("MEC.1:" + _contadores[CONTADOR_MECANICO_1] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_MECANICO_2))
+        //    {
+        //        sb.Append("MEC.2:" + _contadores[CONTADOR_MECANICO_2] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_MECANICO_3))
+        //    {
+        //        sb.Append("MEC.3:" + _contadores[CONTADOR_MECANICO_3] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_MECANICO_4))
+        //    {
+        //        sb.Append("MEC.4:" + _contadores[CONTADOR_MECANICO_4] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_TEST))
+        //    {
+        //        sb.Append("TEST:" + _contadores[CONTADOR_TEST] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_BILLETES))
+        //    {
+        //        sb.Append("BILLETES:" + _contadores[CONTADOR_BILLETES] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_CAJON))
+        //    {
+        //        sb.Append("CAJON:" + _contadores[CONTADOR_CAJON] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_BILLETES5))
+        //    {
+        //        sb.Append("BILL.5€:" + _contadores[CONTADOR_BILLETES5] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_BILLETES10))
+        //    {
+        //        sb.Append("BILL.10€:" + _contadores[CONTADOR_BILLETES10] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_BILLETES20))
+        //    {
+        //        sb.Append("BILL.20€:" + _contadores[CONTADOR_BILLETES20] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_BILLETES50))
+        //    {
+        //        sb.Append("BILL.50€:" + _contadores[CONTADOR_BILLETES50] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_CAJON_MONEDAS_020))
+        //    {
+        //        sb.Append("CAJON.MONEDAS.0,20€:" + _contadores[CONTADOR_CAJON_MONEDAS_020] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_CAJON_MONEDAS_050))
+        //    {
+        //        sb.Append("CAJON.MONEDAS.0,50€:" + _contadores[CONTADOR_CAJON_MONEDAS_050] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_CAJON_MONEDAS_100))
+        //    {
+        //        sb.Append("CAJON.MONEDAS.1€:" + _contadores[CONTADOR_CAJON_MONEDAS_100] + "\r\n");
+        //    }
+        //    if (_contadores.ContainsKey(CONTADOR_CAJON_MONEDAS_200))
+        //    {
+        //        sb.Append("CAJON.MONEDAS.2€:" + _contadores[CONTADOR_CAJON_MONEDAS_200] + "\r\n");
+        //    }
+        //    //Enumerator e = _contadores..GetEnumerator();
+        //    //e.
+        //    //for (int i = 0; i < _contadores.Count; i++)
+        //    //{
+        //    //    sb.Append("(CONTADOR " + i + ":" + _contadores[i] + ")");
+        //    //}
+        //    return sb.ToString();
+        //}
+        public class ItemContador
+        {
+            private string _contador;
+            private long _valor;
+
+            public string Contador { get { return _contador; } }
+            public long Valor { get { return _valor; } }
+
+            public ItemContador(string contador, long valor)
+            {
+                _contador = contador;
+                _valor = valor;
+            }
+        }
+
+        public List<ItemContador> GetItems()
+        {
+            List<ItemContador> lista = new List<ItemContador>();
+
+            if (_contadores.ContainsKey(Contador.Entradas))
+            {
+                lista.Add(new ItemContador("ENTRADAS", _contadores[Contador.Entradas]));
+            }
+            if (_contadores.ContainsKey(Contador.Salidas))
+            {
+                lista.Add(new ItemContador("SALIDAS", _contadores[Contador.Salidas]));
+            }
+            if (_contadores.ContainsKey(Contador.Mecanico1))
+            {
+                lista.Add(new ItemContador("MEC.1", _contadores[Contador.Mecanico1]));
+            }
+            if (_contadores.ContainsKey(Contador.Mecanico2))
+            {
+                lista.Add(new ItemContador("MEC.2", _contadores[Contador.Mecanico2]));
+            }
+            if (_contadores.ContainsKey(Contador.Mecanico3))
+            {
+                lista.Add(new ItemContador("MEC.3", _contadores[Contador.Mecanico3]));
+            }
+            if (_contadores.ContainsKey(Contador.Mecanico4))
+            {
+                lista.Add(new ItemContador("MEC.4", _contadores[Contador.Mecanico4]));
+            }
+            if (_contadores.ContainsKey(Contador.PagosManuales))
+            {
+                lista.Add(new ItemContador("PAGOS MANUALES", _contadores[Contador.PagosManuales]));
+            }
+            if (_contadores.ContainsKey(Contador.Test))
+            {
+                lista.Add(new ItemContador("TEST", _contadores[Contador.Test]));
+            }
+            if (_contadores.ContainsKey(Contador.Billetes))
+            {
+                lista.Add(new ItemContador("BILLETES", _contadores[Contador.Billetes]));
+            }
+            if (_contadores.ContainsKey(Contador.Cajon))
+            {
+                lista.Add(new ItemContador("CAJON", _contadores[Contador.Cajon]));
+            }
+            if (_contadores.ContainsKey(Contador.Billetes5))
+            {
+                lista.Add(new ItemContador("BILL.5€", _contadores[Contador.Billetes5]));
+            }
+            if (_contadores.ContainsKey(Contador.Billetes10))
+            {
+                lista.Add(new ItemContador("BILL.10€", _contadores[Contador.Billetes10]));
+            }
+            if (_contadores.ContainsKey(Contador.Billetes20))
+            {
+                lista.Add(new ItemContador("BILL.20€", _contadores[Contador.Billetes20]));
+            }
+            if (_contadores.ContainsKey(Contador.Billetes50))
+            {
+                lista.Add(new ItemContador("BILL.50€", _contadores[Contador.Billetes50]));
+            }
+            if (_contadores.ContainsKey(Contador.CajonMonedas020))
+            {
+                lista.Add(new ItemContador("CAJ.0,20€", _contadores[Contador.CajonMonedas020]));
+            }
+            if (_contadores.ContainsKey(Contador.CajonMonedas050))
+            {
+                lista.Add(new ItemContador("CAJ.0,50€", _contadores[Contador.CajonMonedas050]));
+            }
+            if (_contadores.ContainsKey(Contador.CajonMonedas100))
+            {
+                lista.Add(new ItemContador("CAJ.1€", _contadores[Contador.CajonMonedas100]));
+            }
+            if (_contadores.ContainsKey(Contador.CajonMonedas200))
+            {
+                lista.Add(new ItemContador("CAJ.2€", _contadores[Contador.CajonMonedas200]));
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar1))
+            {
+                lista.Add(new ItemContador("AUX_1", _contadores[Contador.Auxiliar1]));
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar2))
+            {
+                lista.Add(new ItemContador("AUX_2", _contadores[Contador.Auxiliar2]));
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar3))
+            {
+                lista.Add(new ItemContador("AUX_3", _contadores[Contador.Auxiliar3]));
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar4))
+            {
+                lista.Add(new ItemContador("AUX_4", _contadores[Contador.Auxiliar4]));
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar5))
+            {
+                lista.Add(new ItemContador("AUX_5", _contadores[Contador.Auxiliar5]));
+            }
+            if (_contadores.ContainsKey(Contador.Auxiliar6))
+            {
+                lista.Add(new ItemContador("AUX_6", _contadores[Contador.Auxiliar6]));
+            }
+            if (_contadores.ContainsKey(Contador.Partidas1))
+            {
+                lista.Add(new ItemContador("PARTIDAS_1", _contadores[Contador.Partidas1]));
+            }
+            if (_contadores.ContainsKey(Contador.Partidas2))
+            {
+                lista.Add(new ItemContador("PARTIDAS_2", _contadores[Contador.Partidas2]));
+            }
+            if (_contadores.ContainsKey(Contador.Partidas3))
+            {
+                lista.Add(new ItemContador("PARTIDAS_3", _contadores[Contador.Partidas3]));
+            }
+            if (_contadores.ContainsKey(Contador.TicketIN))
+            {
+                lista.Add(new ItemContador("TICKET_IN", _contadores[Contador.TicketIN]));
+            }
+            if (_contadores.ContainsKey(Contador.TicketOUT))
+            {
+                lista.Add(new ItemContador("TICKET_OUT", _contadores[Contador.TicketOUT]));
+            }
+            //Enumerator e = _contadores..GetEnumerator();
+            //e.
+            //for (int i = 0; i < _contadores.Count; i++)
+            //{
+            //    sb.Append("(CONTADOR " + i + ":" + _contadores[i] + ")");
+            //}
+            return lista;
+        }
+    }
+}

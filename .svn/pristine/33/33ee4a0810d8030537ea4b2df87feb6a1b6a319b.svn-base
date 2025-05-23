@@ -1,0 +1,8 @@
+﻿.click-efecto {
+    background-color: white;
+    transition: background-color 0.2s ease;
+}
+
+    .click-efecto:active {
+        background-color: #cce5ff;
+    }

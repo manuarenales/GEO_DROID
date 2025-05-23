@@ -1,0 +1,38 @@
+﻿
+using SQLite;
+using System.Runtime.Serialization;
+
+
+namespace GeoDroid.Data
+{
+    public class Recaudacion
+    {
+        [PrimaryKey, Unique, DataMember, AutoIncrement]
+
+        public int id { get; set; }
+        [DataMember]
+        public Decimal bruto { get; set; }
+        [DataMember]
+        public Decimal recaudacion { get; set; }
+        [DataMember]
+        public Decimal netoEmpresa { get; set; }
+        [DataMember]
+        public Decimal netoEstablecimiento { get; set; }
+        [DataMember]
+        public bool arqueoRealizado { get; set; }
+        [DataMember]
+        public Decimal valorArqueo { get; set; }
+        [MaxLength(2000), DataMember]
+        public string observaciones { get; set; }
+        [DataMember]
+        public string comentario { get; set; }
+        [DataMember]
+        public int? idRuta { get; set; }
+        [Ignore]
+        public virtual Ruta? Ruta { get; set; }
+        [DataMember]
+        public int? idIncidencia { get; set; }
+        [Ignore]
+        public virtual Incidencia? Incidencia { get; set; }
+    }
+}

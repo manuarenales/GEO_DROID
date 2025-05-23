@@ -1,0 +1,87 @@
+﻿using GeoDroid.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace GEO_DROID.Services
+{
+    public class AveriasService
+    {
+
+        private readonly GeoDroidDbContext _dbContext;
+
+        Averia AveriaBackUp;
+
+        public AveriasService(GeoDroidDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public IQueryable<Averia> GetAveriasAsync()
+        {
+            return _dbContext.Averias.AsQueryable();
+        }
+
+
+        public IQueryable<Averia> GetAveriasByEstablecimiento(int establecimientoId)
+        {
+            return _dbContext.Averias.Where(a => a.incidencia.maquina.idestablecimientos == establecimientoId)
+                .Include(a => a.incidencia)
+                .Include(a => a.incidencia.maquina)
+                .Include(a => a.averiaEstado)
+                .AsQueryable();
+        }
+
+
+        public async Task<Carga> GetCarga(int averiaId)
+        {
+            var sis = await _dbContext.Cargas.Where(a => a.idAveria == averiaId).FirstOrDefaultAsync();
+            return sis;
+        }
+
+        public async Task<Averia> GetAveriaById(int id)
+        {
+            return await _dbContext.Averias
+            .Include(a => a.averiaEstado)
+            .Include(a => a.concepto)
+
+            .Where(a => a.id == id)
+            .FirstOrDefaultAsync();
+        }
+
+        public async Task<Averia> SaveAveriaAsync(Averia item)
+        {
+            var exist = await _dbContext.Averias.FirstOrDefaultAsync(e => e.id == item.id);
+            try
+            {
+                if (exist != null)
+                {
+                    _dbContext.Averias.Update(item);
+                }
+                else
+                {
+                    _dbContext.Averias.Add(item);
+                }
+                await _dbContext.SaveChangesAsync();
+
+                // Cargar la entidad actualizada desde la base de datos para obtener las propiedades generadas
+                await _dbContext.Entry(item).ReloadAsync();
+
+                return item;
+            }
+            catch (Exception ex)
+            {
+                // Manejo del error
+                throw;
+            }
+        }
+
+
+
+        public async Task<int> DeleteAveriaAsync(Averia item)
+        {
+            _dbContext.Averias.Remove(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+
+    }
+}

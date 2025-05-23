@@ -1,0 +1,30 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+
+namespace GeoDroid.Data.Models
+{
+    public class LecturaDetalle
+    {
+        [Key]
+        public int id { get; set; }
+
+        public int? idGeo { get; set; }
+
+        [ForeignKey("lecturaContador")]
+        public int idLecturaContadores { get; set; }
+
+        public LecturaContador lecturaContador { get; set; }
+
+        [ForeignKey("patContDetalle")]
+        public int idPatContDetalles { get; set; }
+
+        public PatronContadorDetalle patContDetalle { get; set; }
+
+        public Int64 valor { get; set; }
+        public Int64 valorAntes { get; set; }
+        public bool tieneAjuste { get; set; }
+    }
+}

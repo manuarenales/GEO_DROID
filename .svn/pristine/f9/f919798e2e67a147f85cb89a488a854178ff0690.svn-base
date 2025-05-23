@@ -1,0 +1,231 @@
+﻿@page "/ajustes"
+@using GEO_DROID.Services
+@inject NavigationManager Navigation
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+<FluentGrid Justify="JustifyContent.Center" Spacing="0">
+    <FluentGridItem xs="12" OnClick='() => NavigateTo("configuracion")'>
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">@Localizer["configuracion"]</FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12" OnClick="OpenTestLecturaContadores">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">@Localizer["testlecturacontadores"]</FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12" OnClick="OpenEstablecerContadores">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">Establecer contadores</FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12" OnClick="OpenTestImpresora">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">Test impresora Bluetooth</FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12" OnClick="OpenActualizarFirmware">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">Actualizar firmware de módulo</FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+</FluentGrid>
+
+
+
+@* ------------ Test Lectura Contadores ------------*@
+@* <div class="modal-backdrop" style="z-index: 1049; display: @(modalTestContadoresVisible ? "block" : "none"); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);"></div>
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalTestContadoresVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Test de lectura de contadores</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideTestContadoresModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Seleccione cómo quiere introducir los datos de conexión al módulo Bluetooth:</label>
+                    <button class="btn btn-secondary w-100 m-1 p-1">Seleccionar desde máquina</button>
+                    <button class="btn btn-primary w-100 m-1 p-1">Introducir manualmente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> *@
+
+@* ------------ Establecer Contadores ------------*@
+@* <div class="modal-backdrop" style="z-index: 1049; display: @(modalEstablecerContadoresVisible ? "block" : "none"); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);"></div>
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalEstablecerContadoresVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Establecer contadores</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideEstablecerContadoresModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Seleccione cómo quiere introducir los datos de conexión al módulo Bluetooth:</label>
+                    <button class="btn btn-secondary w-100 m-1 p-1">Seleccionar desde máquina</button>
+                    <button class="btn btn-primary w-100 m-1 p-1">Introducir manualmente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> *@
+
+@* ------------ TestImpresora ------------*@
+@* <div class="modal-backdrop" style="z-index: 1049; display: @(modalTestImpresionVisible ? "block" : "none"); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);"></div>
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalTestImpresionVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Test impresora Bluetooth</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideTestImpresoraModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-center align-items-center">
+                    <div class="spinner-border text-warning p-1" role="status"></div>
+                    <h3 class="m-1">Imprimiendo....</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> *@
+
+@* ------------ Actualizar Firmware ------------*@
+@* <div class="modal-backdrop" style="z-index: 1049; display: @(modalActualizarFirmVisible ? "block" : "none"); position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);"></div>
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalActualizarFirmVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+        <div class="modal-content bg-light" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <h5 class="modal-title">Actualizar Firmware</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideActualizarFirmModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; flex-grow: 1;">
+                <div class="list-group">
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Mac</span>
+                        <input class="form-control" placeholder="..." />
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Pin</span>
+                        <input class="form-control" placeholder="..." />
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Read</span>
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Write (TECNAUSA)</span>
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Write (M2M.MOVISTAR.ES)</span>
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Write (WLAPN.COM 000114)</span>
+                    </div>
+                </div>
+                <div class="d-flex flex-column justify-content-center mt-3">
+                    <button class="btn btn-secondary w-100 p-2">Actualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> *@
+
+
+@code {
+
+    private bool modalConfigVisible = false;
+    private bool modalTestContadoresVisible = false;
+    private bool modalEstablecerContadoresVisible = false;
+    private bool modalTestImpresionVisible = false;
+    private bool modalActualizarFirmVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+
+    private void HideConfigModal()
+    {
+        modalConfigVisible = false;
+    }
+
+    private void OpenConfig()
+    {
+        modalConfigVisible = true;
+    }
+
+    private void OpenTestLecturaContadores()
+    {
+        modalTestContadoresVisible = true;
+    }
+
+    private void HideTestContadoresModal()
+    {
+        modalTestContadoresVisible = false;
+    }
+
+    private void OpenEstablecerContadores()
+    {
+        modalEstablecerContadoresVisible = true;
+    }
+
+    private void HideEstablecerContadoresModal()
+    {
+        modalEstablecerContadoresVisible = false;
+    }
+
+    private void HideActualizarFirmModal()
+    {
+        modalActualizarFirmVisible = false;
+    }
+
+    private void OpenTestImpresora()
+    {
+        modalTestImpresionVisible = true;
+    }
+
+    private void HideTestImpresoraModal()
+    {
+        modalTestImpresionVisible = false;
+    }
+
+    private void OpenActualizarFirmware()
+    {
+        modalActualizarFirmVisible = true;
+    }
+
+
+}

@@ -1,0 +1,49 @@
+﻿using GeoDroid.Data;
+using GeoDroid.Data.Models;
+using Microsoft.EntityFrameworkCore;
+
+
+namespace GEO_DROID.Services
+{
+    public class PatronContadorDetalleService
+    {
+
+        private readonly GeoDroidDbContext _dbContext;
+
+        public PatronContadorDetalleService()
+        {
+            _dbContext = new GeoDroidDbContext();
+        }
+
+
+
+        public IQueryable<PatronContadorDetalle> GetPatronContadorDetaleFromPatronContadorId(int patronContadorId)
+        {
+            return _dbContext.PatronesContadoresDetalle.Where(pcd => pcd.idPatronContador == patronContadorId).AsQueryable();
+        }
+
+        public async Task<int> SavePatronDetalleAsync(PatronContadorDetalle item)
+        {
+            var existing = await _dbContext.PatronesContadoresDetalle.FirstOrDefaultAsync(e => e.id == item.id);
+            try
+            {
+                if (existing != null)
+                {
+                    _dbContext.PatronesContadoresDetalle.Update(item);
+                }
+                else
+                {
+                    _dbContext.PatronesContadoresDetalle.Add(item);
+                }
+                return await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+
+
+    }
+}

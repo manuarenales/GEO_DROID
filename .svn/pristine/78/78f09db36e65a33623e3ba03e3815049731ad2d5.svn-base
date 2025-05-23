@@ -1,0 +1,81 @@
+﻿using GEO_DROID.Store.Confirmation;
+using GeoDroid.Data;
+using Microsoft.AspNetCore.Components.Routing;
+using System.Globalization;
+namespace GEO_DROID.Store;
+
+//-------------------------------------------------------------------------------------------------------------------//
+public record ChangeCultureAction(CultureInfo culture);
+public record ChangeAveriaSelectedAction(Averia averia);
+public record changeCargaSelectedForAveriasForm(GeoDroid.Data.Carga Carga);
+public record ChangeEstablecimientoSelectedAction(Establecimiento establecimiento);
+public record ChangeRutaSelectedAction(Ruta ruta);
+public record ChangeMaquinaSelectedAction(Maquina maquina);
+public record ChangeConceptoAveriaSelectedAction(ConceptoAveria ConceptoAveria);
+public record ChangeEstablecimientosListSelected(List<Establecimiento> EstablecimientoList);
+public record ChangeRutasListSelected(List<Ruta> RutaList);
+public record ChangeEstablecimientosListForSelecter(List<Establecimiento> EstablecimientoList);
+public record ChangeNavigationAction(string rute, bool replace = false);
+public record ChangeAveriasListSelectedByEstablecimiento(List<Averia> averiaList);
+public record ChangeModalConceptoSelecter(bool active);
+public record ChangeModalEstablecimientoSelecter(bool active);
+public record ChangeAveriaEstadoSelectedAction(GeoDroid.Data.AveriaEstado AveriaEstado);
+public record ChangeAveriaEstadoListForSelecter(List<GeoDroid.Data.AveriaEstado> AveriaEstadoList);
+public record ChangeModalMaquinaSelecter(bool active);
+public record ChangeModalAveriaestadoSelecter(bool active);
+public record ChangeMaquinasListForSelecter(List<Maquina> MaquinaList);
+public record ChangeConceptoAveriaSelectedFormAction(ConceptoAveria ConceptoAveria);
+public record ChangeAveriaEstadoSelectedFormAction(GeoDroid.Data.AveriaEstado AveriaEstadoSelected);
+public record ChangeMaquinaSelectedFormAction(Maquina MaquinaSelected);
+public record ChangeAveriaSelectedFormAction(Averia AveriaSelected);
+public record ChangeIsNormalAction(bool Normal);
+public record changeLecturasDetalleSelectedForAveriasForm(Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle> patronLecturas, int lecturacontadorId);
+public record changeLecturasDetalleSelected(Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle> patronLecturas, int lecturacontadorId);
+public record ChangeAveriasCount(int averiacount);
+
+public record ChangeNavigationHistory(string Rute, int action);
+public record ChangeConceptoAveriasListForSelecter(List<ConceptoAveria> ConceptoAveriaList);
+public record ChangeAllowNavegationAction(bool allowNavegate);
+//-------------------------------------------------------------------------------------------------------------------//
+public record GetEstablecimientosListByDate(DateTime date);
+public record GetRutasListByDate(DateTime date);
+public record GetEstablecimientosList();
+public record GetMaquinasList();
+public record GetMaquinasListFomEstablecimientoSelected();
+public record GetAveriaEstadoList();
+public record GetConceptoAveriaList();
+public record GetAveriasCount(Establecimiento establecimiento);
+public record GetAveriasByEstablecimiento(int establecimientoId);
+//-------------------------------------------------------------------------------------------------------------------//
+public record AddRutaTorutasSelected(Ruta NewRute);
+public record AddRuta(Establecimiento establecimineto);
+public record AddAveria(Averia averia);
+public record AddEstablecimientoSelected(Establecimiento establecimiento);
+//-------------------------------------------------------------------------------------------------------------------//
+public record ShowConfirmationDialogAction(ConfirmationDialogRequest Dialog);
+public record ConfirmationResponseAction(bool Confirmed);
+public record SincronizationAction();
+public record ShowSpinnerAction(string title, string message);
+public record HideSpinnerAction();
+public record SetCurrentRuteAction(string rute);
+//-------------------------------------------------------------------------------------------------------------------//
+public record NavigateBackAction(int steps);
+public record NavigationAction(LocationChangingContext Context);
+public record NavigationToAction(string Rute);
+//-------------------------------------------------------------------------------------------------------------------//
+public record ValidateAveriaFormState();
+public record ValidateAveriaFormStateMaquina();
+public record ValidateAveriaFormStateConceptoAveria();
+public record ValidateAveriaFormStateAveriaEstado();
+//--------------------------------------------------------------------------------------------------------------------//
+public record CreateAveriaFromState();
+public record LoadAveriaForm(Averia averia);
+public record LoadCargaForAveriaForm(Averia averia);
+public record LoadLecturaDetalleForAveriaForm(List<PatContDetalle> PatronContador, Incidencia incidencia);
+public record LoadLecturaDetalleSelected(List<PatContDetalle> PatronContador, Incidencia incidencia);
+
+public record ResetAveriasForm();
+//--------------------------------------------------------------------------------------------------------------------//
+public record DeleteAveria(Averia averia);
+
+//--------------------------------------------------------------------------------------------------------------------//

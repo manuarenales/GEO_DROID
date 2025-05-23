@@ -1,0 +1,288 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using GEO_DROID.Resources.Lib.Comunicacion;
+
+namespace BLL.LeerInfoMaquina
+{
+    class ProtocoloGistra : Protocolo
+    {
+        public const byte CMD_INIT = 0x01;
+
+        public const string RESPUESTA_ARR = "ARR";
+        public const string RESPUESTA_NEW = "NEW";
+        public const string RESPUESTA_S_D = "S/D";
+        public const string RESPUESTA_ERR = "ERR";
+
+        private const char FIN_LINEA = (char)0x0D; // '\r'
+        int _timeoutDefault = 500;
+        const int TIMEOUT2 = 100;
+
+        static int[] revTablaCRC = new int[]
+        {
+            0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
+            0x8C48, 0x9DC1, 0xAF5A, 0xBED3, 0xCA6C, 0xDBE5, 0xE97E, 0xF8F7,
+            0x1081, 0x0108, 0x3393, 0x221A, 0x56A5, 0x472C, 0x75B7, 0x643E,
+            0x9CC9, 0x8D40, 0xBFDB, 0xAE52, 0xDAED, 0xCB64, 0xF9FF, 0xE876,
+            0x2102, 0x308B, 0x0210, 0x1399, 0x6726, 0x76AF, 0x4434, 0x55BD,
+            0xAD4A, 0xBCC3, 0x8E58, 0x9FD1, 0xEB6E, 0xFAE7, 0xC87C, 0xD9F5,
+            0x3183, 0x200A, 0x1291, 0x0318, 0x77A7, 0x662E, 0x54B5, 0x453C,
+            0xBDCB, 0xAC42, 0x9ED9, 0x8F50, 0xFBEF, 0xEA66, 0xD8FD, 0xC974,
+            0x4204, 0x538D, 0x6116, 0x709F, 0x0420, 0x15A9, 0x2732, 0x36BB,
+            0xCE4C, 0xDFC5, 0xED5E, 0xFCD7, 0x8868, 0x99E1, 0xAB7A, 0xBAF3,
+            0x5285, 0x430C, 0x7197, 0x601E, 0x14A1, 0x0528, 0x37B3, 0x263A,
+            0xDECD, 0xCF44, 0xFDDF, 0xEC56, 0x98E9, 0x8960, 0xBBFB, 0xAA72,
+            0x6306, 0x728F, 0x4014, 0x519D, 0x2522, 0x34AB, 0x0630, 0x17B9,
+            0xEF4E, 0xFEC7, 0xCC5C, 0xDDD5, 0xA96A, 0xB8E3, 0x8A78, 0x9BF1,
+            0x7387, 0x620E, 0x5095, 0x411C, 0x35A3, 0x242A, 0x16B1, 0x0738,
+            0xFFCF, 0xEE46, 0xDCDD, 0xCD54, 0xB9EB, 0xA862, 0x9AF9, 0x8B70,
+            0x8408, 0x9581, 0xA71A, 0xB693, 0xC22C, 0xD3A5, 0xE13E, 0xF0B7,
+            0x0840, 0x19C9, 0x2B52, 0x3ADB, 0x4E64, 0x5FED, 0x6D76, 0x7CFF,
+            0x9489, 0x8500, 0xB79B, 0xA612, 0xD2AD, 0xC324, 0xF1BF, 0xE036,
+            0x18C1, 0x0948, 0x3BD3, 0x2A5A, 0x5EE5, 0x4F6C, 0x7DF7, 0x6C7E,
+            0xA50A, 0xB483, 0x8618, 0x9791, 0xE32E, 0xF2A7, 0xC03C, 0xD1B5,
+            0x2942, 0x38CB, 0x0A50, 0x1BD9, 0x6F66, 0x7EEF, 0x4C74, 0x5DFD,
+            0xB58B, 0xA402, 0x9699, 0x8710, 0xF3AF, 0xE226, 0xD0BD, 0xC134,
+            0x39C3, 0x284A, 0x1AD1, 0x0B58, 0x7FE7, 0x6E6E, 0x5CF5, 0x4D7C,
+            0xC60C, 0xD785, 0xE51E, 0xF497, 0x8028, 0x91A1, 0xA33A, 0xB2B3,
+            0x4A44, 0x5BCD, 0x6956, 0x78DF, 0x0C60, 0x1DE9, 0x2F72, 0x3EFB,
+            0xD68D, 0xC704, 0xF59F, 0xE416, 0x90A9, 0x8120, 0xB3BB, 0xA232,
+            0x5AC5, 0x4B4C, 0x79D7, 0x685E, 0x1CE1, 0x0D68, 0x3FF3, 0x2E7A,
+            0xE70E, 0xF687, 0xC41C, 0xD595, 0xA12A, 0xB0A3, 0x8238, 0x93B1,
+            0x6B46, 0x7ACF, 0x4854, 0x59DD, 0x2D62, 0x3CEB, 0x0E70, 0x1FF9,
+            0xF78F, 0xE606, 0xD49D, 0xC514, 0xB1AB, 0xA022, 0x92B9, 0x8330,
+            0x7BC7, 0x6A4E, 0x58D5, 0x495C, 0x3DE3, 0x2C6A, 0x1EF1, 0x0F78
+        };
+
+        public override byte ConfiguracionPuertoSerie
+        {
+            get { return (byte)0x05; } // Baudrate=19200
+        }
+
+        public ProtocoloGistra(IComunicacion com, IFiltroTrama filtroTrama, int timeout)
+            : base(com, filtroTrama)
+        {
+            if (timeout > 0)
+                _timeoutDefault = timeout;
+        }
+
+        protected override char CrearChecksum(StringBuilder sb)
+        {
+            return (char)0x00;
+        }
+
+        protected int CrearChecksum2(string linea)
+        {
+            int val_CRC = 0x00;
+
+            if (linea != null)
+            {
+                int pos_hasta = linea.LastIndexOf(';');
+                for (int i = 0; i <= pos_hasta; i++)
+                    val_CRC = revTablaCRC[(val_CRC ^ (char)linea[i]) & 0xff] ^ (val_CRC >> 8);
+            }
+            return val_CRC;
+        }
+
+        protected override bool ComprobarChecksum(StringBuilder sb)
+        {
+            if (sb != null)
+            {
+                try
+                {
+                    string linea = GetLineaDatos(sb);
+                    string[] datosTrama = linea.Split(';');
+                    string crcTrama = datosTrama[datosTrama.Length - 1];
+                    int crcTramaInt = int.Parse(crcTrama, System.Globalization.NumberStyles.HexNumber);
+                    if (crcTramaInt == CrearChecksum2(linea))
+                        return true;
+                }
+                catch { }
+            }
+            return false;
+        }
+
+        protected override StringBuilder MontarTrama(byte comando, byte[] datos)
+        {
+            StringBuilder sbTemp = new StringBuilder();
+            
+            switch (comando)
+            {
+                case CMD_INIT:
+                    sbTemp.Append("TEC");
+                    break;
+            }
+            sbTemp.Append(FIN_LINEA);
+            return sbTemp;
+        }
+
+        private bool RecibidoIsError(string recibido, string respuestaEsperada)
+        {
+            if (recibido == null)
+                _error = "Recibido null";
+            else if (recibido.Length == 0)
+                _error = "Recibido vacío";
+            else if (recibido.IndexOf(respuestaEsperada) >= 0 && recibido.IndexOf(FIN_LINEA) >= recibido.IndexOf(respuestaEsperada))
+                _error = null; // Esto es bueno... no hay error
+            else
+                _error = "Recibido:(" + recibido + ")";
+            
+            return (_error != null);
+        }
+
+        private StringBuilder EnviaComando(byte comando, string comandoEsperado, int timeout2 = TIMEOUT2)
+        {
+            StringBuilder sb;
+            if (EnviarTrama(comando))
+            {
+                sb = RecibirDatos(_timeoutDefault, timeout2);
+                if (!RecibidoIsError(sb == null ? null : sb.ToString(), comandoEsperado))
+                    return sb;
+            }
+            return null;
+        }
+
+        public override InfoContadores LeerContadores(IProgressCallback callback)
+        {
+            StringBuilder sb;
+
+            _errorEstado = "(S01 CONTADORES)";
+            sb = EnviaComando(CMD_INIT, RESPUESTA_NEW, _timeoutDefault);
+            if (string.IsNullOrEmpty(_error))
+            {
+                if (ComprobarChecksum(sb))
+                    return ProcesarDatos(sb);
+                else
+                    _error = "Checksum (" + sb + ")";
+            }
+            return null;
+        }
+
+        private string GetLineaDatos(StringBuilder sb)
+        {
+            if (sb != null)
+            {
+                int iCmd = sb.ToString().IndexOf(RESPUESTA_NEW);
+                int iFin = sb.ToString().IndexOf(FIN_LINEA, iCmd);
+                if (iCmd >= 0 && iFin > iCmd)
+                {
+                    string s = sb.ToString().Substring(iCmd, iFin - iCmd);
+                    return s;
+                }
+            }
+            return "";
+        }
+
+        private InfoContadores ProcesarDatos(StringBuilder sb)
+        {
+            //Detalle de los campos de la trama de ejemplo mostrada,y que será la misma que recibiréis en todos los protocolos:
+            //                                                                                                                                                    O      QR       T
+            // RES;A;BBBB;CCCC;DDDD;EEEE;FFFF;GGGG;HHHH;IIII;JJJJ;KKKK;LLLL;MMMM;NNNN;;PPP;;;SSSS;;UUUU;VVVV;WWWW;;YY;ZZZZ
+            //(NEW;d;9167;8537;1428;9167;8537;4472;1444;9443;6308;3365;2950;4707;5736;;785;;;1302;;5718;4652;2908;;20;2317)
+
+            //Para mas claridad muestro una trama con los datos numéricos en decimal, con la observación de que la placa COMDATA los manda en HEX al objeto de reducir bytes de transmision.
+
+            //RES  : Respuesta, ARR = Arrancando (cada seg), NEW = Nueva Lectura, ERR = Error Checksum, S/D = Sin datos serie
+            //A    : Protocolo Maquina
+            //BBBB : Total Entradas (o Total Jugado segun protocolo)
+            //CCCC : Total Salidas (o Total Ganado segun protocolo)
+            //DDDD : Total Prem. Manual Cancelado
+            //EEEE : Bolsa 1 - Tecnausa
+            //FFFF : Bolsa 2 - Tecnausa 
+            //GGGG : Monedas  Entrada  0,10 €
+            //HHHH : Monedas  Entrada  0,20 €
+            //IIII : Monedas  Entrada  0,50 €
+            //JJJJ : Monedas  Entrada  1,00 €
+            //KKKK : Monedas  Entrada  2,00 €
+            //LLLL : Billetes Entrada  5,00 €
+            //MMMM : Billetes Entrada 10,00 €
+            //NNNN : Billetes Entrada 20,00 €
+            //OOOO : Billetes Entrada 50,00 €
+            //PPPP : Monedas  Salida   0,10 €
+            //QQQQ : Monedas  Salida   0,20 €
+            //RRRR : Monedas  Salida   0,50 €
+            //SSSS : Monedas  Salida   1,00 €
+            //TTTT : Monedas  Salida   2,00 €
+            //UUUU : Billetes Salida   5,00 €
+            //VVVV : Billetes Salida  10,00 €
+            //WWWW : Billetes Salida  20,00 €
+            //XXXX : Billetes Salida  50,00 €
+            //YYYY : FLAGS Máquina (Llave,Arrancando,CheckError,etc. Mi objetivo es transmitir tambien Puerta abierta en el futuro)
+            //ZZZZ : Checsum Trama anterior incluido el último punto y coma. (Kermit CRC16).
+
+            int[] arrayContadores = new int[] {
+                (int)InfoContadores.Contador.NULO
+                , (int)InfoContadores.Contador.NULO
+                , (int)InfoContadores.Contador.Entradas
+                , (int)InfoContadores.Contador.Salidas
+            };
+
+            if (sb != null)
+            {
+                string datos = GetLineaDatos(sb);
+                string[] contadores = datos.Split(';');
+
+                InfoContadores info = new InfoContadores();
+                info.Buffer = new StringBuilder(datos);
+
+                // Usamos el contador Auxiliar1 para obtener el Protocolo asignado a la máquina en Gistra
+                info.Auxiliar1 = -1;
+                if (contadores.Length > 1)
+                {
+                    try
+                    {
+                        info.Auxiliar1 = long.Parse(contadores[1], System.Globalization.NumberStyles.HexNumber);
+                    }
+                    catch { }
+                }
+
+                for (int i = 0; i < arrayContadores.Length; i++)
+                {
+                    if (arrayContadores[i] != (int)InfoContadores.Contador.NULO
+                        && contadores.Length > i)
+                    {
+                        try
+                        {
+                            info[(InfoContadores.Contador)arrayContadores[i]] = long.Parse(contadores[i], System.Globalization.NumberStyles.HexNumber);
+                        }
+                        catch 
+                        {
+                            info[(InfoContadores.Contador)arrayContadores[i]] = -1;
+                        }
+                    }
+                }
+                return info;
+            }
+            return null;
+        }
+
+        private void Test1()
+        {
+            //01/02/2019 09:44:06 NEW;e;30a714;1ed41c;1ed41c;b92eef;a75bf7;;;;;;d7;265;1ad;142;;;;;;;;;;20;92b5
+            //01/02/2019 09:44:12 NEW;e;54fdd0;4403ea;4403ea;14362a4;13268c8;;;;;;116;44d;4a1;188;;;;;;;;;;20;d86
+
+            StringBuilder sb = new StringBuilder();
+            sb.Append("ARR" + FIN_LINEA);
+            sb.Append("ARR" + FIN_LINEA);
+            sb.Append("ARR" + FIN_LINEA);
+            sb.Append("ARR" + FIN_LINEA);
+            sb.Append("ARR" + FIN_LINEA);
+            sb.Append("NEW;e;30a714;1ed41c;1ed41c;b92eef;a75bf7;;;;;;d7;265;1ad;142;;;;;;;;;;20;92b5" + FIN_LINEA);
+            sb.Append("NEW;e;54fdd0;4403ea;4403ea;14362a4;13268c8;;;;;;116;44d;4a1;188;;;;;;;;;;20;d86" + FIN_LINEA);
+            string s = GetLineaDatos(sb);
+
+            if (ComprobarChecksum(sb))
+            {
+                InfoContadores info = ProcesarDatos(sb);
+                Console.WriteLine(info);
+            }
+
+        }
+
+        public static void Test()
+        {
+            ProtocoloGistra pGistra = new ProtocoloGistra(null, null, 0);
+            pGistra.Test1();
+        }
+    }
+}

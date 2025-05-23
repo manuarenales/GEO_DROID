@@ -1,0 +1,191 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using GEO_DROID.Resources.Lib.Comunicacion;
+using Microsoft.VisualBasic;
+
+namespace BLL.LeerInfoMaquina
+{
+    class ProtocoloTecnausaV2 : ProtocoloTecnausa
+    {
+        public ProtocoloTecnausaV2(IComunicacion comunicacion)
+            : base(comunicacion)
+        {
+        }
+
+        /**********************************************/
+        /*  FILTROS DE TRAMA    */
+        /**********************************************/
+        public override StringBuilder FiltrarTrama(StringBuilder trama)
+        {
+            return FiltrarTrama(trama, 0);
+        }
+
+        public override bool EnviarRespuestaConexion()
+        {
+            return EnviarTrama(CMD_TX_OK);
+        }
+
+        /// <summary>
+        /// 
+        /// Estructuras definidas en el firmware del módulo bluetooth:
+        ///typedef struct 
+        ///{ 
+        ///    unsigned char baudios:3; 
+        ///    unsigned char bits:1; 
+        ///    unsigned char parity_bit:1; 
+        ///    unsigned char parity_mask:1;
+        ///    unsigned char stop:1;
+        ///    unsigned char invertido:1;
+        ///}cfg; 
+        ///
+        ///#define B600    0
+        ///#define B1200    1
+        ///#define B2400    2
+        ///#define B4800    3
+        ///#define B9600    4
+        ///#define B19200    5
+        ///
+        ///#define NONE    0
+        ///#define PARITY  1
+        ///
+        ///#define EVEN    0    //PAR    
+        ///#define ODD        1    //IMPAR
+        ///
+        ///#define BITS_7        1
+        ///#define BITS_8        0
+        ///
+        ///#define STOP_1        0
+        ///#define STOP_2        1
+        ///
+        ///#define NORMAL        0
+        ///#define INVERTIDO    1     
+        /// 
+        /// Esto define el valor que debemos pasar en (byte)config
+        /// </summary>
+        /// <param name="puertoSerie"></param>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public override bool EnviarConfiguracion(PuertoSerie puertoSerie, byte config)
+        {
+            bool ret = false;
+            StringBuilder sbRecibido;
+            byte comando = CMD_CONFIG_SERIE;
+
+            if (puertoSerie == PuertoSerie.Serie1)
+                comando = CMD_CONFIG_SERIE1;
+
+            // Obtenemos configuración compatible, ya que en algunos casos depende de la versión del módulo de captura
+            config = GetCompatibleConfig(config);
+
+            if (EnviarTrama(comando, new byte[] { config }))
+            {
+                int reintentos = MAX_REINTENTOS;
+                Trama t;
+                do
+                {
+                    sbRecibido = _com.RecibirDatos(TIMEOUT_PRIMER_BYTE, TIMEOUT_ENTRE_BYTES);
+                    t = new Trama(sbRecibido);
+                } while ((sbRecibido.Length > 0) && (reintentos-- > 0) && (t == null || !(t.IsOK()))); //Reintentamos si hemos recibido una trama que no se corresponde con la que esperamos
+
+                if (t != null && t.IsOK())
+                {
+                    ret = true;
+                }
+                else
+                {
+                    //ret = "No recibo OK trama: " + iteracion;  
+                    //ret = false;
+                }
+            }
+            else
+            {
+
+                //ret = "Error enviando trama:" + iteracion;
+            }
+            return ret;
+        }
+
+        private byte GetCompatibleConfig(byte config)
+        {
+            if (this.GetType().IsSubclassOf(typeof(ProtocoloTecnausaV2)))
+            {
+                /// No hago nada
+            }
+            else
+            {
+                /// La configuración de las nuevas placas de captura (v56), se ha implementado de forma diferente con respecto a las placas antiguas (v2)
+                /// Es necesario hacer conversiones en determinados casos para mantener compatibilidad de GEODROID con ambas versiones de placa
+                if (config == 0x55) config = 0x25; // 0x55 (parity_mask = COM_PARITY_WAKEUP = 5) no existe en placas v2
+            }
+            return config;
+        }
+
+        public override InfoContadores LeerContadores(IProgressCallback callback)
+        {
+            // Hay que esperar para que el micro del módulo se entere que está conectado
+            System.Threading.Thread.Sleep(200);
+
+            int intento = MAX_REINTENTOS;
+            InfoContadores info = null;
+
+            if (EnviarTrama(CMD_CONTADORES))
+            {
+                StringBuilder sb;
+                Trama t;
+
+                do
+                {
+                    sb = _com.RecibirDatos(TIMEOUT_PRIMER_BYTE, TIMEOUT_ENTRE_BYTES);
+                    Thread.Sleep(400);
+                    t = new Trama(sb);
+                } while ((sb.Length > 0) && (intento-- > 0) && (t == null || !t.CheckComando(CMD_CONTADORES))); //Reintentamos si hemos recibido una trama que no se corresponde con la que esperamos
+
+                info = new InfoContadores();
+                if (t != null)
+                {
+                    info.Mecanico1 = t.GetContadorMecanico1();
+                    info.Mecanico2 = t.GetContadorMecanico2();
+                    info.Mecanico3 = t.GetContadorMecanico3();
+                    info.Mecanico4 = t.GetContadorMecanico4();
+                }
+                info.Buffer = sb;
+                info.SoloMecanicos = true;
+            }
+            return info;
+        }
+
+        public override bool Verificar(int numero)
+        {
+            int intento = MAX_REINTENTOS;
+            int numeroVerifica = NumeroIntAleatorio.Get() + numero;
+            byte[] datos = BitConverter.GetBytes(numeroVerifica);
+            if (EnviarTrama(CMD_VERIFICA, datos))
+            {
+                StringBuilder sb;
+                Trama t;
+
+                do
+                {
+                    sb = _com.RecibirDatos(TIMEOUT_PRIMER_BYTE, TIMEOUT_ENTRE_BYTES);
+                    t = new Trama(sb);
+                } while ((sb.Length > 0) && (intento-- > 0) && (t == null || !t.CheckComando(CMD_VERIFICA))); //Reintentamos si hemos recibido una trama que no se corresponde con la que esperamos
+
+                if (t != null && t.CheckComando(CMD_VERIFICA))
+                    return (t.Verificar(numeroVerifica));
+            }
+            return false;
+        }
+
+        public static class NumeroIntAleatorio
+        {
+            static Random _r = new Random((int)DateTime.Now.Ticks);
+
+            public static int Get()
+            {
+                return _r.Next();
+            }
+        }
+
+    }
+}

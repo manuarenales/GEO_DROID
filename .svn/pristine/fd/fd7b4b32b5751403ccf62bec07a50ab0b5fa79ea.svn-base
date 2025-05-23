@@ -1,0 +1,30 @@
+﻿using GeoDroid.Data;
+using GeoDroid.Data.Models;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services
+{
+    public class LecturaContadorDetalleService
+    {
+        private readonly GeoDroidDbContext _dbContext;
+        public LecturaContadorDetalleService()
+        {
+            _dbContext = new GeoDroidDbContext();
+        }
+
+
+        public void Reload(List<LecturaDetalle> LecturasDetalles)
+        {
+            foreach (LecturaDetalle LecturaDetalle in LecturasDetalles)
+            {
+                _dbContext.Entry(LecturaDetalle).Reload();
+            }
+        }
+
+    }
+}

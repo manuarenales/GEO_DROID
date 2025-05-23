@@ -1,0 +1,47 @@
+﻿
+using GeoDroid.Data;
+using Microsoft.EntityFrameworkCore;
+
+
+namespace GEO_DROID.Services
+{
+    public class EstadoAveriaService
+    {
+
+        private readonly GeoDroidDbContext _dbContext;
+
+        public EstadoAveriaService()
+        {
+            _dbContext = new GeoDroidDbContext();
+        }
+
+
+        public async Task<List<AveriaEstado>> GetEstadoAveriaAsync()
+        {
+            return await _dbContext.AveriasEstados.ToListAsync();
+        }
+
+        public async Task<AveriaEstado> GetEstadoAveriaById(int id)
+        {
+            return await _dbContext.AveriasEstados
+            .Where(a => a.id == id)
+            .FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveEstadoAveriaAsync(AveriaEstado item)
+        {
+            _dbContext.AveriasEstados.Add(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<int> DeleteEstadoAveriaAsync(AveriaEstado item)
+        {
+            _dbContext.AveriasEstados.Remove(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+
+
+
+    }
+}

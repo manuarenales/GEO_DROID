@@ -1,0 +1,18 @@
+﻿
+using System.ComponentModel.DataAnnotations;
+
+namespace GEO_DROID.Models
+{
+
+    public class AveriaEstado
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+
+        [MaxLength(20)]
+        public string descripcion { get; set; }
+        public int color { get; set; }
+        public bool fin { get; set; }
+    }
+}

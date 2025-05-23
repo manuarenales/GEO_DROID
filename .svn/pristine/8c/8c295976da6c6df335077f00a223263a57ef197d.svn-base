@@ -1,0 +1,159 @@
+﻿ @page "/opciones/{id:int}"
+ @using GEO_DROID.Models
+ @using GEO_DROID.Services
+  @inject EstablecimientosService Builder
+
+<div class="d-flex justify-content-center align-items-center   title">
+    <h4> @establecimiento.nombre  </h4>
+</div>
+
+<ul class="list-group list-group-flush">
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center">
+        <span class="m-2"> Recaudar </span>
+        <div class="d-flex justify-content-between align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/tienda.png" /><span>0:00</span>
+            </div>
+            <div>
+                <img class="m-1" src="img/recaudador.png" /><span>0:00</span>
+            </div>
+            <div>
+                <img class="m-1" src="img/notas.png" /><span>B2600.00</span>
+            </div>
+        </div>
+    </li>
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center">
+        <span class="m-2"> Motivos maquina no recaudada </span>
+        <div class="d-flex justify-content-start align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/maquina.png" /><span>0</span>
+            </div>
+        </div>
+    </li>
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center">
+        <span class="m-2"> Averias</span>
+        <div class="d-flex justify-content-start align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/repare.jpg" /><span>0/1</span>
+            </div>
+        </div>
+    </li>
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center">
+        <span class="m-2"> Cambios</span>
+        <div class="d-flex justify-content-start align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/monedas.png" /><span>1/0/0</span>
+            </div>
+        </div>
+    </li>
+    <li class="list-group-item d-flex flex-column justify-content-start align-items-lg-center">
+        <span class="m-2"> Prestamos</span>
+        <div class="d-flex justify-content-between align-items-lg-center">
+            <div>
+                <img class="m-1" src="img/tienda.png" /><span>0:00</span>
+            </div>
+            <div>
+                <img class="m-1" src="img/manoflecha1.png" /><span>0:00</span>
+            </div>
+            <div>
+                <img class="m-1" src="img/manoflecha2.png" /><span>0.00</span>
+            </div>
+        </div>
+    </li>
+</ul>
+
+<div class="fixed-bottom   m-1 p-1 row ">
+    <div class="col-6 d-flex p-2">
+        <button type="button" class="btn btn-secondary w-100" @onclick="() => ShowModalTickets()">Imprimir Tickets</button>
+    </div>
+    <div class="col-6 d-flex p-2">
+        <button type="button" class="btn btn-secondary w-100" @onclick="() => ShowModalInfo()">Informacion</button>
+    </div>
+    <div class="col-12 d-flex justify-content-around align-items-center m-1 p-1">
+        <div>
+            <img class="m-1" src="img/tienda.png" /><span>0:00</span>
+        </div>
+        <div>
+            <img class="m-1" src="img/recaudador.png" /><span>0:00</span>
+        </div>
+    </div>
+</div>
+
+<Modal @ref="modalRefTickets">
+    <ModalContent Size="ModalSize.Fullscreen">
+        <ModalHeader>
+            <ModalTitle> Seleccionar ticket</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+
+        <ModalBody>
+            <TextEdit Placeholder="Buscar" Text="@nameTickets" TextChanged="@OnNameChangedTickets" />
+            <Div Class="m-2">
+                <ListGroup>
+                    @foreach (string item in tickets)
+                    {
+                        <ListGroupItem><Span>@item</Span></ListGroupItem>
+                    }
+                </ListGroup>
+            </Div>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+<Modal @ref="modalRefInfo">
+    <ModalContent Size="ModalSize.Fullscreen">
+        <ModalHeader>
+            <ModalTitle>Informacion del Establecimiento</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+
+        <ModalBody>
+            <Div Class="m-2">
+                <ListGroup>
+                    <ListGroupItem Class="d-flex flex-column">
+                        <Label>Nombre : </Label>
+                        <Span Style="color: blue;">@establecimiento.nombre</Span>
+                        </ListGroupItem>
+                    </ListGroup>
+                </Div>
+            </ModalBody>
+        </ModalContent>
+    </Modal>
+
+    @code {
+
+    [Parameter]
+    public int id { get; set; }
+    private Modal modalRefTickets;
+    private Modal modalRefInfo;
+    private string nameTickets;
+    public Establecimiento establecimiento;
+    public List<string> tickets = new List<string>();
+    public List<string> infoList = new List<string>();
+
+    protected override void OnInitialized()
+    {
+        establecimiento = Builder.getEstablecimientoByID(id);
+        tickets = Builder.getTiketsList(id);
+    }
+
+    Task OnNameChangedTickets(string value)
+    {
+        nameTickets = value;
+        tickets = Builder.getTiketsList(id);
+        return Task.CompletedTask;
+    }
+    Task OnNameChangedInfo(string value)
+    {
+        return Task.CompletedTask;
+    }
+
+    private Task ShowModalTickets()
+    {
+        return modalRefTickets.Show();
+    }
+    private Task ShowModalInfo()
+    {
+        return modalRefInfo.Show();
+    }
+}

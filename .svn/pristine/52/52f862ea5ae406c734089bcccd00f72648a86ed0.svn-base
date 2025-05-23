@@ -1,0 +1,30 @@
+﻿using GeoDroid.Data;
+using GeoDroid.Data.Models;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services
+{
+    public class LecturaContadorService
+    {
+        private readonly GeoDroidDbContext _dbContext;
+
+        public LecturaContadorService()
+        {
+            _dbContext = new GeoDroidDbContext();
+        }
+
+
+        public async Task<LecturaContador> GetLecturaContadorByIncidenciaId(int idIncidencia)
+        {
+
+            return await _dbContext.LecturaContadores.Where(lc => lc.incidencia.id == idIncidencia)
+            .FirstOrDefaultAsync();
+        }
+
+    }
+}

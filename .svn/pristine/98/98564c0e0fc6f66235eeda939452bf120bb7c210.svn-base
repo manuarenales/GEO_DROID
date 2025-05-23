@@ -1,0 +1,145 @@
+﻿@page "/averiaform1/{averiaid:int}/{establecimiento:int}"
+@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject AveriasService AveriasService
+@inject MaquinaService MaquinaServce
+@inject EstadoAveriaService EstadoAveriaService
+@inject ConceptoAveriaService ConceptoAveriaService
+@inject NavigationManager Navigation
+@inject CultureService Cultureservice
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+
+<div class="w-100">
+    <div class="d-flex flex-column justify-content-center align-items-center bg-dark">
+        <span style="color:white" class="subtitle">Detalles</span>
+    </div>
+
+    <div class="list-group">
+        <div class="list-group-item">
+            <GEO_DROID.Shared.Components.Selecter.MaquinasSelecter OnValueChanged="ValidateForm" @bind-maquinaAveria="@averia.maquina" idEstablecimiento="@establecimiento">
+            </GEO_DROID.Shared.Components.Selecter.MaquinasSelecter>
+        </div>
+
+        <div class="list-group-item">
+            <GEO_DROID.Shared.Components.Selecter.ConceptoSelecter @bind-conceptoAveria="@averia.concepto">
+            </GEO_DROID.Shared.Components.Selecter.ConceptoSelecter>
+        </div>
+
+        <div class="list-group-item">
+            <GEO_DROID.Shared.Components.Selecter.EstadoSelecter @bind-estadoAveria="@averia.averiaEstado">
+            </GEO_DROID.Shared.Components.Selecter.EstadoSelecter>
+        </div>
+    </div>
+
+    <div class="list-group">
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Descripción</span>
+            <textarea class="bluetext" @bind="averia.observaciones" placeholder="Comentarios"></textarea>
+        </div>
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Detalle</span>
+            <textarea class="bluetext" @bind="averia.detalle" placeholder="Detalle"></textarea>
+        </div>
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Comentarios</span>
+            <textarea class="bluetext" @bind="averia.comentarios" placeholder="Comentarios"></textarea>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column justify-content-center align-items-center bg-dark">
+        <span style="color:white" class="subtitle">Acciones</span>
+    </div>
+
+    <div class="list-group">
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span class="fs-6">Realizar carga</span>
+            <span class="bluetext">No realizada</span>
+        </div>
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span class="fs-6">Lectura inicial de contadores</span>
+            <span class="bluetext">No realizada</span>
+        </div>
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span class="fs-6">Lectura final contadores</span>
+            <span class="bluetext">No realizada</span>
+        </div>
+    </div>
+</div>
+
+<div style="height: 65px;"></div>
+
+<div class="row m-2 fixed-bottom mb-3">
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="GuardarAveria">Guardar</button>
+    </div>
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" disabled="@((averiaid == -1))" @onclick="EliminarAveria">Eliminar</button>
+    </div>
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick='() => NavigateTo("averias/" + establecimiento)'>Cancelar</button>
+    </div>
+</div>
+
+
+
+@code {
+
+    [Parameter]
+    public int averiaid { get; set; }
+    [Parameter]
+    public int establecimiento { get; set; }
+
+
+    private string title = "";
+    private Averia averia = new Averia();
+
+    private bool IsIdMaquinaValid { get; set; } = true;
+    private bool IsIdConceptoValid { get; set; } = true;
+    private bool IsIdEstadoValid { get; set; } = true;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (averiaid == -1)
+        {
+            title = "Añadir Averia";
+            averia = new Averia();
+        }
+        else
+        {
+            title = "Editando Averia";
+            averia = await AveriasService.GetAveriaByIdAsync(averiaid);
+            if (averia == null)
+            {
+                averia = new Averia();
+            }
+        }
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, true);
+    }
+
+    public async void EliminarAveria()
+    {
+        int res = await AveriasService.DeleteAveriaAsync(averia);
+        NavigateTo("averias/" + establecimiento);
+    }
+
+    public async void GuardarAveria()
+    {
+
+        int res = await AveriasService.SaveAveriaAsync(averia);
+        NavigateTo("averias/" + establecimiento);
+
+    }
+    public void ValidateForm() { }
+
+
+
+
+}

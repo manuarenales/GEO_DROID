@@ -1,0 +1,17 @@
+﻿using GEO_DROID.DataAccess;
+using GEO_DROID.Services;
+
+namespace GEO_DROID
+{
+    public partial class MainPage : ContentPage
+    {
+
+
+        public MainPage()
+        {
+
+            InitializeComponent();
+        }
+
+    }
+}

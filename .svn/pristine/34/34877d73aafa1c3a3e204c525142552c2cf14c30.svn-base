@@ -1,0 +1,39 @@
+﻿@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject NavigationManager Navigation
+@inject EstablecimientosService Builder
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+<ul class="list-group list-group-flush">
+    @foreach (Establecimiento establecimiento in MenuItems)
+    {
+        <li class="list-group-item d-flex flex-row justify-content-between align-items-lg-center">
+            <Div Class="w-100" @onclick='() => NavigateTo("opciones/"+ establecimiento.id)'>
+                <h7 class="m-2"> @establecimiento.nombre</h7>
+                <div class="d-flex justify-content-start align-items-lg-center">
+                    <img class="m-1" src="img/maquinaJuego.jpg" />
+                    <img class="m-1" src="img/repare.jpg" />
+                    <img class="m-1" src="img/flechas.jpg" />
+                    <img class="m-1" src="img/recaudo.jpg" />
+                </div>
+            </Div>
+            <Div Class="mt-2 mb-1 pt-2 pb-2">
+                <Button Color="Color.Danger"><Icon Name="IconName.Delete" /></Button>
+            </Div>
+        </li>
+    }
+</ul>
+
+@code {
+    public List<Establecimiento> MenuItems { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        MenuItems = Builder.GetEstablecimientos();
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+}

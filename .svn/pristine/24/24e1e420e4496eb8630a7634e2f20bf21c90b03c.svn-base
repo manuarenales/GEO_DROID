@@ -1,0 +1,38 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GeoDroid.Data.Models
+{
+    public class EstablecimientoPotencialMaquina
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        [ForeignKey("EstablecimientoPotencial")]
+        public int idEstablecimientoPotencial { get; set; }
+        public virtual EstablecimientoPotencial EstablecimientoPotencial { get; set; }
+
+
+        [ForeignKey("EmpresaCompetidora")]
+        public int idEmpresaCompetidora { get; set; }
+        public EmpresaCompetidora EmpresaCompetidora { get; set; }
+
+        [ForeignKey("Modelo")]
+        public int idModelo { get; set; }
+        public virtual ModeloMaquina Modelo { get; set; }
+
+        [DataMember]
+        public DateTime fecha { get; set; }
+        [DataMember]
+        public DateTime fechaPermiso { get; set; }
+        [DataMember]
+        public DateTime fechaRenovacion { get; set; }
+    }
+}

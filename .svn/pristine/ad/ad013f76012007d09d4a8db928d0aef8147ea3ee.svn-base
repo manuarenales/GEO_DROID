@@ -1,0 +1,34 @@
+﻿using SQLite;
+using System.Runtime.Serialization;
+
+namespace GeoDroid.Data
+{
+    [DataContract(Namespace = "http://schemas.datacontract.org/2004/07/GeoDroid.Models")]
+    public class EstablecimientoPotencial
+    {
+        [PrimaryKey, Unique, DataMember, AutoIncrement]
+        public int id { get; set; }
+        [DataMember]
+        public int idGeo { get; set; }
+        [DataMember, MaxLength(50)]
+        public string nombre { get; set; }
+        [DataMember, MaxLength(100)]
+        public string direccion { get; set; }
+        [DataMember, MaxLength(10)]
+        public string codigoPostal { get; set; }
+        [DataMember, MaxLength(20)]
+        public string telefono1 { get; set; }
+        [DataMember, MaxLength(20)]
+        public string telefono2 { get; set; }
+        [DataMember]
+        public int idComercial { get; set; }
+        [DataMember]
+        public DateTime fechaModificacion { get; set; }
+        [DataMember, MaxLength(2000)]
+        public string comentarios { get; set; }
+
+        //[ForeignKey("Poblacion"), DataMember]
+        public int? idPoblacion { get; set; }
+        //public virtual Poblacion? Poblacion { get; set; }
+    }
+}

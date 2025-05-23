@@ -1,0 +1,365 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace GeoDroid.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class Change : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Cargas_Averias_idAverias",
+                table: "Cargas");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Cargas_Incidencias_Incidenciaid",
+                table: "Cargas");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Maquinas_Establecimientos_Idestablecimientos",
+                table: "Maquinas");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Cargas_idAverias",
+                table: "Cargas");
+
+            migrationBuilder.RenameColumn(
+                name: "Idestablecimientos",
+                table: "Maquinas",
+                newName: "idestablecimientos");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_Maquinas_Idestablecimientos",
+                table: "Maquinas",
+                newName: "IX_Maquinas_idestablecimientos");
+
+            migrationBuilder.RenameColumn(
+                name: "Incidenciaid",
+                table: "Cargas",
+                newName: "idAveria");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_Cargas_Incidenciaid",
+                table: "Cargas",
+                newName: "IX_Cargas_idAveria");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "codigo",
+                table: "Maquinas",
+                type: "TEXT",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "TEXT");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "nombre",
+                table: "Establecimientos",
+                type: "TEXT",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "TEXT");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "codigo",
+                table: "Establecimientos",
+                type: "TEXT",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "TEXT");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "observaciones",
+                table: "Averias",
+                type: "TEXT",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "TEXT");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "idPersonal",
+                table: "Averias",
+                type: "INTEGER",
+                nullable: true,
+                oldClrType: typeof(int),
+                oldType: "INTEGER");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "idGeo",
+                table: "Averias",
+                type: "INTEGER",
+                nullable: true,
+                oldClrType: typeof(int),
+                oldType: "INTEGER");
+
+            migrationBuilder.AlterColumn<byte[]>(
+                name: "foto",
+                table: "Averias",
+                type: "BLOB",
+                nullable: true,
+                oldClrType: typeof(byte[]),
+                oldType: "BLOB");
+
+            migrationBuilder.AlterColumn<DateTime>(
+                name: "fechaModificacion",
+                table: "Averias",
+                type: "TEXT",
+                nullable: true,
+                oldClrType: typeof(DateTime),
+                oldType: "TEXT");
+
+            migrationBuilder.AlterColumn<DateTime>(
+                name: "fechaFin",
+                table: "Averias",
+                type: "TEXT",
+                nullable: true,
+                oldClrType: typeof(DateTime),
+                oldType: "TEXT");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "estado",
+                table: "Averias",
+                type: "TEXT",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "TEXT");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "detalle",
+                table: "Averias",
+                type: "TEXT",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "TEXT");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "comentarios",
+                table: "Averias",
+                type: "TEXT",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "TEXT");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Cargas_idIncidencia",
+                table: "Cargas",
+                column: "idIncidencia");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Cargas_Averias_idAveria",
+                table: "Cargas",
+                column: "idAveria",
+                principalTable: "Averias",
+                principalColumn: "id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Cargas_Incidencias_idIncidencia",
+                table: "Cargas",
+                column: "idIncidencia",
+                principalTable: "Incidencias",
+                principalColumn: "id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Maquinas_Establecimientos_idestablecimientos",
+                table: "Maquinas",
+                column: "idestablecimientos",
+                principalTable: "Establecimientos",
+                principalColumn: "id",
+                onDelete: ReferentialAction.Cascade);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Cargas_Averias_idAveria",
+                table: "Cargas");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Cargas_Incidencias_idIncidencia",
+                table: "Cargas");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Maquinas_Establecimientos_idestablecimientos",
+                table: "Maquinas");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Cargas_idIncidencia",
+                table: "Cargas");
+
+            migrationBuilder.RenameColumn(
+                name: "idestablecimientos",
+                table: "Maquinas",
+                newName: "Idestablecimientos");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_Maquinas_idestablecimientos",
+                table: "Maquinas",
+                newName: "IX_Maquinas_Idestablecimientos");
+
+            migrationBuilder.RenameColumn(
+                name: "idAveria",
+                table: "Cargas",
+                newName: "Incidenciaid");
+
+            migrationBuilder.RenameIndex(
+                name: "IX_Cargas_idAveria",
+                table: "Cargas",
+                newName: "IX_Cargas_Incidenciaid");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "codigo",
+                table: "Maquinas",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "TEXT",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "nombre",
+                table: "Establecimientos",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "TEXT",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "codigo",
+                table: "Establecimientos",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "TEXT",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "observaciones",
+                table: "Averias",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "TEXT",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<int>(
+                name: "idPersonal",
+                table: "Averias",
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: 0,
+                oldClrType: typeof(int),
+                oldType: "INTEGER",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<int>(
+                name: "idGeo",
+                table: "Averias",
+                type: "INTEGER",
+                nullable: false,
+                defaultValue: 0,
+                oldClrType: typeof(int),
+                oldType: "INTEGER",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<byte[]>(
+                name: "foto",
+                table: "Averias",
+                type: "BLOB",
+                nullable: false,
+                defaultValue: new byte[0],
+                oldClrType: typeof(byte[]),
+                oldType: "BLOB",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<DateTime>(
+                name: "fechaModificacion",
+                table: "Averias",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                oldClrType: typeof(DateTime),
+                oldType: "TEXT",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<DateTime>(
+                name: "fechaFin",
+                table: "Averias",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                oldClrType: typeof(DateTime),
+                oldType: "TEXT",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "estado",
+                table: "Averias",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "TEXT",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "detalle",
+                table: "Averias",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "TEXT",
+                oldNullable: true);
+
+            migrationBuilder.AlterColumn<string>(
+                name: "comentarios",
+                table: "Averias",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "TEXT",
+                oldNullable: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Cargas_idAverias",
+                table: "Cargas",
+                column: "idAverias");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Cargas_Averias_idAverias",
+                table: "Cargas",
+                column: "idAverias",
+                principalTable: "Averias",
+                principalColumn: "id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Cargas_Incidencias_Incidenciaid",
+                table: "Cargas",
+                column: "Incidenciaid",
+                principalTable: "Incidencias",
+                principalColumn: "id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Maquinas_Establecimientos_Idestablecimientos",
+                table: "Maquinas",
+                column: "Idestablecimientos",
+                principalTable: "Establecimientos",
+                principalColumn: "id",
+                onDelete: ReferentialAction.Cascade);
+        }
+    }
+}

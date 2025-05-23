@@ -1,0 +1,45 @@
+﻿using Fluxor;
+using GeoDroid.Data;
+
+namespace GEO_DROID.Store.EstablecimientoState
+{
+    public static class EstablecimientoReducer
+    {
+
+        [ReducerMethod]
+        public static EstablecimientoState EstablecimientoSelectedChangedAction(EstablecimientoState state, ChangeEstablecimientoSelectedAction action)
+        {
+            return state with { EstablecimientoSelected = action.establecimiento };
+        }
+
+        [ReducerMethod]
+        public static EstablecimientoState EstablecimientoListSelectedChangedAction(EstablecimientoState state, ChangeEstablecimientosListSelected action)
+        {
+
+            return state with { EstablecimientoListSelected = action.EstablecimientoList };
+
+        }
+
+
+        [ReducerMethod]
+        public static EstablecimientoState EstablecimientoListSelectedForSelecterChangedAction(EstablecimientoState state, ChangeEstablecimientosListForSelecter action)
+        {
+
+            return state with { EstablecimientoListSelecterSelected = action.EstablecimientoList };
+        }
+
+        [ReducerMethod]
+        public static EstablecimientoState AddEstablecimientoSelected(EstablecimientoState state, AddEstablecimientoSelected action)
+        {
+            List<Establecimiento> establecimientoList = state.EstablecimientoListSelected;
+            var finded = establecimientoList.Find(x => x.id == action.establecimiento.id);
+            if (finded == null)
+            {
+                establecimientoList.Add(action.establecimiento);
+            }
+
+            return state with { EstablecimientoListSelected = establecimientoList };
+        }
+
+    }
+}

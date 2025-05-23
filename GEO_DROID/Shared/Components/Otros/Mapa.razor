@@ -1,0 +1,31 @@
+﻿ @inject IJSRuntime JS
+
+
+<div id="@_mapId" style="height: 400px; width: 100%;"></div>
+
+
+@code {
+    private string _mapId = "mymap";
+    private double latitude = 0;
+    private double longitude = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeMap();
+        }
+    }
+
+    private async Task InitializeMap()
+    {
+        await JS.InvokeVoidAsync("initializeMap", _mapId, latitude, longitude);
+    }
+
+    public async Task UpdateMapLocation(double lat, double lng)
+    {
+        latitude = lat;
+        longitude = lng;
+        await JS.InvokeVoidAsync("updateMapLocation", lat, lng);
+    }
+}

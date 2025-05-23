@@ -1,0 +1,52 @@
+﻿using GEO_DROID.DataAccess;
+using GEO_DROID.Models;
+using Microsoft.EntityFrameworkCore;
+using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services
+{
+    public class MaquinaService
+    {
+        private readonly GeoDroidDbContext _dbContext;
+
+        public MaquinaService(GeoDroidDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public async Task<List<Maquina>> GetMaquinasAsync()
+        {
+            return await _dbContext.Maquinas.ToListAsync();
+        }
+
+        public async Task<Maquina> GetMaquinaById(int id)
+        {
+            return await _dbContext.Maquinas
+            .Where(a => a.id == id)
+            .FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveMaquinaAsync(Maquina item)
+        {
+            _dbContext.Maquinas.Add(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<int> DeleteMaquinaAsync(Maquina item)
+        {
+            _dbContext.Maquinas.Remove(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<List<Maquina>> GetMaquinasByEstablecimientoAsync(int idEstablecimiento)
+        {
+            return await _dbContext.Maquinas.Where(m => m.idEstablecimiento == idEstablecimiento).ToListAsync();
+        }
+
+    }
+}

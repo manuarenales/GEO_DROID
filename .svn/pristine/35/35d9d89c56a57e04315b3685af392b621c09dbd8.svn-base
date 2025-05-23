@@ -1,0 +1,25 @@
+﻿using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Carga
+    {
+        [DataMember, PrimaryKey, AutoIncrement]
+        public int id { get; set; }
+        [DataMember]
+        public int idGeo { get; set; }
+
+
+        [DataMember]
+        public decimal carga { get; set; }
+        [DataMember]
+        public decimal recuperacion { get; set; }
+
+    }
+}

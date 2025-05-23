@@ -1,0 +1,576 @@
+
+using System.Text;
+using Android.Widget;
+using GEO_DROID.Platforms.Android.Handlers;
+using GEO_DROID.Resources.Lib.Comunicacion;
+using GeoDroid.Data.Migrations;
+using static Java.Util.Jar.Attributes;
+
+
+
+
+namespace BLL.LeerInfoMaquina
+{
+    public class ModuloBluetooth : IDisposable, IComunicacion
+    {
+        public enum ProtocoloMaquina { BARCREST, BELLFRUIT, CIRSA, COSTACALIDA, FRANCO, GIGAMES, SENTE, SLEIC, TECNAUSA, TOURVISION, WORTE, NONE };
+
+        const bool LEER_HOPPERS = false; //LICENCIA 000018=true resto=false
+
+        protected bool _disposed = false;
+
+        const string ESTADO_CONEXION = "01";
+        const string ESTADO_CONFIGURACION = "02";
+        const string ESTADO_LECTURACONTADORES = "03";
+        const string ESTADO_DESCONEXION = "04";
+
+        public delegate void RefrescaEstadoDelegate(string texto);
+
+        public BluetoothService _com;
+        ProtocoloTecnausa _protocoloTecnausa;
+
+        ProtocoloAra _protocoloAra;
+        ProtocoloMaquina _p; //protocolo que se ha seleccionado para inicializar
+        string _passwordMaquina;
+        int _timeout = 0;
+
+        string _estado;
+        string _error;
+
+        public string _mac;
+        public byte[] byteArray = new byte[20000];
+
+        // PROPIEDADES DE LA CLASE////////////
+        public string Error
+        {
+            get { return _error; }
+        }
+        public string ErrorInfo
+        {
+            get { return ""; }
+        }
+        public string Estado
+        {
+            get { return _estado; }
+        }
+        public bool IsReady
+        {
+            get { return (_com != null) ? _com.Conected : false; }
+        }
+        public StringBuilder UltimoRecibido
+        {
+            get { return RecibirDatos(0, 0); }
+        }
+        decimal _valorPasoEntradas;
+        public decimal ValorPasoEntradas
+        {
+            get { return _valorPasoEntradas; }
+            set { _valorPasoEntradas = value; }
+        }
+        decimal _valorPasoSalidas;
+        public decimal ValorPasoSalidas
+        {
+            get { return _valorPasoSalidas; }
+            set { _valorPasoSalidas = value; }
+        }
+
+        /***************/
+        /* CONSTRUCTOR */
+        /***************/
+        public ModuloBluetooth(ProtocoloMaquina p, string mac, string pin)
+            : this(p, null)
+        {
+            _p = p;
+            _mac = mac;
+            _passwordMaquina = pin;
+            _com = new BluetoothService();
+        }
+        public ModuloBluetooth(string mac, string pin)
+        {
+            _mac = mac;
+            _passwordMaquina = pin;
+            _com = new BluetoothService();
+        }
+        public ModuloBluetooth(ProtocoloMaquina p, string passwordMaquina)
+        {
+            _p = p;
+            _passwordMaquina = passwordMaquina;
+            _com = new BluetoothService();
+        }
+        public ModuloBluetooth(ProtocoloMaquina p, string passwordMaquina, int timeout)
+        {
+            _p = p;
+            _passwordMaquina = passwordMaquina;
+            _timeout = timeout;
+            _com = new BluetoothService();
+        }
+
+        public bool Conectar()
+        {
+            try
+            {
+                if (_com.Conected == false)
+                {
+                    _com.PairDevice(_mac, _passwordMaquina);
+
+                    //_com.ConnectToDevice(_mac);
+                    //StringBuilder resp = _com.RecibirDatos(0, 0);
+                    //_protocoloTecnausa = ProtocoloTecnausa.Get(this, resp);
+                    //_protocoloTecnausa.EnviarRespuestaConexion();
+                    // 
+                }
+            }
+            catch (Exception ex)
+            {
+                _error = "Error en la conexión: " + ex;
+            }
+            return false;
+        }
+
+        /***************/
+        /* DESCONECTAR */
+        /***************/
+        public bool Desconectar()
+        {
+            try
+            {
+                if (_com.Conected)
+                {
+                    _com.DisconnectDevice();
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+                throw;
+            }
+        }
+
+        /*******************/
+        /* Programar */
+        /*******************/
+        public bool Programar(String[] content, IProgressCallback progreso)
+        {
+            String lectura = "";
+
+            if (!IsReady)
+            {
+                _error = "Comunicación no inicializada";
+                return false;
+            }
+
+            if (_protocoloTecnausa != null)
+            {
+                lectura = null;
+
+                // OJO!! Hay que comprobar primero las clases heredadas, ya que también se identificarán como la padre
+                if (_protocoloTecnausa is ProtocoloTecnausaV56)
+                    lectura = ""; //Distinto de null, aunque sin valor porque la clase ProtocoloTecnausaV56 sabe que archivo utilizar
+                else if (_protocoloTecnausa is ProtocoloTecnausaV3)
+                    lectura = content[2]; //rutaArchivo = rutaArchivo.Replace("PRI.BIN", "PRIV3.BIN");
+                else if (_protocoloTecnausa is ProtocoloTecnausaV2)
+                    lectura = content[1]; //rutaArchivo = rutaArchivo.Replace("PRI.BIN", "PRIv2.BIN");
+
+                if (lectura != null)
+                {
+                    string ret = _protocoloTecnausa.Programar(lectura, progreso);
+                    if (ret != null && ret.Length > 0)
+                        _error = ret;
+                    else
+                        return true;
+                }
+                else
+                {
+                    _error = "Protocolo del módulo no reconocido";
+                }
+            }
+            else
+            {
+                _error = "Protocolo del módulo no establecido";
+            }
+            return false;
+        }
+
+        public string GetAPNConfig(IProgressCallback progreso)
+        {
+            if (!IsReady)
+            {
+                _error = "Comunicación no inicializada";
+                return null;
+            }
+
+            if (_protocoloTecnausa != null)
+            {
+                // OJO!! Hay que comprobar primero las clases heredadas, ya que también se identificarán como la padre
+                if (_protocoloTecnausa is ProtocoloTecnausaV56)
+                    return ((ProtocoloTecnausaV56)_protocoloTecnausa).GetAPNConfig();
+                else
+                    _error = "Protocolo del módulo no reconocido";
+            }
+            else
+            {
+                _error = "Protocolo del módulo no establecido";
+            }
+            return null;
+        }
+
+        public bool SetAPNConfig(string configFileName, IProgressCallback progreso)
+        {
+            if (!IsReady)
+            {
+                _error = "Comunicación no inicializada";
+                return false;
+            }
+
+            if (_protocoloTecnausa != null)
+            {
+                // OJO!! Hay que comprobar primero las clases heredadas, ya que también se identificarán como la padre
+                if (_protocoloTecnausa is ProtocoloTecnausaV56)
+                    return ((ProtocoloTecnausaV56)_protocoloTecnausa).SetAPNConfig(configFileName);
+                else
+                    _error = "Protocolo del módulo no reconocido";
+            }
+            else
+            {
+                _error = "Protocolo del módulo no establecido";
+            }
+            return false;
+        }
+
+        /*******************/
+        /* SET CONTADORES */
+        /*******************/
+        // TODO:
+        public bool SetContadores(int mec1, int mec2, int mec3, int mec4)
+        {
+            if (!IsReady)
+            {
+                _error = "Comunicación no inicializada";
+                return false;
+            }
+
+            if (_protocoloTecnausa != null)
+            {
+                if (_protocoloTecnausa.SetContadoresMecanicos(1, mec1))
+                    if (_protocoloTecnausa.SetContadoresMecanicos(2, mec2))
+                        if (_protocoloTecnausa.SetContadoresMecanicos(3, mec3))
+                            return _protocoloTecnausa.SetContadoresMecanicos(4, mec4);
+            }
+            else
+            {
+                _error = "Protocolo del módulo no establecido";
+            }
+            return false;
+        }
+        private bool Configurar(byte configuracion)
+        {
+            return Configurar(ProtocoloTecnausa.PuertoSerie.Serie0, configuracion);
+        }
+        private bool Configurar(ProtocoloTecnausa.PuertoSerie puertoSerie, byte configuracion)
+        {
+            if (_protocoloTecnausa != null)
+            {
+                if (_protocoloTecnausa.EnviarConfiguracion(puertoSerie, configuracion))
+                    return true;
+                else
+                    _error = "Error al configurar el módulo";
+                return false;
+            }
+
+            return true;
+        }
+
+        /*******************/
+        /* LEER CONTADORES */
+        /*******************/
+        public InfoContadores LeerContadores()
+        {
+            return LeerContadores(null);
+        }
+        private static Protocolo GetProtocolo(ProtocoloMaquina p, IComunicacion com, IFiltroTrama filtroTrama, string passwordMaquina, int timeout)
+        {
+            Protocolo ret = null;
+
+            switch (p)
+            {
+                case ProtocoloMaquina.BARCREST:
+                    ret = new ProtocoloGigames2(com, filtroTrama, passwordMaquina, timeout);
+                    break;
+                case ProtocoloMaquina.BELLFRUIT:
+                    ret = new ProtocoloBellFruit(com, filtroTrama);
+                    break;
+                case ProtocoloMaquina.CIRSA:
+                    ret = new ProtocoloUnidesa(com, filtroTrama, passwordMaquina, timeout);
+                    break;
+                case ProtocoloMaquina.COSTACALIDA:
+                    ret = new ProtocoloCostaCalida(com, filtroTrama, passwordMaquina);
+                    break;
+                case ProtocoloMaquina.FRANCO:
+                    ret = new ProtocoloFranco(com, filtroTrama, passwordMaquina, timeout);
+                    break;
+                case ProtocoloMaquina.GIGAMES:
+                    ret = new ProtocoloGigames(com, filtroTrama, passwordMaquina, timeout);
+                    break;
+                case ProtocoloMaquina.SENTE:
+                    ret = new ProtocoloSente(com, filtroTrama, passwordMaquina);
+                    break;
+                case ProtocoloMaquina.SLEIC:
+                    ret = new ProtocoloSleic(com, filtroTrama, timeout);
+                    break;
+                case ProtocoloMaquina.TOURVISION:
+                    ret = new ProtocoloTourvision(com, filtroTrama, passwordMaquina, timeout);
+                    break;
+                case ProtocoloMaquina.TECNAUSA:
+                    ret = new ProtocoloTecnausa(com);
+                    break;
+                case ProtocoloMaquina.WORTE:
+                    ret = new ProtocoloGigames2(com, filtroTrama, passwordMaquina, timeout);
+                    break;
+                    //case ProtocoloMaquina.GEMINI:
+                    //    ret = new ProtocoloGemini(com, filtroTrama);
+                    //    break;
+                    //case ProtocoloMaquina.AMATIC:
+                    //case ProtocoloMaquina.NOVOMATIC_SAS:
+                    //    ret = new ProtocoloSAS(com, filtroTrama, passwordMaquina, timeout);
+                    //    break;
+                    //case ProtocoloMaquina.MERKUR:
+                    //    ret = new ProtocoloMerkur(com, filtroTrama, passwordMaquina);
+                    //    break;
+                    //case ProtocoloMaquina.OLYMPIC:
+                    //    ret = new ProtocoloOlympic(com, filtroTrama);
+                    //    break;
+                    //case ProtocoloMaquina.NOVOMATIC:
+                    //    ret = new ProtocoloGSP(com, filtroTrama, timeout);
+                    //    break;
+                    //case ProtocoloMaquina.ZITRO:
+                    //    ret = new ProtocoloZitro(com, filtroTrama, passwordMaquina, timeout);
+                    //    break;
+                    //case ProtocoloMaquina.GISTRA:
+                    //    ret = new ProtocoloGistra(com, filtroTrama, timeout);
+                    //    break;
+
+            }
+            return ret;
+        }
+
+        private static int GetBitsDeDatos(byte b)
+        {
+            return ((b & 0x08) == 0) ? 8 : 7;
+        }
+
+        private static int GetBaudrate(byte b)
+        {
+            int ret = 9600; // por defecto ponemos 9600
+            int baudrate = b & 0x07;
+
+            switch (baudrate)
+            {
+                case 0:
+                    ret = 600;
+                    break;
+                case 1:
+                    ret = 1200;
+                    break;
+                case 2:
+                    ret = 2400;
+                    break;
+                case 3:
+                    ret = 4800;
+                    break;
+                case 4:
+                    ret = 9600;
+                    break;
+                case 5:
+                    ret = 19200;
+                    break;
+            }
+
+            return ret;
+        }
+
+        public InfoContadores LeerContadores(IProgressCallback callback)
+        {
+            InfoContadores info = null;
+            InfoContadores infoMecanicos = null;
+            // Comprobamos si estamos conectados
+
+            //if (!_com.Conected)
+            //{
+            //    _com.ConnectToDevice(_mac);
+            //    _error = "Comunicación no inicializada";
+            //    return null;
+            //}
+            _estado = ESTADO_LECTURACONTADORES;
+
+#if LibreriaRecaudacionBT
+            // Llamamos al método que verifica que el módulo de captura es 'made in TECNAUSA'
+            if (_protocoloTecnausa is ProtocoloTecnausaV2)
+            {
+                if (!_protocoloTecnausa.Verificar(_com.GetHashCode()))
+                {
+                    _error = "Protocolo incorrecto";
+                    return null;
+                }
+            }
+#endif
+            InfoContadores infoHoppers = null;
+            // Leemos los contadores de hoppers
+            if (LEER_HOPPERS)
+            {
+                _protocoloAra = new ProtocoloAra(this, _protocoloTecnausa);
+                if (Configurar(ProtocoloTecnausa.PuertoSerie.Serie1, _protocoloAra.ConfiguracionPuertoSerie))
+                    infoHoppers = _protocoloAra.LeerContadores();
+            }
+
+            // Leemos los contadores mecanicos
+            if (_protocoloTecnausa is ProtocoloTecnausaV2)
+                infoMecanicos = _protocoloTecnausa.LeerContadores(callback);
+
+            // Leemos los contadores electrónicos
+            if (_p == ProtocoloMaquina.TECNAUSA)
+            {
+                if (_protocoloTecnausa is ProtocoloTecnausa)
+                    info = _protocoloTecnausa.LeerContadores(callback);
+            }
+            else
+            {
+                Protocolo p = GetProtocolo(_p, this, _protocoloTecnausa, _passwordMaquina, _timeout);
+                if (p != null)
+                {
+                    // Asignamos los valores de paso para contadores que vamos a recibir en importes
+                    // Calcularemos los pasos con esa información
+                    if (p is ProtocoloBellFruit)
+                    {
+                        ((ProtocoloBellFruit)p).ValorPasoSalidas = _valorPasoSalidas;
+                    }
+                    else if (p is ProtocoloSente)
+                    {
+                        ((ProtocoloSente)p).ValorPasoEntradas = _valorPasoEntradas;
+                        ((ProtocoloSente)p).ValorPasoSalidas = _valorPasoSalidas;
+                    }
+
+                    if (Configurar(p.ConfiguracionPuertoSerie))
+                    {
+                        info = p.LeerContadores(callback);
+                        if (info == null)
+                        {
+                            _error = p.Error;
+                        }
+                    }
+                    else
+                    {
+                        _error = "Error configurando módulo";
+                    }
+                }
+                else
+                {
+                    if (infoMecanicos == null && p == null)
+                        _error = "Protocolo de máquina no implementado";
+                }
+            }
+            // Preparamos los contadores a devolver en función de los que hemos obtenido
+            if (info == null)
+                info = infoMecanicos;
+            else
+                info.MergeMecanicos(infoMecanicos);
+            // Asignamos el contador de hoppers
+            if (info != null && infoHoppers != null)
+                info.Auxiliar1 = infoHoppers.Auxiliar1;
+            if (_protocoloAra != null && !string.IsNullOrEmpty(_protocoloAra.Error))
+                _error += " Error lectura hoppers:" + _protocoloAra.Error;
+
+            return info;
+        }
+        /*******************/
+        /* LEER CONTADORES */
+        /*******************/
+        public bool Reconectar(IProgressCallback progreso)
+        {
+            if (Desconectar())
+            {
+                if (progreso != null)
+                    progreso.SetText("Reconectando...(-)");
+                System.Threading.Thread.Sleep(2000);
+                if (Conectar())
+                    return true;
+                _error = "Problemas al reconectar";
+                //ret = "Problemas al reconectar";
+            }
+            else
+            {
+                _error = "No hemos podido cerrar la conexión para reconectar";
+            }
+            _com.DisconnectDevice();
+            _com = null;
+            return false;
+        }
+        public bool ConfigurarComunicacion(byte parametros)
+        {
+            if (_protocoloTecnausa == null)
+            {
+
+            }
+            else if (_protocoloTecnausa is ProtocoloTecnausaV2)
+            {
+                return Configurar(parametros);// _protocoloTecnausa.EnviarConfiguracion(parametros);
+            }
+            return false;
+
+        }
+        public bool EnviarDatos(StringBuilder datos)
+        {
+            string send = datos.ToString();
+            try
+            {
+                _com.WriteData(send);
+                return true;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+
+        }
+        public void LimpiarBuffer()
+        {
+            byteArray = new byte[2400];
+        }
+
+        /***************************************************************************/
+        // Destructor y liberación de recursos
+        /***************************************************************************/
+        ~ModuloBluetooth()
+        {
+            Dispose(false);
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this._disposed)
+            {
+                if (disposing)
+                {
+                    // Libero todo lo que he manejado
+                    if (_com != null) _com.DisconnectDevice();
+
+                }
+
+                _disposed = true;
+            }
+        }
+        public StringBuilder RecibirDatos(int timeout, int timeout2)
+        {
+
+            string sr = _com.ReadData();
+            StringBuilder sb = new StringBuilder(sr);
+            return sb;
+
+        }
+    }
+}

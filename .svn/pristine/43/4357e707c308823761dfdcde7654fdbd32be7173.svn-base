@@ -1,0 +1,44 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GeoDroid.Data.Models
+{
+    public class Recaudacion
+    {
+        [Key]
+        public int id { get; set; }
+
+        [ForeignKey("Ruta")]
+        public int idRuta { get; set; }
+
+        public virtual Ruta Ruta { get; set; }
+
+        [ForeignKey("Incidencia")]
+        public int idIncidencia { get; set; }
+
+        public virtual Incidencia Incidencia { get; set; }
+
+        public Decimal bruto { get; set; }
+
+        public Decimal recaudacion { get; set; }
+
+        public Decimal netoEmpresa { get; set; }
+
+        public Decimal netoEstablecimiento { get; set; }
+
+        public bool arqueoRealizado { get; set; }
+
+        public Decimal valorArqueo { get; set; }
+        [MaxLength(2000)]
+        public string observaciones { get; set; }
+
+        public string comentario { get; set; }
+    }
+}

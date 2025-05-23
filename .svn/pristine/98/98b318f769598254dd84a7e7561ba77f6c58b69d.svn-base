@@ -1,0 +1,102 @@
+﻿@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject ConceptoAveriaService conceptoAveriaService
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+
+
+
+<div Class=" d-flex flex-column justify-content-start mb-1" @onclick="() => ShowModal()">
+    <label class="TextoMedio">
+        Concepto
+    </label>
+    @if (conceptoAveria != null)
+    {
+        <input class="form-control @(IsValid ? "" : "is-invalid")" Style="height: fit-content; min-height: 1.5em; color: blue" @bind="@conceptoAveria.descripcion" readonly ontouchstart="" />
+    }
+    else
+    {
+        <input class="form-control @(IsValid ? "" : "is-invalid")" style="height: 1.5em !important ;" readonly ontouchstart="" />
+    }
+    @if (!IsValid)
+    {
+        <div class="invalid-feedback">
+            Please choose a valid Concept.
+        </div>
+    }
+</div>
+
+
+<div class="modal show " tabindex="-1" role="dialog" style="display: @(modalVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+        <div class="modal-content bg-light" style="height: 100%;">
+            <div class="modal-header">
+                <span class="modal-title Titulo ">@Localizer["añadirestablecimiento"]</span>
+                <button type="button" class="close" aria-label="Close" @onclick="HideModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <input type="text" @bind="Bconcepto" placeholder="Buscar" class="w-100 p-2" @oninput="FilterEstados" />
+                <div class="m-2" style="height: 80%;  overflow-y: auto;">
+                    <ul class="list-group">
+                        @foreach (ConceptoAveria item in conceptos.Where(e => string.IsNullOrEmpty(Bconcepto) || e.descripcion.ToLower().Contains(Bconcepto.ToLower())))
+                        {
+                            <li class="list-group-item" @onclick="() => SetConceptoAveria(item)"><span>@item.descripcion</span></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    [Parameter]
+    public ConceptoAveria conceptoAveria { get; set; }
+    [Parameter]
+    public EventCallback<ConceptoAveria> conceptoAveriaChanged { get; set; }
+    [Parameter]
+    public EventCallback<ConceptoAveria> Changed { get; set; }
+    [Parameter]
+    public int idEstablecimiento { get; set; }
+    [Parameter]
+    public bool IsValid { get; set; } = true;
+
+    private string Bconcepto = "";
+    private bool IsIdConceptoValid { get; set; } = true;
+    public List<ConceptoAveria> conceptos = new List<ConceptoAveria>();
+    bool modalVisible = false;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        conceptos = await conceptoAveriaService.GetConceptosAveriasAsync();
+    }
+
+    void ShowModal()
+    {
+        modalVisible = true;
+    }
+
+    void HideModal()
+    {
+        modalVisible = false;
+    }
+
+    private void SetConceptoAveria(ConceptoAveria concepto)
+    {
+        conceptoAveriaChanged.InvokeAsync(concepto);
+        Changed.InvokeAsync(concepto);
+        HideModal();
+    }
+
+    public void FilterEstados(ChangeEventArgs filter)
+    {
+        Bconcepto = filter.Value.ToString();
+    }
+
+}

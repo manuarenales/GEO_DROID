@@ -1,0 +1,68 @@
+﻿using GEO_DROID.DataAccess;
+using GEO_DROID.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using SQLite;
+using System.Collections.Generic;
+
+namespace GEO_DROID.Services
+{
+    public class AveriasService
+    {
+
+        private readonly GeoDroidDbContext _dbContext;
+
+        Averia AveriaBackUp;
+
+        public AveriasService(GeoDroidDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public async Task<List<Averia>> GetAveriasAsync()
+        {
+            return await _dbContext.Averias.ToListAsync();
+        }
+
+        public async Task<Averia> GetAveriaById(int id)
+        {
+            return await _dbContext.Averias
+            .Include(a => a.maquina)
+            .Include(a => a.averiaEstado)
+            .Include(a => a.concepto)
+            .Include(a => a.carga)
+            .Where(a => a.id == id)
+            .FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveAveriaAsync(Averia item)
+        {
+            _dbContext.Averias.Add(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<int> DeleteAveriaAsync(Averia item)
+        {
+            _dbContext.Averias.Remove(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public void SaveAveria(Averia averia)
+        {
+            AveriaBackUp = averia;
+        }
+
+        public Averia GetAveria()
+        {
+            return AveriaBackUp;
+        }
+
+        public void ResetAveria()
+        {
+            AveriaBackUp = null;
+        }
+
+
+
+    }
+}

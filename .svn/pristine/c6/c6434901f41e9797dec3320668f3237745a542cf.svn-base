@@ -1,0 +1,113 @@
+﻿using GEO_DROID.Models;
+using SQLite;
+using System.Text.Json;
+
+
+namespace GEO_DROID.Services
+{
+    public class EstablecimientosService
+    {
+        SQLiteAsyncConnection Database;
+        private readonly HttpClient _httpClient;
+        public EstablecimientosService()
+        {
+            Init();
+        }
+        async Task Init()
+        {
+            if (Database is not null)
+                return;
+            try
+            {
+                Database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
+                var result = await Database.CreateTableAsync<Establecimiento>();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+        }
+        public async Task<Establecimiento> getEstablecimientoByID(int id)
+        {
+            return await Database.Table<Establecimiento>().Where(i => i.id == id).FirstOrDefaultAsync();
+        }
+        public async Task<List<Establecimiento>> GetEstablecimientos()
+        {
+            return await Database.Table<Establecimiento>().ToListAsync();
+        }
+        public List<string> getTiketsList(int id)
+        {
+            List<string> list = new List<string>();
+
+            list.Add("Rec. Totales");
+            list.Add("Recaudacion con desglose");
+            list.Add("Rec. Reducido");
+            list.Add("Rec. Detallado");
+            list.Add("Rec. Detallado Contadores");
+            list.Add("Rec. Superdetallado");
+
+            return list;
+        }
+        public async Task<int> SaveEstablecimientoAsync(Establecimiento item)
+        {
+            Establecimiento device = await Database.Table<Establecimiento>().Where(i => i.id == item.id).FirstOrDefaultAsync();
+
+            if (device != null)
+            {
+                return await Database.UpdateAsync(item);
+            }
+            else
+            {
+                return await Database.InsertAsync(item);
+            }
+        }
+        public async Task<int> DeleteEstablecimientoAsync(Establecimiento item)
+        {
+            var yes = await Database.Table<Establecimiento>().DeleteAsync(i => i.id == item.id);
+            return yes;
+        }
+
+        public async Task<RecaudacionEstablecimientoDTO> ObtenerEstablecimientosAsync(string codigo)
+        {
+            try
+            {
+                var handler = new HttpClientHandler();
+                HttpClient _httpClient = new HttpClient(handler);
+                handler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslPolicyErrors) => { return true; };
+
+                string ruta = $"https://geoline.fortuneconnect.es:7035/odata/ODataRecaudacionEstablecimiento?$filter=codigoEstablecimiento eq '{codigo}'";
+                HttpResponseMessage response = await _httpClient.GetAsync(ruta);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    };
+
+                    var contenido = await response.Content.ReadAsStringAsync();
+
+
+                    if (contenido.Length > 2)
+                    {
+                        var establecimiento = JsonSerializer.Deserialize<List<RecaudacionEstablecimientoDTO>>(contenido, options)[0];
+
+                        return establecimiento;
+                    }
+                    return null;
+                }
+                else
+                {
+                    // Manejo de errores cuando la solicitud no es exitosa  
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Manejo de errores en caso de excepción 
+                return null;
+            }
+        }
+    }
+}

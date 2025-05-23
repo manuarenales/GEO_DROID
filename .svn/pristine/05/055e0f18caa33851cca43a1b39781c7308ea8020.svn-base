@@ -1,0 +1,12 @@
+﻿.title {
+    background-color: #bfbfbf;
+}
+
+.spancolor {
+    color: blue;
+}
+
+.content {
+    height: 80vh;
+    max-height: fit-content;
+}

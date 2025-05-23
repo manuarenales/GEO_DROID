@@ -1,0 +1,62 @@
+﻿
+
+
+namespace GEO_DROID.Services
+{
+    public class LayoutBuilderService
+    {
+        public LayoutBuilderService() { }
+
+        public List<ItemList> GetIndexMenuItems()
+        {
+            List<ItemList> items = new List<ItemList>();
+            ItemList item1 = new ItemList();
+            ItemList item2 = new ItemList();
+            ItemList item3 = new ItemList();
+            ItemList item4 = new ItemList();
+            ItemList item5 = new ItemList();
+
+
+            item1.title = "ruta";
+            item1.icon = "img/ruta.png";
+            item1.subtitle = "Configuracion de Rutas ";
+            item1.ruta = "rutas";
+
+            item2.title = "Informacion General";
+            item2.icon = "img/info.png";
+            item2.subtitle = "Configuracion de Maquinas ";
+            item2.ruta = "informaciongeneral";
+
+            item3.title = "Vehiculos";
+            item3.icon = "img/vehiculos.png";
+            item3.subtitle = "Configuracion de Recaudadores ";
+            item3.ruta = "vehiculos";
+
+            item4.title = "Sincronizacion";
+            item4.icon = "img/sincro.png";
+            item4.subtitle = "Configuracion de Instalaciones ";
+            item4.ruta = "sincronizacion";
+
+            item5.title = "Ajustes";
+            item5.icon = "img/ajustes.png";
+            item5.subtitle = "Configuracion de Instalaciones ";
+            item5.ruta = "ajustes";
+
+            items.Add(item1);
+            items.Add(item2);
+            items.Add(item3);
+            items.Add(item4);
+            items.Add(item5);
+
+            return items;
+        }
+
+    }
+    public class ItemList
+    {
+        public string icon;
+        public string title;
+        public string subtitle;
+        public string ruta;
+    }
+}

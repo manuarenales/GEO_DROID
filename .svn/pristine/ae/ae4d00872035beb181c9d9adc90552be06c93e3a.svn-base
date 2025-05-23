@@ -1,0 +1,126 @@
+﻿@page "/rutas"
+
+@using GEO_DROID.Models
+@using GEO_DROID.Services
+
+@inject NavigationManager Navigation
+@inject EstablecimientosService Builder
+@inject CultureService Cultureservice
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject EstablecimientosService EstablecimientoService
+
+<ul class="list-group">
+    <li class="additem list-group-item d-flex justify-content-start align-items-lg-center" @onclick="() => ShowModal()">
+        <img class="m-1" src="img/add.png" />
+        <h7 class="m-2"> @Localizer["añadirestablecimiento"]</h7>
+    </li>
+    <li class="list-group-item d-flex justify-content-between align-items-lg-center" style="position: relative;">
+        <h8 class="m-2">@FormattedDate(selectedDate)</h8>
+        <img class="m-1" src="img/calendar.png" />
+        <input type="date" @ref="dateInput" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 1;" @bind="selectedDate" />
+    </li>
+</ul>
+
+<ul class="list-group list-group-flush">
+    @foreach (Establecimiento establecimiento in MenuItems)
+    {
+        <li class="list-group-item d-flex flex-row justify-content-between align-items-lg-center">
+            <Div Class="w-100" @onclick='() => NavigateTo("opciones/"+ establecimiento.id)'>
+                <h8 class="m-2"> @establecimiento.nombre</h8>
+                <div class="d-flex justify-content-start align-items-lg-center">
+                    <img class="m-1" src="img/maquinaJuego.jpg" />
+                    <img class="m-1" src="img/repare.jpg" />
+                    <img class="m-1" src="img/flechas.jpg" />
+                    <img class="m-1" src="img/recaudo.jpg" />
+                </div>
+            </Div>
+            <Div Class="mt-2 mb-1 pt-2 pb-2">
+                <GEO_DROID.Shared.Components.Otros.Recaudacion CodigoEstablecimiento="@establecimiento.codigo"></GEO_DROID.Shared.Components.Otros.Recaudacion>
+            </Div>
+        </li>
+    }
+
+</ul>
+
+<Modal @ref="modalRef">
+    <ModalContent Size="ModalSize.Fullscreen">
+        <ModalHeader>
+            <ModalTitle> @Localizer["añadirestablecimiento"] </ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+
+        <ModalBody>
+            <input type="text" @bind="busqueda" placeholder="Buscar" class="w-100 p-2" />
+            <Div Class="m-2">
+                <ListGroup>
+                    @foreach (Establecimiento item in establecimientosList.Where(m => m.nombre.Contains(busqueda)))
+                    {
+                        <ListGroupItem @onclick='() => AddItemToList(item)'><Span>@item.nombre</Span></ListGroupItem>
+                    }
+                </ListGroup>
+            </Div>
+        </ModalBody>
+
+    </ModalContent>
+</Modal>
+
+@code {
+    public List<Establecimiento> MenuItems = new List<Establecimiento>();
+    private ElementReference dateInput;
+    private DateTime selectedDate = DateTime.Now;
+    private Modal modalRef;
+    private string name;
+    private string busqueda = "";
+    private List<Establecimiento> establecimientosList = new List<Establecimiento>();
+    private EstablecimientosService establecimientoService;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        establecimientoService = new EstablecimientosService();
+        Cultureservice.CultureChanged += StateHasChanged;
+        MenuItems = await EstablecimientoService.GetEstablecimientos();
+        establecimientosList = await EstablecimientoService.GetEstablecimientos();
+    }
+
+    async void OnNameChanged(string value)
+    {
+        name = value;
+        MenuItems = await Builder.GetEstablecimientos();
+    }
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, false);
+    }
+    private async void DeleteItem(Establecimiento establecimiento)
+    {
+        await EstablecimientoService.DeleteEstablecimientoAsync(establecimiento);
+        MenuItems.Remove(establecimiento);
+        StateHasChanged();
+    }
+    public string FormattedDate(DateTime date)
+    {
+        return $"{date.ToString("dddd, dd")} de {date.ToString("MMMM")}, {date.Year}";
+    }
+
+
+
+    private Task ShowModal()
+    {
+
+        return modalRef.Show();
+    }
+
+    private Task HideModal()
+    {
+        return modalRef.Hide();
+    }
+
+    private void AddItemToList(Establecimiento item)
+    {
+        MenuItems.Add(item);
+        StateHasChanged();
+    }
+
+}

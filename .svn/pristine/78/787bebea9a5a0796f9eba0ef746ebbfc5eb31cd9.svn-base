@@ -1,0 +1,42 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Recaudacion
+    {
+        [Key]
+        public int id { get; set; }
+
+        public int idRuta { get; set; }
+        public int idIncidencia { get; set; }
+
+        [ForeignKey("idRuta")]
+        public virtual Ruta Ruta { get; set; }
+
+        [ForeignKey("idIncidencia")]
+        public virtual Incidencia incidencia { get; set; }
+
+
+        public Decimal bruto { get; set; }
+
+        public Decimal recaudacion { get; set; }
+
+        public Decimal netoEmpresa { get; set; }
+
+        public Decimal netoEstablecimiento { get; set; }
+
+        public bool arqueoRealizado { get; set; }
+
+        public Decimal valorArqueo { get; set; }
+        [MaxLength(2000)]
+        public string observaciones { get; set; }
+
+        public string comentario { get; set; }
+    }
+}

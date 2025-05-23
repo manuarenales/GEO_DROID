@@ -1,0 +1,60 @@
+﻿using Fluxor;
+using Microsoft.AspNetCore.Components;
+using IDispatcher = Fluxor.IDispatcher;
+
+namespace GEO_DROID.Store.Navegation
+{
+    public class NavegationEffects
+    {
+        private readonly NavigationManager _navigationManager;
+        private readonly IState<NavigationState> _state;
+        public NavegationEffects(NavigationManager navigationManager, IState<NavigationState> state)
+        {
+            _navigationManager = navigationManager;
+            _state = state;
+        }
+
+
+        [EffectMethod]
+        public async Task ReduceNavigation(NavigationToAction action, IDispatcher dispatcher)
+        {
+            //si pasa por aqui es una navegacion normal 
+            dispatcher.Dispatch(new ChangeAllowNavegationAction(true));
+            dispatcher.Dispatch(new ChangeIsNormalAction(true));
+
+
+            _navigationManager.NavigateTo(action.Rute);
+        }
+
+
+        [EffectMethod]
+        public async Task ReduceNavigation(NavigationAction action, IDispatcher dispatcher)
+        {
+            if (_state.Value.NormalNavegation)
+            {
+                dispatcher.Dispatch(new ChangeIsNormalAction(false));
+                dispatcher.Dispatch(new ChangeAllowNavegationAction(true));
+                dispatcher.Dispatch(new ChangeNavigationHistory(action.Context.TargetLocation, 1));
+                dispatcher.Dispatch(new SetCurrentRuteAction(action.Context.TargetLocation));
+
+                _navigationManager.NavigateTo(action.Context.TargetLocation);
+            }
+            else
+            {
+                //estamos navegando con el boton de atras ; 
+                //dispatcher.Dispatch(new ChangeIsNormalAction(false)); tengo que detectar en que ruta estoy y donde quiero navegar de forma que limpio el historial hasta esa ruta 
+                //dispatcher.Dispatch(new ChangeAllowNavegationAction(true));
+                //dispatcher.Dispatch(new ChangeNavigationHistory(action.Context.TargetLocation, -1));
+                //dispatcher.Dispatch(new SetCurrentRuteAction(action.Context.TargetLocation));
+                //8.43/9
+                _navigationManager.NavigateTo(action.Context.TargetLocation);
+            }
+
+        }
+
+
+
+
+    }
+
+}

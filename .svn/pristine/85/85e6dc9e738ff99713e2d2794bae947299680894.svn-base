@@ -1,0 +1,58 @@
+﻿using Fluxor;
+using GEO_DROID.Pages;
+using GeoDroid.Data;
+using GeoDroid.Data.SQL;
+using SQLite;
+using IDispatcher = Fluxor.IDispatcher;
+
+namespace GEO_DROID.Store.AveriaCase
+{
+    public class AveriaEffects
+    {
+        private readonly GeoDroidDatabase _database;
+
+        public AveriaEffects(GeoDroidDatabase database)
+        {
+            _database = database;
+        }
+
+        [EffectMethod]
+        public async Task GetAveriasByEstablecimientoIdAsync(GetAveriasByEstablecimiento action, IDispatcher dispatcher)
+        {
+            // Obtener datos de la base de datos 
+            List<Averia> result = new List<Averia>();
+
+            Establecimiento establecimiento = await _database._database.Table<Establecimiento>().Where(e => e.id == action.establecimientoId).FirstOrDefaultAsync();
+            Maquina maquina = await _database._database.Table<Maquina>().Where(m => m.idEstablecimiento == action.establecimientoId).FirstOrDefaultAsync();
+            Incidencia incidencia = await _database._database.Table<Incidencia>().Where(i => i.idMaquinas == maquina.id).FirstOrDefaultAsync();
+
+            if (incidencia != null)
+            {
+                result = await _database._database.Table<Averia>().Where(a => a.idIncidencias == incidencia.id).ToListAsync();
+            }
+
+            dispatcher.Dispatch(new ChangeAveriasListSelectedByEstablecimiento(result));
+        }
+
+
+        [EffectMethod]
+        public async Task AddNewAveriaAsync(AddAveria action, IDispatcher dispatcher)
+        {
+            // Obtener datos de la base de datos 
+
+            try
+            {
+                await _database._database.InsertAsync(action.averia);
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+
+            // dispatcher.Dispatch(new ChangeAveriasListSelectedByEstablecimiento(result));
+        }
+
+    }
+
+}

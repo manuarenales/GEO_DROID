@@ -1,0 +1,40 @@
+﻿using GEO_DROID.Models;
+using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services
+{
+    public class AveriaEstadoService
+    {
+        SQLiteAsyncConnection Database;
+
+        public AveriaEstadoService()
+        {
+            Init();
+        }
+
+        async Task Init()
+        {
+            if (Database is not null)
+                return;
+            try
+            {
+                Database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
+                var result = await Database.CreateTableAsync<AveriaEstado>();
+            }
+            catch (Exception e)
+            {
+
+                throw;
+            }
+        }
+        public async Task<List<AveriaEstado>> GetAveriaEstados()
+        {
+            return await Database.Table<AveriaEstado>().ToListAsync();
+        }
+    }
+}

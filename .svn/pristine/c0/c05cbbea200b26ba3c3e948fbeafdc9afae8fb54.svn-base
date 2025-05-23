@@ -1,0 +1,64 @@
+﻿@inject IJSRuntime JS
+@page "/vehiculos"
+
+@using GEO_DROID.Shared.Components.Otros
+
+<h3>Geolocalización</h3>
+<p>Latitud: @location.Latitude </p>
+<p>Longitud:@location.Longitude</p>
+<p>Altitude:@location.Altitude</p>
+<p>Accuracy :@location.Accuracy</p>
+<p>VerticalAccuracy :@location.VerticalAccuracy</p>
+<p>IsFromMockProvider :@location.IsFromMockProvider</p>
+
+<p>Speed :@location.Speed</p>
+
+@* <GEO_DROID.Shared.Components.Otros.Mapa @ref="mapComponent"></GEO_DROID.Shared.Components.Otros.Mapa> *@
+<div id="@_mapId" style="height: 400px; width: 100%;"></div>
+
+@code {
+    private Location location;
+    private string _mapId = "mymap";
+    private bool mapInitialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Obtener ubicación
+        this.location = await GetLocationAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && location != null && !mapInitialized)
+        {
+            // Inicializar el mapa después del primer render
+            await JS.InvokeVoidAsync("initializeMap", _mapId, location.Latitude, location.Longitude);
+            mapInitialized = true; // Evitar re-inicialización en cada render
+        }
+    }
+
+    public async Task<Location> GetLocationAsync()
+    {
+        try
+        {
+            // Intentar obtener la última ubicación conocida
+            var loc = await Geolocation.GetLastKnownLocationAsync();
+
+            // Si no hay ubicación previa, obtener una nueva ubicación
+            if (loc == null)
+            {
+                loc = await Geolocation.GetLocationAsync(new GeolocationRequest
+                    {
+                        DesiredAccuracy = GeolocationAccuracy.High
+                    });
+            }
+
+            return loc;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error obteniendo ubicación: {ex.Message}");
+            return null;
+        }
+    }
+}

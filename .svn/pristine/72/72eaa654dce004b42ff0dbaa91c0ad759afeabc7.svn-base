@@ -1,0 +1,80 @@
+﻿using Fluxor;
+using GeoDroid.Data;
+using GeoDroid.Data.SQL;
+using IDispatcher = Fluxor.IDispatcher;
+
+namespace GEO_DROID.Store.Maquinas
+{
+    public class MaquinasEffects
+    {
+        private readonly GeoDroidDatabase _database;
+        private readonly IState<EstablecimientoState> _EstablecimientoState;
+
+        public MaquinasEffects(GeoDroidDatabase database, IState<EstablecimientoState> EstablecimientoState)
+        {
+            _database = database;
+            _EstablecimientoState = EstablecimientoState;
+        }
+
+        [EffectMethod]
+        public async Task GetMaquinasList(GetMaquinasList action, IDispatcher dispatcher)
+        {
+            try
+            {
+                List<Maquina> maquinas = await _database._database.Table<Maquina>().ToListAsync();
+                dispatcher.Dispatch(new ChangeMaquinasListForSelecter(maquinas));
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+        [EffectMethod]
+        public async Task GetMaquinasListFomEstablecimientoSelected(GetMaquinasListFomEstablecimientoSelected action, IDispatcher dispatcher)
+        {
+            try
+            {
+                if (_EstablecimientoState.Value.EstablecimientoSelected is not null)
+                {
+                    List<Maquina> maquinas = await _database._database.Table<Maquina>().Where(m => m.idEstablecimiento == _EstablecimientoState.Value.EstablecimientoSelected.id).ToListAsync();
+
+                    // recorro las maquinas y les añado los asociados 
+                    foreach (var maquina in maquinas)
+                    {
+                        if (maquina.Empresaid.HasValue)
+                        {
+                            maquina.Empresa = await _database._database
+                                .Table<Empresa>()
+                                .Where(e => e.id == maquina.Empresaid.Value)
+                                .FirstOrDefaultAsync();
+                        }
+                        if (maquina.idEstablecimiento.HasValue)
+                        {
+                            maquina.establecimiento = await _database._database
+                                .Table<Establecimiento>()
+                                .Where(e => e.id == maquina.idEstablecimiento.Value)
+                                .FirstOrDefaultAsync();
+                        }
+                        // PatronContador
+                        if (maquina.idPatronContadores.HasValue)
+                        {
+                            maquina.patronContador = await _database._database
+                                .Table<PatContDetalle>()
+                                .Where(e => e.id == maquina.idPatronContadores.Value)
+                                .ToListAsync();
+                        }
+                    }
+                    dispatcher.Dispatch(new ChangeMaquinasListForSelecter(maquinas));
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+    }
+}

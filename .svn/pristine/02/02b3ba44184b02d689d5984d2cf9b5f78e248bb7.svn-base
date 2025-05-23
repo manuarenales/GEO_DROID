@@ -1,0 +1,91 @@
+﻿@using GEO_DROID.Models
+@using GEO_DROID.Services
+ @inject EstadoAveriaService estadoAveriaService
+
+
+<Validation Validator="ValidationRule.IsNotEmpty">
+    <Div Class=" d-flex flex-column justify-content-start" @onclick="() => ShowModal()">
+        <label>
+            Estado
+        </label>
+        @if (estadoAveria != null)
+        {
+            <TextEdit Style="color: blue" @bind-Text="@estadoAveria.descripcion">
+                <ValidationSuccess>Name is good.</ValidationSuccess>
+            </TextEdit>
+        }
+        else
+        {
+            <TextEdit>
+                <ValidationSuccess>Name is good.</ValidationSuccess>
+                <ValidationError>Enter valid name!</ValidationError>
+            </TextEdit>
+        }
+    </Div>
+</Validation>
+
+<Modal @ref="modalEstado" style="height:80%;">
+    <ModalContent Centered>
+        <ModalHeader>
+            <ModalTitle>Estado</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <input class="w-100" @bind="Bestado" />
+            <ul class="list-group list-group-flush">
+                @foreach (AveriaEstado estado in estados.Where(c => Bestado == "" || c.descripcion.Contains(Bestado)))
+                {
+                    <li class="list-group-item " @onclick="() =>SetConceptoAveria(estado)">
+                        <span class=""> @estado.descripcion </span>
+                    </li>
+                }
+            </ul>
+        </ModalBody>
+    </ModalContent>
+</Modal>
+
+
+@code {
+    [Parameter]
+    public AveriaEstado estadoAveria { get; set; }
+    [Parameter]
+    public EventCallback<AveriaEstado> estadoAveriaChanged { get; set; }
+
+    private string Bestado = "";
+    private Modal modalEstado;
+    private bool IsIdEstadoValid { get; set; } = true;
+    public List<AveriaEstado> estados = new List<AveriaEstado>();
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        estados = await estadoAveriaService.GetEstadosAsync();
+    }
+
+    private Task ShowModal()
+    {
+        return modalEstado.Show();
+    }
+
+    private void SetConceptoAveria(AveriaEstado estado)
+    {
+        estadoAveriaChanged.InvokeAsync(estado);
+
+        modalEstado.Hide();
+    }
+
+    void ValidateEstado(ValidatorEventArgs e)
+    {
+        if (estadoAveria == null)
+        {
+            e.Status = ValidationStatus.Error;
+            e.ErrorText = "Selecciona una máquina.";
+        }
+        else
+        {
+            e.Status = ValidationStatus.Success;
+        }
+    }
+
+}

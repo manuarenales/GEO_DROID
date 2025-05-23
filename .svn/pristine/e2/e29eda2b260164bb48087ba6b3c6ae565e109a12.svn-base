@@ -1,0 +1,36 @@
+﻿using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GeoDroid.Data.Models
+{
+    public class VehiculoKm
+    {
+        public enum Tipo { SALIDA = 0, LLEGADA = 1, OTROS = 2 };
+
+        [Key]
+        public int id { get; set; }
+
+        /// <summary>
+        /// 0 when new insertion in mobile device
+        /// </summary>
+        [DataMember]
+        public int idGeo { get; set; }
+
+        [ForeignKey("Vehiculos")]
+        public int idVehiculos { get; set; }
+        public virtual Vehiculo Vehiculos { get; set; }
+        [DataMember]
+        public DateTime fecha { get; set; }
+        [DataMember]
+        public int km { get; set; }
+        [DataMember]
+        public int tipo { get; set; }
+    }
+}

@@ -1,0 +1,208 @@
+﻿@using BLL.LeerInfoMaquina
+@using GEO_DROID.Resources.Lib.Comunicacion
+@using GEO_DROID.Services
+@using GeoDroid.Data.Models
+@using InTheHand.Net
+@using Microsoft.Maui.ApplicationModel;
+@using BLL.LeerInfoMaquina;
+
+@using static BLL.LeerInfoMaquina.ModuloBluetooth
+
+@inject LecturaContadorService _LecturaContadorService;
+@inject LecturaContadorDetalleService _LecturaContadorDetalleService;
+@inject PatronContadorService _PatronContadorService
+@inject MaquinaService _MaquinaService ;
+@inject PatronContadorDetalleService _PatronContadorDetalleService;
+
+<form class="w-100 content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start " needs-validation>
+    <div class="row w-100 bg-dark ">
+        <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center ">
+
+            <span style="color:white" class="SubTitulo">
+                Tipo Lectura  GEOLINE
+            </span>
+            @* <span style="color:white" class="SubTitulo"> </span>  *@
+        </div>
+        <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center ">
+        </div>
+    </div>
+    <div class="row w-100 ">
+        @foreach (LecturaDetalle lecturaDetalle in LecturasDetalle)
+        {
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>@lecturaDetalle.patContDetalle.tipoContadores  (@lecturaDetalle.patContDetalle.valorPaso)</span>
+                <input type="number" class="mb-1" @bind="lecturaDetalle.valorAntes" />
+            </div>
+        }
+    </div>
+</form>
+
+<div class="w-100 bg-red" style="height:8vw;"></div>
+<span>
+    @erro
+</span>
+
+@if (info != null)
+{
+    <div class="row">
+        <div class="col-12">
+            <span> Entradas @info.InfoContadores.Entradas / Salidas @info.InfoContadores.Salidas </span>
+            <span> Mecanico1 @info.InfoContadores.Mecanico1 / Mecanico2 @info.InfoContadores.Mecanico2 / Mecanico3 @info.InfoContadores.Mecanico3 / Mecanico4 @info.InfoContadores.Mecanico4 </span>
+            <span> PagosManuales @info.InfoContadores.PagosManuales </span>
+            <span> Billetes @info.InfoContadores.Billetes / Billetes10 @info.InfoContadores.Billetes10 / Billetes20 @info.InfoContadores.Billetes20 / Billetes5 @info.InfoContadores.Billetes5 / Billetes50 @info.InfoContadores.Billetes50 </span>
+            <span> Auxiliar1 @info.InfoContadores.Auxiliar1 / Auxiliar2 @info.InfoContadores.Auxiliar2 / Auxiliar3 @info.InfoContadores.Auxiliar3 / Auxiliar4 @info.InfoContadores.Auxiliar4 / Auxiliar5 @info.InfoContadores.Auxiliar5 / Auxiliar6 @info.InfoContadores.Auxiliar6 </span>
+        </div>
+    </div>
+}
+
+
+<div class="row m-1 fixed-bottom  ">
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="GuardarLectura ">Guardar</button>
+    </div>
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="LeerLectura ">Leer</button>
+    </div>
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="Actualizar  ">Actualizar  </button>
+    </div>
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="CancelarLectura ">Cancelar </button>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public bool Modified { get; set; }
+    [Parameter]
+    public EventCallback<bool> ModifiedChanged { get; set; }
+    [Parameter]
+    public int idIncidencia { get; set; }
+    [Parameter]
+    public int idAveria { get; set; }
+    [Parameter]
+    public int idEstablecimiento { get; set; }
+    [Parameter]
+    public int idMaquinas { get; set; }
+    [Parameter]
+    public EventCallback<List<LecturaDetalle>> Changed { get; set; }
+    [Parameter]
+    public List<LecturaDetalle> ParameterLecturasDetalle { get; set; }
+
+    public List<LecturaDetalle> LecturasDetalle;
+
+#if Android
+    public InfoContadoresPlus info = null;
+#else
+    public InfoContadoresPlus info = null;
+#endif
+
+
+#if Android
+    ModuloBluetooth moduloconexion;
+#endif
+
+    string erro;
+
+    int retys;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+#if Android
+    moduloconexion = new ModuloBluetooth(BLL.LeerInfoMaquina.ProtocoloMaquina.NOVOMATIC_SAS);
+#endif
+        if (ParameterLecturasDetalle == null)
+        {
+            Maquina maquina = await _MaquinaService.GetMaquinaById(idMaquinas);
+
+            //tenemos que crear N Lectura Detalle para esta LecturaContador
+            PatronContador patronContador = await _PatronContadorService.GetPatronContadorById(maquina.idPatronContadores);
+            List<PatronContadorDetalle> patronContadorDetalles = _PatronContadorDetalleService.GetPatronContadorDetaleFromPatronContadorId(patronContador.id).ToList();
+
+            this.LecturasDetalle = new List<LecturaDetalle>();
+
+            foreach (PatronContadorDetalle patronContadorDetalle in patronContadorDetalles)
+            {
+                LecturaDetalle Lecturadetalle = new LecturaDetalle();
+                Lecturadetalle.idPatContDetalles = patronContadorDetalle.id;
+                Lecturadetalle.patContDetalle = patronContadorDetalle;
+                this.LecturasDetalle.Add(Lecturadetalle);
+            }
+        }
+        else
+        {
+            LecturasDetalle = ParameterLecturasDetalle;
+
+        }
+    }
+
+    public async void GuardarLectura()
+    {
+        await ModifiedChanged.InvokeAsync(true);
+        await Changed.InvokeAsync(LecturasDetalle);
+    }
+
+    public async void Actualizar()
+    {
+#if Android
+    var activity = ActivityHelper.GetCurrentActivity();
+    BluetoothExtraInfo _btExtra = new BluetoothExtraInfo();
+    await BTUtils.UpdateFirmware(BLL.LeerInfoMaquina.ProtocoloMaquina.NOVOMATIC_SAS, "00:A0:96:2A:45:38", activity, _btExtra, "1111");
+#endif
+    }
+
+    public async void CancelarLectura()
+    {
+
+        if (idAveria > 0)
+        {
+            if (LecturasDetalle[0] != null && LecturasDetalle[0].id > 0)
+            {
+                _LecturaContadorDetalleService.Reload(LecturasDetalle);
+            }
+            else
+            {
+                foreach (LecturaDetalle lec in LecturasDetalle)
+                {
+                    lec.valorAntes = 0;
+                }
+                await ModifiedChanged.InvokeAsync(false);
+            }
+
+            await Changed.InvokeAsync(LecturasDetalle);
+        }
+        else
+        {
+            foreach (LecturaDetalle lec in LecturasDetalle)
+            {
+                lec.valorAntes = 0;
+            }
+            await ModifiedChanged.InvokeAsync(false);
+            await Changed.InvokeAsync(LecturasDetalle);
+        }
+
+
+    }
+
+    public async Task LeerLectura()
+    {
+#if Android
+    var activity = ActivityHelper.GetCurrentActivity();
+    BluetoothExtraInfo _btExtra = new BluetoothExtraInfo();
+    this.info = await BTUtils.GetCounters(BLL.LeerInfoMaquina.ProtocoloMaquina.NOVOMATIC_SAS, "00:A0:96:2A:45:38", activity, _btExtra, "1111");
+    StateHasChanged();
+#endif
+    }
+
+
+    public class InfoContadoresPlus
+    {
+        public InfoContadores InfoContadores { get; set; }
+        public string MensajeError { get; set; }
+        public string GuidInstalacionFortune { get; set; }
+    }
+
+
+}

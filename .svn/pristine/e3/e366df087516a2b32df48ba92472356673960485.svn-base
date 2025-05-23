@@ -1,0 +1,48 @@
+﻿using GEO_DROID.DataAccess;
+using GEO_DROID.Models;
+using Microsoft.EntityFrameworkCore;
+using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Services
+{
+    public class IncidenciaService
+    {
+
+        private readonly GeoDroidDbContext _dbContext;
+
+        public IncidenciaService(GeoDroidDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public async Task<List<Incidencia>> GetCargasAsync()
+        {
+            return await _dbContext.Incidencias.ToListAsync();
+        }
+
+        public async Task<Incidencia> GetCargaById(int id)
+        {
+            return await _dbContext.Incidencias
+            .Where(a => a.id == id)
+            .FirstOrDefaultAsync();
+        }
+
+        public async Task<int> SaveAveriaAsync(Incidencia item)
+        {
+            _dbContext.Incidencias.Add(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<int> DeleteAveriaAsync(Incidencia item)
+        {
+            _dbContext.Incidencias.Remove(item);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+    }
+}

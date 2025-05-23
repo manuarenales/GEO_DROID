@@ -1,0 +1,220 @@
+﻿ @page "/opciones/{establecimientoid:int}"
+ @using GEO_DROID.Models
+ @using GEO_DROID.Services
+ @inject NavigationManager Navigation
+ @inject EstablecimientosService Builder
+ @inject IStringLocalizer<StringLocalizer> Localizer;
+ @inject CultureService Cultureservice
+
+
+<div class=" content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start  ">
+
+    <div class="row  w-100 ">
+        <div class="col-12 d-flex justify-content-center align-items-center bg-dark ">
+            <span class=" Titulo" style="color:white"> @establecimiento.nombre  </span>
+        </div>
+    </div>
+
+    <div class="row border  w-100  ">
+        <div class="col-12">
+            <span class="m-2 TextoMediano"> @Localizer["recaudar"] </span>
+        </div>
+
+        <div class="col-12 d-flex align-items-center justify-content-start overflow-visible">
+
+            <div class="d-flex align-items-center justify-content-start">
+                <img class="m-1" src="img/tienda.png" /><span class=" TextoPequeno">0:00</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-start">
+                <img class="m-1" src="img/recaudador.png" /><span class=" TextoPequeno">0:00</span>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-end">
+                <img class="m-1" src="img/notas.png" /><span style="overflow-wrap: break-word; " class=" TextoPequeno">B2600.00</span>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="row border w-100 ">
+        <div class="col-12">
+            <span class="m-2 TextoMediano "> @Localizer["motivosmaquinanorecaudada"]  </span>
+        </div>
+
+        <div class=" col-12 d-flex justify-content-start  ">
+            <div>
+                <img class="m-1" src="img/maquina.png" /><span class=" TextoPequeno">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row border w-100 " @onclick='() => NavigateTo("averias/" + establecimientoid  )'>
+        <div class="col-12">
+            <span class="m-2 TextoMediano"> @Localizer["averias"]</span>
+        </div>
+
+        <div class="col-12 d-flex justify-content-start  ">
+            <div>
+                <img class="m-1" src="img/repare.jpg" /><span class=" TextoPequeno">0/1</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row border w-100 ">
+        <div class="col-12">
+            <span class="m-2 TextoMediano"> @Localizer["cambios"] </span>
+        </div>
+
+        <div class="col-12 d-flex justify-content-start  ">
+            <div>
+                <img class="m-1" src="img/monedas.png" /><span class=" TextoPequeno">1/0/0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row border w-100 ">
+        <div class="col-12">
+            <span class="m-2 TextoMediano">  @Localizer["prestamos"] </span>
+        </div>
+        <div class="col-12 d-flex align-items-center justify-content-start overflow-visible">
+            <div class="d-flex align-items-center justify-content-start">
+                <img class="m-1" src="img/tienda.png" /><span class=" TextoPequeno">0:00</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-start">
+                <img class="m-1" src="img/manoflecha1.png" /><span class=" TextoPequeno">0:00</span>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-end">
+                <img class="m-1" src="img/manoflecha2.png" /><span class=" TextoPequeno">0.00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="w-100 bg-red" style="height:8vw;">
+</div>
+
+<div Class="fixed-bottom row  ">
+    <div class="col-1">
+    </div>
+    <div class="col-5 p-1  ">
+        <button type="button" style="overflow-wrap: break-word; " class="btn btn-secondary w-100 h-100 TextoPequeno" @onclick="() => ShowModalTickets()"> @Localizer["imprimirtickets"]  </button>
+    </div>
+    <div class="col-5  p-1 ">
+        <button type="button " style="overflow-wrap: break-word; " class="btn btn-secondary  w-100 h-100 TextoPequeno" @onclick="() => ShowModalInfo()"> @Localizer["informacion"] </button>
+    </div>
+    <div class="col-1">
+    </div>
+</div>
+
+
+<div class="modal show " tabindex="-1" role="dialog" style="display: @(modalTicketsVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+        <div class="modal-content bg-light" style="height: 100%;">
+            <div class="modal-header">
+                <span class="modal-title Titulo ">Seleccionar ticket</span>
+                <button type="button" class="close" aria-label="Close" @onclick="HideTicketsModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <input class="form-control" placeholder="Buscar" @bind="nameTickets" @oninput="OnNameChangedTickets" />
+                <div class="m-2">
+                    <ul class="list-group">
+                        @foreach (string item in tickets)
+                        {
+                            <li class="list-group-item">
+                                <span>@item</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div class="d-flex p-1 m-1">
+                    <button class="btn btn-info w-100 m-2 p-1" disabled="@string.IsNullOrEmpty(selectedItem)">Seleccionar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class=" modal show " tabindex="-1" role="dialog" style="display: @(modalInfoVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+        <div class="modal-content bg-light " style="height: 100%;">
+            <div class="modal-header">
+                <span class="modal-title Titulo ">Información del Establecimiento</span>
+                <button type="button" class="close" aria-label="Close" @onclick="HideInfoModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="m-2">
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <label>Nombre:</label>
+                            <span style="color: blue;">@establecimiento.nombre</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    [Parameter]
+    public int establecimientoid { get; set; }
+
+    public bool modalTicketsVisible = false;
+    public bool modalInfoVisible = false;
+
+    private string nameTickets;
+    public Establecimiento establecimiento = new Establecimiento();
+    public List<string> tickets = new List<string>();
+    public List<string> infoList = new List<string>();
+
+    private string selectedItem = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        establecimiento = await Builder.GetEstablecimientoById(establecimientoid);
+        tickets = Builder.getTiketsList(establecimientoid);
+        Cultureservice.CultureChanged += StateHasChanged;
+    }
+
+    Task OnNameChangedTickets(ChangeEventArgs e)
+    {
+        nameTickets = e.Value.ToString();
+        tickets = Builder.getTiketsList(establecimientoid);
+        return Task.CompletedTask;
+    }
+    Task OnNameChangedInfo(string value)
+    {
+        return Task.CompletedTask;
+    }
+
+    private void ShowModalTickets()
+    {
+        modalTicketsVisible = true;
+    }
+    private void ShowModalInfo()
+    {
+        modalInfoVisible = true;
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+
+    private void HideTicketsModal()
+    {
+        modalTicketsVisible = false;
+    }
+
+    private void HideInfoModal()
+    {
+        modalInfoVisible = false;
+    }
+}

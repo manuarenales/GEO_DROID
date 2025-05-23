@@ -1,0 +1,1181 @@
+
+using System.Text;
+using GEO_DROID.Resources.Lib.Comunicacion;
+
+
+
+
+namespace BLL.LeerInfoMaquina
+{
+    class ProtocoloTecnausa : Protocolo, IFiltroTrama
+    {
+        protected const int TIMEOUT_PRIMER_BYTE = 1000;
+        protected const int TIMEOUT_ENTRE_BYTES = 200;
+        protected const int MAX_REINTENTOS = 3;
+        const int MIN_TRAMA_LEN = 8;
+        const int LEN_BLOQUE_PROGRAMACION = 64;
+        protected const byte COD_CABECERA = (byte)0xFA;
+
+        public const byte CMD_CONTADORES = (byte)0x01;
+        public const byte CMD_DIF_CONTADORES = (byte)0x02;
+        public const byte CMD_CONTADORES_DIA = (byte)0x03;
+        public const byte CMD_EVENTOS = (byte)0x04;
+        public const byte CMD_SINCRONIZA = (byte)0x05;
+        public const byte CMD_JUGADAS_DIA = (byte)0x06;
+        public const byte CMD_CONFIG_RTC = (byte)0x07;
+        public const byte CMD_TX_OK = (byte)0x08;
+        public const byte CMD_TX_NOK = (byte)0x09;
+        public const byte CMD_PROG = (byte)0x0A;
+        public const byte CMD_VERSION = (byte)0x0B;
+        public const byte CMD_RESETEA = (byte)0x0C;
+        public const byte CMD_SET_CONTADORES = (byte)0x13;
+        public const byte CMD_CONFIG_SERIE = (byte)0x14;
+        public const byte CMD_VERIFICA = (byte)0x15;
+        public const byte CMD_CONFIG_SERIE1 = (byte)0x16;
+        public const byte CMD_SAS_WAKEUP = (byte)0x1E;
+
+        public const byte CMD_CONFIG_APN_LEER_DATOS = (byte)0x2A;
+        public const byte CMD_CONFIG_APN_BORRAR_DATOS = (byte)0x28;
+        public const byte CMD_CONFIG_APN_ESCRIBIR_DATOS = (byte)0x29;
+
+        public const byte CMD_FW_REC_BEGIN = (byte)0x0D;
+        public const byte CMD_FW_REC_END = (byte)0x0E;
+        public const byte CMD_FW_REC_TRAMA = (byte)0x0F;
+
+        public const byte CMD_COMIENZA_PROG_ELECTR = (byte)103;
+        public const byte CMD_FIN_PROG_ELECTR = (byte)101;
+        public const byte CMD_TRAMA_PROG = (byte)100;
+
+        public const byte CMD_INFO_FIRM_CONTA = (byte)0x10;
+
+        public enum PuertoSerie { Serie0, Serie1 };
+        public StringBuilder configuraciones = new StringBuilder();
+
+
+        public ProtocoloTecnausa(IComunicacion com)
+            : base(com, null)
+        {
+        }
+
+        public static ProtocoloTecnausa Get(IComunicacion com, StringBuilder sb)
+        {
+            ProtocoloTecnausa p = null;
+            int v = GetModelo(sb);
+
+            if (v == 0)
+            {
+#if LibreriaRecaudacionBT
+#else
+                p = new ProtocoloTecnausa(com);
+#endif
+                // TODO: Ver si es la placa avanzada, aunque en principio no es necesario
+                //if (p.EnviarTrama(CMD_VERSION))
+                //{
+                //    StringBuilder sb = p.RecibirDatos(1000, 100);
+                //    Trama t = new Trama(sb);
+                //    if (t.IsComando(CMD_VERSION))
+                //    {   // Si llegamos aquí es el módulo avanzado
+                //        p = new ProtocoloTecnausa(com);
+                //    }
+                //}
+            }
+            else if (v == 2)
+            {
+                p = new ProtocoloTecnausaV2(com);
+            }
+            else if (v == 3)
+            {
+#if LibreriaRecaudacionBT
+#else
+                p = new ProtocoloTecnausaV3(com);
+#endif
+            }
+            else if (v == 56 || v == 10056)
+            {
+                p = new ProtocoloTecnausaV56(com);
+            }
+
+            return p;
+        }
+
+        private static int GetModelo(StringBuilder sb)
+        {
+            Trama t = new Trama(sb);
+            string v = t.GetModelo();
+            try
+            {
+                return int.Parse(v);
+            }
+            catch { }
+            return 0;
+        }
+
+        /**********************************************/
+        /*  CHECKSUM    */
+        /**********************************************/
+        private static char CrearCS(StringBuilder sb)
+        {
+            char c = (char)0x00;
+            for (int i = 0; i < sb.Length; i++)
+                c += sb[i];
+
+            int resp = (0x00 - (c % 256));
+            return (char)resp;
+        }
+
+        private static bool CheckCS(StringBuilder sbTrama)
+        {
+            return (CrearCS(sbTrama) == 0x00);
+        }
+
+        protected override char CrearChecksum(StringBuilder sb)
+        {
+            return CrearCS(sb);
+        }
+
+        protected override bool ComprobarChecksum(StringBuilder sb)
+        {
+            return CheckCS(sb);
+        }
+
+        public virtual bool Verificar(int numero)
+        {
+            return false;
+        }
+
+        /**********************************************/
+        /*  MONTAR TRAMA    */
+        /**********************************************/
+        private void SetLongitudTrama(StringBuilder trama)
+        {
+            trama[1] = (char)(trama.Length + 1); //trama actual más el checksum
+        }
+
+        protected override StringBuilder MontarTrama(byte comando, byte[] datos) //throws CheckSumException
+        {
+            // NOTA: Si dentro de los datos aparece un código de cabecera (0x0FC)
+            // no se debe interpretar como tal sino como datos por lo que se
+            // le añade un dato (no contabilizable como tal en la trama) 0x00
+            StringBuilder sbTemp = new StringBuilder();
+            sbTemp.Append((char)COD_CABECERA); 	// Cabecera
+            sbTemp.Append((char)0x00);          // Longitud trama inicial 0. Se asigna después
+            sbTemp.Append((char)0x00); 		    // Origen
+            sbTemp.Append((char)0x00); 		    // Origen
+            sbTemp.Append((char)0x00); 		    // Destino
+            sbTemp.Append((char)0x00); 		    // Destino
+            sbTemp.Append((char)comando);      	// Comando  
+
+            for (int i = 0; datos != null && i < datos.Length; i++)
+                sbTemp.Append((char)datos[i]);  // Datos
+
+            sbTemp = FiltrarTrama(sbTemp, 1);   // Filtramos la trama de bytes iguales a la cabecera
+            SetLongitudTrama(sbTemp);           // Pone la longitud de la trama
+            sbTemp.Append((char)CrearChecksum(sbTemp));	// Checksum
+            return sbTemp;
+        }
+
+        protected bool IsOk(StringBuilder sb)
+        {
+            //Trama t = new Trama(sb);
+            //return t.IsOK();
+
+            //[FA] [08] [00] [00] [00] [00] [08] [F6]
+            if (sb != null && sb.Length >= 8)
+            {
+                if (sb[0] == (char)0xFA
+                    && sb[1] == (char)0x08
+                    && sb[2] == (char)0x00
+                    && sb[3] == (char)0x00
+                    && sb[4] == (char)0x00
+                    && sb[5] == (char)0x00
+                    && sb[6] == (char)0x08
+                    && sb[7] == (char)0xF6)
+                    return true;
+            }
+
+            return false;
+        }
+
+        protected bool Comunicar(byte comando, byte[] datos, byte comandoEsperado)
+        {
+            return Comunicar(comando, datos, comandoEsperado, MAX_REINTENTOS);
+        }
+
+        protected bool Comunicar(byte comando, byte[] datos, byte comandoEsperado, int reintentos)
+        {
+            if (EnviarTrama(comando, datos))
+            {
+                StringBuilder sbRecibido = null;
+                Trama t = null;
+                do
+                {
+                    sbRecibido = _com.RecibirDatos(1000, 200);
+                    t = new Trama(sbRecibido);
+                } while ((sbRecibido.Length > 0) && (reintentos-- > 0) && (t == null || !t.CheckComando(comandoEsperado))); //Reintentamos si hemos recibido una trama que no se corresponde con la que esperamos
+
+                if (t != null && t.CheckComando(comandoEsperado))
+                    return true;
+            }
+            return false;
+        }
+
+        public virtual bool EnviarRespuestaConexion()
+        {
+            return EnviarTrama(CMD_TX_OK);
+        }
+
+        public virtual bool EnviarConfiguracion(PuertoSerie puertoSerie, byte config)
+        {
+            return true;
+        }
+
+        public bool SetContadoresMecanicos(int indice, int valor)
+        {
+            byte[] b = BitConverter.GetBytes(valor);
+            byte[] datos = new byte[5];
+
+            // Los datos a enviar son el índice del contador (de 0 a 3)
+            // y el valor representado en 4 bytes.
+            datos[0] = (byte)(indice - 1);
+            for (int i = 1; i < datos.Length; i++)
+            {
+                if (b.Length > i - 1)
+                    datos[i] = b[i - 1];
+                else
+                    datos[i] = 0;
+            }
+
+            if (EnviarTrama(CMD_SET_CONTADORES, datos))
+            {
+                StringBuilder sb = _com.RecibirDatos(1000, 0);
+                return IsOk(sb);
+            }
+            return false;
+        }
+
+        /**********************************************/
+        /*  FILTROS DE TRAMA   */
+        /**********************************************/
+        public virtual StringBuilder FiltrarTrama(StringBuilder trama)
+        {   // Para los módulos antiguos, no se aplican filtros.
+            return trama;
+        }
+
+        protected StringBuilder FiltrarTrama(StringBuilder trama, int inicio)
+        {
+            StringBuilder sb = null;
+            if (trama != null)
+            {
+                sb = new StringBuilder();
+                for (int i = 0; i < trama.Length; i++)
+                {
+                    char c = trama[i];
+                    sb.Append(c);
+                    if (i >= inicio)
+                    {
+                        if (c == COD_CABECERA)
+                            sb.Append((char)0x00);
+                    }
+                }
+            }
+            return sb;
+        }
+
+        /**********************************************/
+        /*  LECTURAS                                  */
+        /**********************************************/
+        public override InfoContadores LeerContadores(IProgressCallback callback)
+        {
+            // Hay que esperar para que el micro del módulo se entere que está conectado
+            System.Threading.Thread.Sleep(500);
+            InfoContadores info = null;
+            bool _soloMecanicos = true;
+
+            // Si no recibimos CMD_TX_OK no devolvemos valores y sacamos el mensaje
+            if (EnviarTrama(CMD_SINCRONIZA))
+            {
+                StringBuilder sbs = _com.RecibirDatos(3000, 0);
+                EnviarRespuestaConexion();
+                if (sbs.Length != 8 || sbs[6] != CMD_TX_OK)
+                {
+                    _error = "No se recibió OK del CMD_SINCRONIZA";
+                    if (sbs.Length == 8)
+                    {
+                        // Ojo! no cambiar el CMD formateado en esta cadena que se usa para 
+                        // el formulario que lo llama y dar el warning
+                        _error += " (CMD" + (int)sbs[6] + ")";
+                    }
+                }
+                else
+                {
+                    _soloMecanicos = false;
+                }
+            }
+
+            if (EnviarTrama(CMD_CONTADORES))
+            {
+
+                //System.Threading.Thread.Sleep(1000);
+                StringBuilder sb = _com.RecibirDatos(1000, 0);
+                EnviarRespuestaConexion();
+                StringBuilder informacion = new StringBuilder();
+
+                for (int j = 0; j < sb.Length; j++)
+                    informacion.Append((char)sb[j]);
+
+                Paquete p = new Paquete(informacion);
+                if (p.ValidarTrama())
+                {
+                    info = new InfoContadores();
+                    info.Mecanico1 = p.GetValorContador(0);
+                    info.Mecanico2 = p.GetValorContador(1);
+                    info.Mecanico3 = p.GetValorContador(2);
+                    info.Mecanico4 = p.GetValorContador(3);
+                    info.Entradas = p.GetValorContador(4);
+                    info.Salidas = p.GetValorContador(5);
+                    info.Billetes5 = p.GetValorContador(8);
+                    info.Billetes10 = p.GetValorContador(9);
+                    info.Billetes20 = p.GetValorContador(10);
+                    info.Billetes50 = p.GetValorContador(11);
+                    info.Cajon = p.GetValorContador(12);
+
+                    info.CajonMonedas020 = p.GetValorContador(13);
+                    info.CajonMonedas050 = p.GetValorContador(14);
+                    info.CajonMonedas100 = p.GetValorContador(15);
+                    info.CajonMonedas200 = p.GetValorContador(16);
+
+                    info.Buffer = p.TramaOriginal;
+                    info.SoloMecanicos = _soloMecanicos;
+                }
+            }
+            return info;
+        }
+
+        public InfoEventos LeerEventos()
+        {
+            return LeerEventos(null);
+        }
+
+        public InfoEventos LeerEventos(IProgressCallback callback)
+        {
+            InfoEventos info = null;
+            if (EnviarTrama(CMD_EVENTOS))
+            {
+                //System.Threading.Thread.Sleep(1000);
+                StringBuilder sb = _com.RecibirDatos(1000, 0);
+                StringBuilder informacion = new StringBuilder();
+
+                for (int j = 0; j < sb.Length; j++)
+                    informacion.Append((char)sb[j]);
+
+                Paquete p = new Paquete(informacion);
+
+                if (p.ValidarTrama())
+                {
+                    info = new InfoEventos();
+                    for (int i = 0; i < p.Count; i++)
+                    {
+                        info.Add(p.GetEvento(i), p.GetFecha(i));
+                    }
+                }
+            }
+            return info;
+        }
+
+        public InfoContadoresDia LeerContadoresDia()
+        {
+            return LeerContadoresDia(null);
+        }
+
+        public InfoContadoresDia LeerContadoresDia(IProgressCallback callback)
+        {
+            InfoContadoresDia info = null;
+            if (EnviarTrama(CMD_CONTADORES_DIA))
+            {
+                //System.Threading.Thread.Sleep(1000);
+                StringBuilder sb = _com.RecibirDatos(1000, 0);
+                StringBuilder informacion = new StringBuilder();
+
+                for (int j = 0; j < sb.Length; j++)
+                    informacion.Append((char)sb[j]);
+
+                Paquete p = new Paquete(informacion);
+
+                if (p.ValidarTrama())
+                {
+                    info = new InfoContadoresDia(p.GetFecha());
+                    int n = p.GetNumeroDias();
+                    for (int i = 1; i < p.Count && i <= n; i++)
+                    {
+                        info.Add(p.GetJugadas(i), p.GetPremios(i));
+                    }
+                }
+            }
+            return info;
+        }
+
+        /***********************************************************/
+        // Programar
+        /***********************************************************/
+        protected string PonerEnModoProgramacion(IProgressCallback progreso, byte[] datosProgramacion)
+        {
+            string ret = null;
+            StringBuilder sbRecibido = null;
+
+            if (progreso != null)
+                progreso.SetText("SET modo programación");
+            //Enviamos trama de programacion
+            if (EnviarTrama(CMD_PROG, datosProgramacion))
+            {
+                sbRecibido = _com.RecibirDatos(300, 0);
+                if (IsOk(sbRecibido))
+                {
+                    if (progreso != null)
+                        progreso.SetText("Reconectando...");
+                    //Esperamos un poco a que la placa se reinicialice...
+                    for (int i = 0; i < 15; i++)
+                    {
+                        System.Threading.Thread.Sleep(1000);
+                        if (progreso != null)
+                            progreso.SetText("Reconectando...(" + i + ")");
+                    }
+                    // Hay que reconectar con el módulo para empezar a programar
+                    // ***********************************************
+                    if (!_com.Reconectar(null))
+                        ret = "Problemas al reconectar";
+                    // ***********************************************
+                    //if (Cerrar())
+                    //{
+                    //    //Esperamos un poco a que la placa se reinicialice...
+                    //    //for (int i = 0; i < 20; i++)
+                    //    //{
+                    //    //    System.Threading.Thread.Sleep(1000);
+                    //    //    if (progreso != null)
+                    //    //        progreso.SetText("Reconectando...("+i+")");
+                    //    //}
+                    //    //Volvemos a conectar
+                    //    if (progreso != null)
+                    //        progreso.SetText("Reconectando...(-)");
+                    //    System.Threading.Thread.Sleep(2000);
+                    //    if (!Abrir())
+                    //        ret = "Problemas al reconectar";
+                    //}
+                    //else
+                    //{
+                    //    ret = "No hemos podido cerrar la conexión para reconectar";
+                    //}
+                }
+                else
+                {
+                    // Si no recibo OK puede ser que ya esté en bootloader.
+                    // Lo sabré al enviar la primera trama de programar.
+                    //ret = "Error estableciendo modo programación";
+                }
+            }
+            else
+            {
+                ret = "Error estableciendo modo programación";
+            }
+            return ret;
+        }
+
+        public string Programar(String lectura, IProgressCallback progreso)
+        {
+            return Programar(lectura, progreso, false);
+        }
+
+        public virtual string Programar(String lectura, IProgressCallback progreso, bool firwareRecaudacion)
+        {
+            byte _cmdBegin = CMD_COMIENZA_PROG_ELECTR;
+            byte _cmdTrama = CMD_TRAMA_PROG;
+            byte _cmdEnd = CMD_FIN_PROG_ELECTR;
+
+            string ret = null;
+            byte[] primeraTrama = null;
+            int tramasEnvio = 0;
+
+            if (firwareRecaudacion)
+            {
+                _cmdBegin = CMD_FW_REC_BEGIN;
+                _cmdTrama = CMD_FW_REC_TRAMA;
+                _cmdEnd = CMD_FW_REC_END;
+            }
+            else
+            {
+                ret = PonerEnModoProgramacion(progreso, null);
+            }
+
+            StringBuilder sbRecibido = null;
+
+            if (ret == null) // por si en algún proceso anterior ya hemos encontrado algún error
+            {
+                if (EnviarTrama(_cmdBegin))
+                {
+                    int reintentos = 3;
+                    do
+                    {
+                        //System.Threading.Thread.Sleep(500);
+                        sbRecibido = _com.RecibirDatos(1000, 0);
+                    } while (reintentos-- > 0 && !IsOk(sbRecibido));
+                    if (IsOk(sbRecibido))
+                    {
+                        // Abrimos el archivo que queremos enviar
+                        //int version = 0;
+                        //int longitud = 0;
+                        //int tipo = 0;
+                        StringBuilder sbDatos = new StringBuilder();
+
+                        // TODO: si no existe archivo explota!!!
+                        StreamReader reader = null;
+
+                        // TODO
+
+                        /*if (File.Exists(archivo))
+                        {
+                            //cstring exePath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase);
+                            //StreamReader reader = new StreamReader(exePath + "\\MBA0100.BIN");
+                            reader = new StreamReader(archivo);
+
+                        }*/
+#if Android
+                        reader = new StreamReader(Android.App.Application.Context.Assets.Open(lectura));
+#endif
+                        //if (reader != null && reader.BaseStream != null)
+                        if (reader != null && reader.BaseStream != null)
+                        {
+
+                            if (firwareRecaudacion)
+                            {
+                                //int byteIni = 0x00;
+                                //while ((byteIni = reader.BaseStream.ReadByte()) == 0x00) ;
+                                //if (byteIni > 0)
+                                //    reader.BaseStream.Position--;
+                                reader.BaseStream.Position = 0xC000;
+                                tramasEnvio = ((int)(reader.BaseStream.Length - reader.BaseStream.Position) / LEN_BLOQUE_PROGRAMACION) + 1;
+                            }
+                            else
+                            {
+                                if (progreso != null)
+                                    // TODO ERROR FRAMEWORK
+                                    tramasEnvio = ((int)reader.BaseStream.Length / LEN_BLOQUE_PROGRAMACION) + 1;
+                            }
+
+                            //if (tramasEnvio < 100)
+                            //   tramasEnvio = 1000;
+                            if (progreso != null)
+                                progreso.SetText("Enviando tramas...(" + tramasEnvio + ")");
+                            //byte byte1 = (byte)reader.BaseStream.ReadByte();
+                            //byte byte2 = (byte)reader.BaseStream.ReadByte();
+
+                            //longitud = (byte)reader.BaseStream.ReadByte();
+                            //tipo = (byte)reader.BaseStream.ReadByte();
+
+                            //Firma tecnausa
+                            //for (int i = 0; i < 8; i++)
+                            //    byte1 = reader.BaseStream.ReadByte();
+
+                            //longitud = (Len(File) / 64) % 256;
+                            //Leemos datos
+                            bool fin = false;
+                            int mem = 0;
+                            int iteracion = 0;
+                            while (!fin)
+                            {
+                                int byte1 = reader.BaseStream.ReadByte();
+                                int byte2 = reader.BaseStream.ReadByte();
+                                if (byte1 == -1 || byte2 == -1)
+                                {
+                                    fin = true;
+                                }
+                                else
+                                {
+                                    //byte1 = (byte1 ^ longitud) ^ 10;
+                                    //byte2 = (byte2 ^ longitud) ^ 10;
+
+                                    sbDatos.Append((char)byte2);
+                                    sbDatos.Append((char)byte1);
+                                    //sbDatos.Append((char)byte2);
+                                }
+
+                                if (fin || sbDatos.Length >= LEN_BLOQUE_PROGRAMACION)
+                                {   // Enviamos la trama
+                                    int longitudDatos = sbDatos.Length;
+                                    if (longitudDatos > 0) //Si ya no tenemos datos que enviar, no enviamos trama. Estaríamos escribiendo un bloque que realmente no tenemos en el archivo de firmware
+                                    {
+                                        if (longitudDatos > LEN_BLOQUE_PROGRAMACION)
+                                            longitudDatos = LEN_BLOQUE_PROGRAMACION;
+
+                                        byte memh = (byte)(mem / 256);
+                                        byte meml = (byte)(mem % 256);
+                                        mem += LEN_BLOQUE_PROGRAMACION;
+                                        iteracion++;
+
+                                        byte[] datos = new byte[LEN_BLOQUE_PROGRAMACION + 2];
+                                        datos[0] = memh;
+                                        datos[1] = meml;
+                                        for (int i = 0; i < longitudDatos; i++)
+                                            datos[i + 2] = (byte)sbDatos[i];
+                                        for (int i = longitudDatos; i < LEN_BLOQUE_PROGRAMACION; i++)
+                                            datos[i + 2] = (byte)0xFF;
+                                        // Elimino los datos que se envian
+                                        sbDatos.Remove(0, longitudDatos);
+
+                                        if (primeraTrama == null)
+                                        {   // Si es la primera trama la guardamos 
+                                            primeraTrama = datos;
+                                            if (!firwareRecaudacion)
+                                            {
+                                                ret = EnviaTramaProgramacion(_cmdTrama, datos, iteracion);
+                                                if (ret != null) break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            ret = EnviaTramaProgramacion(_cmdTrama, datos, iteracion);
+                                            if (ret != null) break;
+                                        }
+                                    }
+
+                                    if (fin && primeraTrama != null && firwareRecaudacion)
+                                    {
+                                        ret = EnviaTramaProgramacion(_cmdTrama, primeraTrama, 1);
+                                    }
+                                    //if (EnviarTrama(_cmdTrama, datos))
+                                    //{
+                                    //    reintentos = 3;
+                                    //    do
+                                    //    {
+                                    //        System.Threading.Thread.Sleep(100);
+                                    //        sbRecibido = _com.RecibirDatos(500);
+                                    //    } while (reintentos-- > 0 && !IsOk(sbRecibido));
+                                    //    if (!IsOk(sbRecibido))
+                                    //    {
+                                    //        ret = "No recibo OK trama: " + iteracion;
+                                    //        break;
+                                    //    }
+                                    //}
+                                    //else
+                                    //{
+                                    //    ret = "Error enviando trama:" + iteracion;
+                                    //    break;
+                                    //}
+                                    // Movemos barra de progreso
+                                    if (progreso != null)
+                                    {
+                                        int valor = 5 + ((iteracion * 90 / tramasEnvio));
+                                        progreso.StepTo(valor);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ret = "Error: Archivo no encontrado";
+                        }
+
+                        if (ret == null || ret.Length == 0)
+                        {
+                            if (EnviarTrama(_cmdEnd))
+                            {
+                                reintentos = 3;
+                                do
+                                {
+                                    //System.Threading.Thread.Sleep(500);
+                                    sbRecibido = _com.RecibirDatos(1000, 0);
+                                } while (reintentos-- > 0 && !IsOk(sbRecibido));
+
+                                if (IsOk(sbRecibido))
+                                {
+                                    //ret = "Recibido OK FIN programar" ;
+                                }
+                                else
+                                {
+                                    ret = "No recibo OK FIN programar";
+                                }
+                            }
+                            else
+                            {
+                                ret = "Error enviando la trama de FIN programacion";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ret = "No recibo OK para programar";
+                    }
+                }
+                else
+                {
+                    ret = "Error enviando la trama de programacion";
+                }
+            }
+            return ret;
+        }
+
+        private string EnviaTramaProgramacion(byte _cmdTrama, byte[] datos, int iteracion)
+        {
+            string ret = null;
+            StringBuilder sbRecibido = null;
+            if (EnviarTrama(_cmdTrama, datos))
+            {
+                int reintentos = 3;
+                do
+                {
+                    System.Threading.Thread.Sleep(100);
+                    sbRecibido = _com.RecibirDatos(500, 250);
+                } while (reintentos-- > 0 && !IsOk(sbRecibido));
+                if (!IsOk(sbRecibido))
+                {
+                    ret = "No recibo OK trama: " + iteracion;
+                }
+            }
+            else
+            {
+                ret = "Error enviando trama:" + iteracion;
+            }
+            return ret;
+        }
+
+        /*************************************************/
+        //CLASE TRAMA
+        /*************************************************/
+        protected class Trama
+        {
+            StringBuilder _datos = new StringBuilder();
+            int _comando = 0;
+
+
+            public static Trama GetTrama(StringBuilder datos)
+            {
+                Trama t = new Trama(datos);
+                if (t._comando != 0)
+                    return t;
+                return null;
+            }
+
+            public Trama(StringBuilder sb)
+            {
+                byte rx_sw = 0x00;
+                bool recCabecera = false;
+                int rx_len = 0;
+                int c;
+                int rx_cs = 0;
+                int rx_cmd = 0;
+                bool salir = false;
+
+                for (int x = 0; x < sb.Length && !salir; x++)
+                {
+                    c = sb[x];		//Lee el caracter del buffer
+                    if (recCabecera)		//El ultimo caracter recibido fue un 0xFA
+                    {
+                        if (c != 0)				//Si despues de 0xFA se recibe algo distinto de 0 se inicia la comunicación
+                        {
+                            if (c >= 8 && c < 128 && (sb.Length - x) >= (c - 1)) // Buffer máximo
+                            {
+                                rx_sw = 1;			//Flag de recepción a 1 siguiente dato a recibir = Numero de destino
+                                rx_len = c - 8;		//Dato recibido = longitud. Restamos 8 para obtener numero de datos
+                                _datos.Length = 0;// rxptr = rx_buffer;	//Restaura el puntero del buffer de recepcion para recibir los datos
+                                rx_cs = COD_CABECERA + c; 	//Inicia variable de checksum
+                            }
+                            else
+                                rx_sw = 0;
+                            if (c != COD_CABECERA)
+                                recCabecera = false;
+                        }
+                        else
+                        {
+                            recCabecera = false;
+                        }
+                    }
+                    else
+                    {
+                        rx_cs += c;                 //Se incrementa la variable de checksum 
+
+                        switch (rx_sw)	//Se procesa el dato recibido segun estado de recepcion 
+                        {
+                            case 1:
+                            case 2:
+                            case 3:
+                            case 4:
+                                rx_sw++;
+                                break;
+
+                            case 5:
+                                rx_cmd = c;
+                                rx_sw++;
+                                break;
+
+                            case 6:
+                                if (rx_len != 0)
+                                {
+                                    _datos.Append((char)c); // *rxptr++ = c;	//Se almacenan los datos recibidos
+                                    rx_len--;
+                                }
+                                else if ((rx_cs & 0xFF) != 0)	//else if(rx_cs || rx_len>80)		//Se han recibido todos los datos. Se comprueba el check sum
+                                {
+                                    rx_sw = 0;	//Error de check-sum
+                                }
+                                else
+                                {
+                                    //RECEPCION BUENA
+                                    //_longitudDatos = rx_len_tmp;
+                                    _comando = rx_cmd;
+                                    rx_cmd = 0;
+                                    rx_sw = 0;
+                                    salir = true;
+                                    sb.Remove(0, x + 1);
+                                }
+                                break;
+                        }
+                        if (c == COD_CABECERA)
+                            recCabecera = true;			//Si se recibe un 0xFA se pone flag a 1 
+                    }
+                }
+            }
+
+            public bool IsOK()
+            {
+                return (_comando == CMD_TX_OK);
+            }
+
+            public string GetModelo()
+            {
+                string ret = "";
+                if (_comando == CMD_VERSION && _datos.Length > 3)
+                {
+                    byte[] b = new byte[4];
+                    b[3] = (byte)0;
+                    b[2] = (byte)0;
+                    b[1] = (byte)_datos[0];
+                    b[0] = (byte)_datos[1];
+                    ret = "" + BitConverter.ToInt32(b, 0);
+
+                    //b = new byte[4];
+                    //b[3] = (byte)0;
+                    //b[2] = (byte)0;
+                    //b[1] = (byte)_datos[2];
+                    //b[0] = (byte)_datos[3];
+                    //ret += ":" + BitConverter.ToInt32(b, 0);
+                }
+                return ret;
+            }
+
+            public string GetVersion()
+            {
+                string ret = "";
+                if (_comando == CMD_VERSION && _datos.Length > 3)
+                {
+                    byte[] b = new byte[4];
+                    b[3] = (byte)0;
+                    b[2] = (byte)0;
+                    b[1] = (byte)_datos[2];
+                    b[0] = (byte)_datos[3];
+                    ret = "" + BitConverter.ToInt32(b, 0);
+
+                    //b = new byte[4];
+                    //b[3] = (byte)0;
+                    //b[2] = (byte)0;
+                    //b[1] = (byte)_datos[2];
+                    //b[0] = (byte)_datos[3];
+                    //ret += ":" + BitConverter.ToInt32(b, 0);
+                }
+                return ret;
+            }
+
+            // CONTADORES
+            private int GetContadorMecanico(int indice)
+            {
+                if (CheckComando(CMD_CONTADORES))
+                {   // Si la trama es un comando de contadores y tiene longitud 13 sacamos la informacion
+                    int pos = ((indice - 1) * 4);
+                    if (pos + 4 <= _datos.Length)
+                    {
+                        byte[] b = new byte[4];
+                        b[3] = (byte)_datos[pos + 3];
+                        b[2] = (byte)_datos[pos + 2];
+                        b[1] = (byte)_datos[pos + 1];
+                        b[0] = (byte)_datos[pos + 0];
+                        return BitConverter.ToInt32(b, 0);
+                    }
+                }
+                return -1;
+            }
+
+            public int GetContadorMecanico1()
+            {
+                return GetContadorMecanico(1);
+            }
+
+            public int GetContadorMecanico2()
+            {
+                return GetContadorMecanico(2);
+            }
+
+            public int GetContadorMecanico3()
+            {
+                return GetContadorMecanico(3);
+            }
+
+            public int GetContadorMecanico4()
+            {
+                return GetContadorMecanico(4);
+            }
+
+            public bool CheckComando(byte comando)
+            {
+                return (_comando == comando);
+            }
+
+            public bool Verificar(int valor)
+            {
+                int i = Encriptacion(valor);
+
+                byte[] b = new byte[4];
+                b[0] = (byte)_datos[0];
+                b[1] = (byte)_datos[1];
+                b[2] = (byte)_datos[2];
+                b[3] = (byte)_datos[3];
+
+                return (i == BitConverter.ToInt32(b, 0));
+            }
+
+            private ushort EncriptacionAux(ushort entrada, ushort a, ushort b)
+            {
+                ushort ret = entrada;
+                for (int x = 0; x < 8; x++)
+                {
+                    bool acarreo = false;
+                    try
+                    {
+                        checked
+                        {
+                            ret <<= 1;
+                        }
+                    }
+                    catch
+                    {
+                        acarreo = true;
+                        ret <<= 1;
+                    }
+                    if (acarreo)
+                        ret ^= a;
+                    else
+                        ret ^= b;
+                }
+                return ret;
+            }
+
+            private int Encriptacion(int entrada)
+            {
+                int ret = 0;
+
+                byte[] b_entrada = BitConverter.GetBytes(entrada);
+
+                byte[] b_a = new byte[2];
+                b_a[0] = (byte)(b_entrada[2] ^ b_entrada[3]);
+                b_a[1] = (byte)(b_entrada[0] ^ b_entrada[1]);
+                ushort s_a = BitConverter.ToUInt16(b_a, 0);
+                ushort ret_a = EncriptacionAux(s_a, (ushort)0x20c8, (ushort)0xfe30);
+                b_a = BitConverter.GetBytes(ret_a);
+
+                byte[] b_b = new byte[2];
+                b_b[0] = (byte)(b_a[0] ^ b_entrada[3]);
+                b_b[1] = (byte)(b_a[1] ^ b_entrada[0]);
+                ushort s_b = BitConverter.ToUInt16(b_b, 0);
+                ushort ret_b = EncriptacionAux(s_b, (ushort)0xaab3, (ushort)0x53f2);
+                b_b = BitConverter.GetBytes(ret_b);
+
+                byte[] b_ret = new byte[4];
+                b_ret[0] = b_b[0];
+                b_ret[1] = b_a[0];
+                b_ret[2] = b_a[1];
+                b_ret[3] = b_b[1];
+                ret = BitConverter.ToInt32(b_ret, 0);
+
+                return ret;
+            }
+        }
+
+        /*************************************************/
+        //CLASE PAQUETE
+        /*************************************************/
+        protected class Paquete
+        {
+            List<StringBuilder> tramas = new List<StringBuilder>();
+            StringBuilder sbOriginal = new StringBuilder();
+
+            bool _paqueteValido = false;
+
+            public int Count
+            {
+                get { return tramas.Count; }
+            }
+
+            public StringBuilder TramaOriginal
+            {
+                get { return sbOriginal; }
+            }
+
+            public Paquete(StringBuilder sb)
+            {
+                StringBuilder trama = null;
+                for (int i = 0; i < sb.Length; i++)
+                {
+                    if (sb[i] == COD_CABECERA && ((i + 1) < sb.Length) && sb[i + 1] != (byte)0x00)
+                    {
+                        if (trama != null)
+                            tramas.Add(trama);
+                        trama = new StringBuilder();
+                    }
+                    if (trama != null)
+                        trama.Append((char)sb[i]);
+                    sbOriginal.Append((char)sb[i]); //Copiamos el string original
+                }
+                if (trama != null && trama.Length > MIN_TRAMA_LEN && trama[6] != 0x08)
+                    tramas.Add(trama);
+            }
+
+            public bool ValidarTrama()
+            {
+                bool ret = true;
+
+                for (int i = 0; i < tramas.Count; i++)
+                    ret = ret && CheckCS(tramas[i]);
+
+                return ret;
+            }
+
+            private bool CheckComando(byte comando, int minLen, int i)
+            {
+                return CheckComando(comando, minLen, i, i);
+            }
+
+            private bool CheckComando(byte comando, int minLen, int i, int n)
+            {
+                if (i < tramas.Count)
+                {
+                    if (_paqueteValido) return true;
+
+                    if (tramas[i].Length >= minLen && tramas[i].Length > MIN_TRAMA_LEN)
+                    {
+                        bool b = (tramas[i][6] == comando && tramas[i][7] == (char)n);
+                        if (b
+                            && (comando == CMD_CONTADORES || comando == CMD_EVENTOS))
+                            _paqueteValido = true;
+                        return b;
+                    }
+                }
+                return false;
+            }
+
+            // CONTADORES
+            public int GetValorContador(int i)
+            {
+                if (CheckComando(CMD_CONTADORES, 13, i))
+                {   // Si la trama es un comando de contadores y tiene longitud 13 sacamos la informacion
+                    byte[] b = new byte[4];
+                    b[3] = (byte)tramas[i][8];
+                    b[2] = (byte)tramas[i][9];
+                    b[1] = (byte)tramas[i][10];
+                    b[0] = (byte)tramas[i][11];
+                    return BitConverter.ToInt32(b, 0);
+                }
+                return -1;
+            }
+
+            // CONTADORES DIA
+            public DateTime GetFecha()
+            {
+                DateTime fecha = InfoEventos.MIN_DATETIME;
+                if (CheckComando(CMD_CONTADORES_DIA, 15, 0))
+                {
+                    byte bAnyo = (byte)tramas[0][8];
+                    byte bMes = (byte)tramas[0][9];
+                    byte bDia = (byte)tramas[0][10];
+                    byte bHora = (byte)tramas[0][11];
+                    byte bMin = (byte)tramas[0][12];
+                    fecha = new DateTime((int)bAnyo, (int)bMes, (int)bDia, (int)bHora, (int)bMin, 0);
+                }
+                return fecha;
+            }
+
+            public int GetNumeroDias()
+            {
+                if (CheckComando(CMD_CONTADORES_DIA, 15, 0))
+                {
+                    return (int)tramas[0][13];
+                }
+                return -1;
+            }
+
+            public int GetJugadas(int i)
+            {
+                if (i > 0)
+                {
+                    if (CheckComando(CMD_CONTADORES_DIA, 13, i, i - 1))
+                    {
+                        byte[] b = new byte[4];
+                        b[3] = (byte)0x00;
+                        b[2] = (byte)0x00;
+                        b[1] = (byte)tramas[i][8];
+                        b[0] = (byte)tramas[i][9];
+                        return BitConverter.ToInt32(b, 0);
+                    }
+                }
+                return -1;
+            }
+
+            public int GetPremios(int i)
+            {
+                if (i > 0)
+                {
+                    if (CheckComando(CMD_CONTADORES_DIA, 13, i, i - 1))
+                    {
+                        byte[] b = new byte[4];
+                        b[3] = (byte)0x00;
+                        b[2] = (byte)0x00;
+                        b[1] = (byte)tramas[i][10];
+                        b[0] = (byte)tramas[i][11];
+                        return BitConverter.ToInt32(b, 0);
+                    }
+                }
+                return -1;
+            }
+
+            // EVENTOS
+            public DateTime GetFecha(int i)
+            {
+                DateTime fecha = InfoEventos.MIN_DATETIME;
+                if (CheckComando(CMD_EVENTOS, 13, i))
+                {
+                    byte dato8 = (byte)tramas[i][8];
+                    byte dato9 = (byte)tramas[i][9];
+                    byte dato10 = (byte)tramas[i][10];
+                    byte dato11 = (byte)tramas[i][11];
+
+                    byte bMes = (byte)(dato8 & (byte)0x0F);
+                    byte bAnyo = dato9;
+                    byte bDia = (byte)(dato10 & (byte)0x1F);
+                    byte bHora = (byte)(dato11 & (byte)0x1F);
+                    byte bMin = (byte)(dato11 >> 5 | ((dato10 & 0xE0) >> 2));
+                    if (bAnyo == 0)
+                        fecha = InfoEventos.MIN_DATETIME;
+                    else
+                        fecha = new DateTime((int)bAnyo, (int)bMes, (int)bDia, (int)bHora, (int)bMin, 0);
+                }
+                return fecha;
+            }
+
+            public byte GetEvento(int i)
+            {
+                if (CheckComando(CMD_EVENTOS, 13, i))
+                {
+                    byte b = (byte)tramas[i][8];
+                    b = (byte)(b >> 4);
+                    return b;
+                }
+                return InfoEventos.EVENTO_UNDEFINED;
+            }
+        }
+    }
+}

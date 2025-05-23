@@ -1,0 +1,41 @@
+﻿
+
+using GeoDroid.Data;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
+
+namespace GEO_DROID.Services
+{
+    [DataContract(Namespace = "http://schemas.datacontract.org/2004/07/GeoDroid.Models")]
+    public class Recaudacion
+    {
+        [Key]
+        public int id { get; set; }
+
+        [ForeignKey("Ruta")]
+        public int idRuta { get; set; }
+        public virtual Ruta Ruta { get; set; }
+
+        [ForeignKey("Incidencia")]
+        public int idIncidencia { get; set; }
+        public virtual Incidencia Incidencia { get; set; }
+
+        public Decimal bruto { get; set; }
+
+        public Decimal recaudacion { get; set; }
+
+        public Decimal netoEmpresa { get; set; }
+
+        public Decimal netoEstablecimiento { get; set; }
+
+        public bool arqueoRealizado { get; set; }
+
+        public Decimal valorArqueo { get; set; }
+        [MaxLength(2000)]
+        public string observaciones { get; set; }
+
+        public string comentario { get; set; }
+    }
+}

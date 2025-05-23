@@ -1,0 +1,46 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Instalacion
+    {
+        [Key]
+        public int id { get; set; }
+
+        public int idGeo { get; set; }
+        public int idIncidencia { get; set; }
+
+        public DateTime fechaInstalacion { get; set; }
+
+        public DateTime fechaInstalacionPrevista { get; set; }
+        public DateTime fechaTransporteGet { get; set; }
+        public DateTime fechaTransportePut { get; set; }
+        public DateTime fechaModificacion { get; set; }
+        public Decimal arqueo { get; set; }
+        public Decimal arqueoEstablecido { get; set; }
+
+        [MaxLength(2000)]
+        public string comentarios { get; set; }
+        //////////////////////////////////////////////////////////////////////
+        public int idMaquinas { get; set; }
+        public int idEstablecimientoOrigen { get; set; }
+
+        public int idEstablecimientoDestino { get; set; }
+
+        //////////////////////////////////////////////////////////////////////
+        [ForeignKey("idMaquinas")]
+        public virtual Maquina maquina { get; set; }
+        [ForeignKey("idEstablecimientoOrigen")]
+        public virtual Establecimiento establecimientoOrigen { get; set; }
+        [ForeignKey("idEstablecimientoDestino")]
+        public virtual Establecimiento establecimientoDestino { get; set; }
+
+        //////////////////////////////////////////////////////////////////////
+    }
+}

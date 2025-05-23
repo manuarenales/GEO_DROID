@@ -1,0 +1,56 @@
+﻿using Fluxor;
+using GeoDroid.Data.SQL;
+
+namespace GEO_DROID.Store.AveriaEstado
+{
+
+    public class AveriaEstadoEffects
+    {
+        private readonly GeoDroidDatabase _database;
+
+        public AveriaEstadoEffects(GeoDroidDatabase database)
+        {
+            _database = database;
+        }
+
+        [EffectMethod]
+        public async Task GetAveriaEstadosList(GetAveriaEstadoList action, Fluxor.IDispatcher dispatcher)
+        {
+            
+            try
+            {
+                List<GeoDroid.Data.AveriaEstado> AveriaEstado = await _database._database.Table<GeoDroid.Data.AveriaEstado>().ToListAsync();
+                if (AveriaEstado.Count == 0)
+                {
+                    await _database._database.InsertAsync(new GeoDroid.Data.AveriaEstado { descripcion = "Cerrada" });
+                }
+                AveriaEstado = await _database._database.Table<GeoDroid.Data.AveriaEstado>().ToListAsync();
+                dispatcher.Dispatch(new ChangeAveriaEstadoListForSelecter(AveriaEstado));
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+
+        }
+
+
+        [EffectMethod]
+        public async Task DeleteAveria(DeleteAveria action, Fluxor.IDispatcher dispatcher)
+        {
+
+            try
+            {
+                await _database._database.DeleteAsync(action.averia);
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+
+    }
+}

@@ -1,0 +1,192 @@
+﻿@page "/averiaform1/{averiaid:int}/{establecimiento:int}"
+@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject AveriasService AveriasService
+@inject MaquinaService MaquinaServce
+@inject EstadoAveriaService EstadoAveriaService
+@inject ConceptoAveriaService ConceptoAveriaService
+@inject NavigationManager Navigation
+@inject CultureService Cultureservice
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+
+<form class="w-100" needs-validation>
+    <div class="d-flex flex-column justify-content-center align-items-center bg-dark">
+        <span style="color:white" class="subtitle">Detalles</span>
+    </div>
+
+    <div class="list-group">
+        <div class="list-group-item">
+            <GEO_DROID.Shared.Components.Selecter.MaquinasSelecter @bind-maquinaAveria="@averia.maquina" Changed="HandleMaquinaAveriaChanged" idEstablecimiento="@establecimiento" IsValid="@IsIdMaquinaValid">
+            </GEO_DROID.Shared.Components.Selecter.MaquinasSelecter>
+        </div>
+
+        <div class="list-group-item">
+            <GEO_DROID.Shared.Components.Selecter.ConceptoSelecter @bind-conceptoAveria="@averia.concepto" Changed="HandleConceptoAveriaChanged" idEstablecimiento="@establecimiento" IsValid="@IsIdConceptoValid">
+            </GEO_DROID.Shared.Components.Selecter.ConceptoSelecter>
+        </div>
+
+        <div class="list-group-item">
+            <GEO_DROID.Shared.Components.Selecter.EstadoSelecter @bind-estadoAveria="@averia.averiaEstado" Changed="HandleEstadoAveriaChanged" idEstablecimiento="@establecimiento" IsValid="@IsIdEstadoValid">
+            </GEO_DROID.Shared.Components.Selecter.EstadoSelecter>
+        </div>
+    </div>
+
+    <div class="list-group">
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Descripción</span>
+            <textarea class="bluetext" @bind="averia.observaciones" placeholder="Comentarios"></textarea>
+        </div>
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Detalle</span>
+            <textarea class="bluetext" @bind="averia.detalle" placeholder="Detalle"></textarea>
+        </div>
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span>Comentarios</span>
+            <textarea class="bluetext" @bind="averia.comentarios" placeholder="Comentarios"></textarea>
+        </div>
+    </div>
+
+    <div class="d-flex flex-column justify-content-center align-items-center bg-dark">
+        <span style="color:white" class="subtitle">Acciones</span>
+    </div>
+
+    <div class="list-group">
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span class="fs-6">Realizar carga</span>
+            <span class="bluetext">No realizada</span>
+        </div>
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span class="fs-6">Lectura inicial de contadores</span>
+            <span class="bluetext">No realizada</span>
+        </div>
+        <div class="list-group-item d-flex flex-column justify-content-start">
+            <span class="fs-6">Lectura final contadores</span>
+            <span class="bluetext">No realizada</span>
+        </div>
+    </div>
+</form>
+
+<div style="height: 65px;"></div>
+
+<div class="row m-2 fixed-bottom mb-3">
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="GuardarAveria">Guardar</button>
+    </div>
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" disabled="@((averiaid == -1))" @onclick="EliminarAveria">Eliminar</button>
+    </div>
+    <div class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick='() => NavigateTo("averias/" + establecimiento)'>Cancelar</button>
+    </div>
+</div>
+
+
+
+@code {
+
+    [Parameter]
+    public int averiaid { get; set; }
+    [Parameter]
+    public int establecimiento { get; set; }
+
+
+    private string title = "";
+    private Averia averia = new Averia();
+
+    private bool IsIdMaquinaValid { get; set; } = true;
+    private bool IsIdConceptoValid { get; set; } = true;
+    private bool IsIdEstadoValid { get; set; } = true;
+
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (averiaid == -1)
+        {
+            title = "Añadir Averia";
+            averia = new Averia();
+        }
+        else
+        {
+            title = "Editando Averia";
+            averia = await AveriasService.GetAveriaByIdAsync(averiaid);
+            if (averia == null)
+            {
+                averia = new Averia();
+            }
+        }
+    }
+
+    private async Task HandleMaquinaAveriaChanged(Maquina maquina)
+    {
+
+        IsIdMaquinaValid = maquina != null;
+
+    }
+    private async Task HandleConceptoAveriaChanged(ConceptoAveria concepto)
+    {
+
+        IsIdConceptoValid = concepto != null;
+
+    }
+    private async Task HandleEstadoAveriaChanged(AveriaEstado estado)
+    {
+
+        IsIdEstadoValid = estado != null;
+
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, true);
+    }
+
+    public async void EliminarAveria()
+    {
+        int res = await AveriasService.DeleteAveriaAsync(averia);
+        NavigateTo("averias/" + establecimiento);
+    }
+
+    public async void GuardarAveria()
+    {
+
+        if (ValidateForm())
+        {
+            int res = await AveriasService.SaveAveriaAsync(averia);
+            NavigateTo("averias/" + establecimiento);
+        }
+        else
+        {
+            //añadiremos un servicio de alesrtas
+
+        }
+
+
+    }
+
+    public bool ValidateForm()
+    {
+        // Validar que se haya seleccionado una máquina
+        IsIdMaquinaValid = averia.maquina != null;
+
+        // Validar que se haya seleccionado un concepto
+        IsIdConceptoValid = averia.concepto != null;
+
+        // Validar que se haya seleccionado un estado
+        IsIdEstadoValid = averia.averiaEstado != null;
+
+        // Actualizar la interfaz de usuario para mostrar los errores de validación
+        StateHasChanged();
+
+        // Devolver true si todos los campos requeridos están completos
+        return IsIdMaquinaValid && IsIdConceptoValid && IsIdEstadoValid;
+    }
+
+
+
+
+
+}

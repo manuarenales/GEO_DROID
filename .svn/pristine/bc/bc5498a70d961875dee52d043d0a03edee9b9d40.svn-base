@@ -1,0 +1,75 @@
+﻿using GEO_DROID.Services;
+using GeoDroid.Data;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.EntityFrameworkCore;
+
+
+
+#if ANDROID
+using GEO_DROID.Platforms.Android.Handlers;
+#endif
+
+namespace GEO_DROID
+{
+    public static class MauiProgram
+    {
+        public static MauiApp CreateMauiApp()
+        {
+            var builder = MauiApp.CreateBuilder();
+            builder
+                .UseMauiApp<App>()
+
+                .ConfigureFonts(fonts =>
+                {
+                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                }).ConfigureMauiHandlers(handlers =>
+                {
+#if ANDROID
+                    handlers.AddHandler<BlazorWebView, MauiBlazorWebViewHandler>();
+#endif
+                });
+
+            /////////////////////////////////////////////////// ORM ////////////////////////////////////////////////
+
+            builder.Services.AddDbContext<GeoDroidDbContext>();
+            var dbContext = new GeoDroidDbContext();
+
+
+
+            dbContext.Database.Migrate();
+            builder.Services.AddMauiBlazorWebView();
+
+            builder.Services.AddTransient<Averia>();
+            builder.Services.AddTransient<AveriaEstado>();
+            builder.Services.AddTransient<ConceptoAveria>();
+            builder.Services.AddTransient<DeviceCandidate>();
+            builder.Services.AddTransient<Establecimiento>();
+            builder.Services.AddTransient<Incidencia>();
+            builder.Services.AddTransient<Ruta>();
+            builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddLocalization();
+            builder.Services.AddTransient<CustomNavigationManager>();
+
+            /////////////////////////////////////////////////// Servicios ////////////////////////////////////////////////
+
+            builder.Services.AddTransient<LayoutBuilderService>();
+            builder.Services.AddTransient<EstablecimientosService>();
+            builder.Services.AddTransient<CultureService>();
+            builder.Services.AddTransient<AveriasService>();
+
+            builder.Services.AddTransient<CargaService>();
+
+            builder.Services.AddTransient<MaquinaService>();
+            builder.Services.AddTransient<ConceptoAveriaService>();
+            builder.Services.AddTransient<SincroService>();
+            builder.Services.AddTransient<EstadoAveriaService>();
+            builder.Services.AddTransient<TokenService>();
+            builder.Services.AddTransient<GeolineOdataService>();
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            builder.Logging.AddDebug();
+            return builder.Build();
+        }
+    }
+}

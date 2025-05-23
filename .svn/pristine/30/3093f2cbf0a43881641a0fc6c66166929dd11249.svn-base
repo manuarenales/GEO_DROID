@@ -1,0 +1,210 @@
+﻿@page "/ajustes"
+@using GEO_DROID.Services
+ @inject NavigationManager Navigation
+  @inject IStringLocalizer<StringLocalizer> Localizer;
+  @inject CultureService Cultureservice
+
+<div class="row  mb-2">
+    <div class="col-12  border  d-flex justify-content-start align-items-lg-center" @onclick='() => NavigateTo("configuracion")'>
+        <img class="m-1" src="/img/smartajustes.png" />
+        <h6 class="m-2">@Localizer["configuracion"]</h6>
+    </div>
+    <div class="col-12  border d-flex justify-content-start align-items-lg-center" @onclick="OpenTestLecturaContadores">
+        <img class="m-1" src="/img/lecturaContadores.png" />
+        <h6 class="m-2">@Localizer["testlecturacontadores"]</h6>
+    </div>
+    <div class="col-12  border d-flex justify-content-start align-items-lg-center" @onclick="OpenEstablecerContadores">
+        <img class="m-1" src="/img/setLeturaCounters.png" />
+        <h6 class="m-2">Establecer contadores</h6>
+    </div>
+    <div class="col-12  border d-flex justify-content-start align-items-lg-center" @onclick="OpenTestImpresora">
+        <img class="m-1" src="/img/impresoras.png" />
+        <h6 class="m-2">Test impresora Bluetooth</h6>
+    </div>
+    <div class="col-12  border d-flex justify-content-start align-items-lg-center" @onclick="OpenActualizarFirmware">
+        <img class="m-1" src="/img/actualizFilmware.png" />
+        <h6 class="m-2">Actualizar firmware de modulo</h6>
+    </div>
+</div>
+
+
+
+
+
+
+@* ------------ Test Lectura Contadores ------------*@
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalTestContadoresVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Test de lectura de contadores</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideTestContadoresModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Seleccione cómo quiere introducir los datos de conexión al módulo Bluetooth:</label>
+                    <button class="btn btn-secondary w-100 m-1 p-1">Seleccionar desde máquina</button>
+                    <button class="btn btn-primary w-100 m-1 p-1">Introducir manualmente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@* ------------ Establecer Contadores ------------*@
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalEstablecerContadoresVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Establecer contadores</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideEstablecerContadoresModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Seleccione cómo quiere introducir los datos de conexión al módulo Bluetooth:</label>
+                    <button class="btn btn-secondary w-100 m-1 p-1">Seleccionar desde máquina</button>
+                    <button class="btn btn-primary w-100 m-1 p-1">Introducir manualmente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ------------ TestImpresora ------------*@
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalTestImpresionVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Test impresora Bluetooth</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideTestImpresoraModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-center align-items-center">
+                    <div class="spinner-border text-warning p-1" role="status"></div>
+                    <h3 class="m-1">Imprimiendo....</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@* ------------ Actualizar Firmware ------------*@
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalActualizarFirmVisible ? "block" : "none")">
+    <div class="modal-dialog  modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Actualizar Firmware</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideActualizarFirmModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Mac</span>
+                        <input class="form-control" placeholder="..." />
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Pin</span>
+                        <input class="form-control" placeholder="..." />
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Read</span>
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Write (TECNAUSA)</span>
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Write (M2M.MOVISTAR.ES)</span>
+                    </div>
+                    <div class="list-group-item d-flex flex-column justify-content-start">
+                        <span>Write (WLAPN.COM 000114)</span>
+                    </div>
+                </div>
+                <div class="d-flex flex-column justify-content-center">
+                    <button class="btn btn-secondary w-100 m-2 p-2 ml-2">Actualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    private bool modalConfigVisible = false;
+    private bool modalTestContadoresVisible = false;
+    private bool modalEstablecerContadoresVisible = false;
+    private bool modalTestImpresionVisible = false;
+    private bool modalActualizarFirmVisible = false;
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cultureservice.CultureChanged += StateHasChanged;
+        var nig = 12;
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+
+    private void HideConfigModal()
+    {
+        modalConfigVisible = false;
+
+    }
+    private void OpenConfig()
+    {
+        modalConfigVisible = true;
+    }
+
+    private void OpenTestLecturaContadores()
+    {
+        modalTestContadoresVisible = true;
+    }
+
+    private void HideTestContadoresModal()
+    {
+        modalTestContadoresVisible = false;
+    }
+
+    private void OpenEstablecerContadores()
+    {
+        modalEstablecerContadoresVisible = true;
+    }
+
+    private void HideEstablecerContadoresModal()
+    {
+        modalEstablecerContadoresVisible = false;
+    }
+
+    private void HideActualizarFirmModal()
+    {
+        modalActualizarFirmVisible = false;
+    }
+
+    private void OpenTestImpresora()
+    {
+        modalTestImpresionVisible = true;
+    }
+
+    private void HideTestImpresoraModal()
+    {
+        modalTestImpresionVisible = false;
+    }
+
+    private void OpenActualizarFirmware()
+    {
+        modalActualizarFirmVisible = true;
+    }
+}

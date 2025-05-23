@@ -1,0 +1,222 @@
+using GEO_DROID.Resources.Lib.Comunicacion;
+using GEO_DROID.Resources.Lib.Extra;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+
+namespace BLL.LeerInfoMaquina
+{
+    class ProtocoloTecnausaV56 : ProtocoloTecnausaV2
+    {
+        private bool programando = false; //Flag que nos indica que estamos en proceso de programación
+
+        public ProtocoloTecnausaV56(IComunicacion comunicacion) : base(comunicacion)
+        {
+        }
+
+        public override string Programar(String lectura, IProgressCallback progreso, bool firwareRecaudacion)
+        {
+            ///Establecemos los datos que hay que enviar en el comando de poner en modo bootloader, ya que en módulos del modelo 56 es necesario. 
+            ///Si no enviamos estos datos no se pone en modo bootloader.
+            byte[] datosProgramacion = Encoding.UTF8.GetBytes("1f&8Ad<9(tyN4%3" + '\0');
+
+            string errorPonerEnModoProgramacion = PonerEnModoProgramacion(progreso, datosProgramacion);
+            if (string.IsNullOrEmpty(errorPonerEnModoProgramacion))
+            {
+                // preparamos el flasher
+                programando = true;
+
+                DeviceControllerFlash flasher = new DeviceControllerFlash();
+                flasher.onLogMessage = (message) =>
+                {
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    #####: LOG : " + message);
+                };
+
+                flasher.onStateChange = (DeviceControllerFlash.State State) =>
+                {
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    #####: onStateChange : Estado=" + State);
+                    if (State == DeviceControllerFlash.State.Finished || State == DeviceControllerFlash.State.RESET)
+                    {
+                        programando = false;
+                    }
+                };
+                flasher.onSendCommand = (comando) =>
+                {
+                    comando.pack();
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    ##### : onSendCommand : Comando=" + comando.CmdToString(true));
+                    byte[] buffer = comando.getBuffer();
+                    _com.EnviarDatos(ByteArrayToStringBuilder(buffer));
+                };
+                //_com.onCommandReceive = (comando) =>
+                //{
+                //    flasher.onCommandReceive(comando);
+                //};
+
+                string dbPath = GetFirmwareFilePath();
+                flasher.setFirmware(dbPath);
+                flasher.Start();
+
+                CmdReceiver receiver = new CmdReceiver();
+                int iteracionesImproductivas = 0;
+                const int MAX_ITERACIONES_ESPERA_RESPUESTA = 10;
+                while (programando && iteracionesImproductivas < MAX_ITERACIONES_ESPERA_RESPUESTA)
+                {
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    ##### : onCommandReceive : Iteración=" + iteracionesImproductivas);
+                    StringBuilder sb2 = _com.RecibirDatos(1000, 100);
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    ##### : onCommandReceive : Len=" + sb2.Length);
+
+                    receiver.reset();
+                    receiver.addBuffer(StringBuilderToByteArray(sb2), sb2.Length);
+                    Cmd comando1 = receiver.Procesa();
+                    if (comando1 != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine("#####   FLASHER    ##### : onCommandReceive : Comando=" + comando1);
+                        flasher.onCommandReceive(comando1);
+                        iteracionesImproductivas = 0;
+                    }
+                    else
+                    {
+                        iteracionesImproductivas++;
+                    }
+                }
+                return "" + (flasher.state == DeviceControllerFlash.State.Finished ? "" : "Estado: " + flasher.state);
+            }
+            return errorPonerEnModoProgramacion;
+        }
+
+        public string GetAPNConfig()
+        {
+            ///Establecemos los datos que hay que enviar en el comando de poner en modo bootloader, ya que en módulos del modelo 56 es necesario. 
+            ///Si no enviamos estos datos no se pone en modo bootloader.
+            byte[] datosProgramacion = Encoding.UTF8.GetBytes("1f&8Ad<9(tyN4%3" + '\0');
+
+            string errorPonerEnModoProgramacion = PonerEnModoProgramacion(null, datosProgramacion);
+            if (string.IsNullOrEmpty(errorPonerEnModoProgramacion))
+            {
+                DeviceControllerFlash flasher = new DeviceControllerFlash();
+                flasher.onLogMessage = (message) =>
+                {
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    #####: LOG : " + message);
+                };
+
+                flasher.onStateChange = (DeviceControllerFlash.State State) =>
+                {
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    #####: onStateChange : Estado=" + State);
+                    if (State == DeviceControllerFlash.State.Finished || State == DeviceControllerFlash.State.RESET)
+                    {
+                        programando = false;
+                    }
+                };
+                flasher.onSendCommand = (comando) =>
+                {
+                    comando.pack();
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    ##### : onSendCommand : Comando=" + comando.CmdToString(true));
+                    byte[] buffer = comando.getBuffer();
+                    _com.EnviarDatos(ByteArrayToStringBuilder(buffer));
+
+                    System.Threading.Thread.Sleep(200);
+                    StringBuilder sb = _com.RecibirDatos(0, 0);
+                    byte[] bufferXXX = StringBuilderToByteArray(sb);
+                    ////[0xF9] [CRC1] [CRC2] [IDTRAMA] [COMANDO] [NUMDATOS] [DATO 1]....[DATO N]
+                    ////                                                    [ADDRESSL] [ADDRESSH] [ADDRESSU] [0] [NUMDATOS] [DATO 1] ... [DATO N]
+                    Cmd comandoRecibido = new Cmd(bufferXXX, (byte)bufferXXX.Length);//bufferPointer);
+                    comandoRecibido.seek(4);
+                    string datos = comandoRecibido.getString();
+                    for (int i = 0; i < datos.Length; i++)
+                        configuraciones.Append((char)datos[i]);
+                };
+
+                configuraciones.Clear();
+                flasher.ReadConfigData();
+            }
+            return configuraciones.ToString();
+        }
+
+        public bool SetAPNConfig(string configFileName)
+        {
+            ///Establecemos los datos que hay que enviar en el comando de poner en modo bootloader, ya que en módulos del modelo 56 es necesario. 
+            ///Si no enviamos estos datos no se pone en modo bootloader.
+            byte[] datosProgramacion = Encoding.UTF8.GetBytes("1f&8Ad<9(tyN4%3" + '\0');
+
+            string errorPonerEnModoProgramacion = PonerEnModoProgramacion(null/*progreso*/, datosProgramacion);
+            if (string.IsNullOrEmpty(errorPonerEnModoProgramacion))
+            {
+                DeviceControllerFlash flasher = new DeviceControllerFlash();
+                flasher.onLogMessage = (message) =>
+                {
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    #####: LOG : " + message);
+                };
+                flasher.onStateChange = (DeviceControllerFlash.State State) =>
+                {
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    #####: onStateChange : Estado=" + State);
+                    if (State == DeviceControllerFlash.State.Finished || State == DeviceControllerFlash.State.RESET)
+                    {
+                        programando = false;
+                    }
+                };
+                flasher.onSendCommand = (comando) =>
+                {
+                    comando.pack();
+                    System.Diagnostics.Debug.WriteLine("#####   FLASHER    ##### : onSendCommand : Comando=" + comando.CmdToString(true));
+                    byte[] buffer = comando.getBuffer();
+                    _com.EnviarDatos(ByteArrayToStringBuilder(buffer));
+
+                    System.Threading.Thread.Sleep(200);
+                    StringBuilder sb = _com.RecibirDatos(0, 0);
+                    byte[] bufferXXX = StringBuilderToByteArray(sb);
+                    Console.WriteLine(";Leido " + bufferXXX.Length);
+                };
+                configuraciones.Clear();
+                flasher.WriteConfigData(configFileName);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Método para obtener la ruta al archivo de firmware. El archivo, al estar incluido como Asset, lo copiaremos a una ruta concreta para que pueda ser referenciado sin problemas.
+        /// </summary>
+        /// <returns></returns>
+        private string GetFirmwareFilePath()
+        {
+            string FIRMWARE_FILENAME = "ESRECPLC056_1005_MECANICOS.frw"; // "ESRECPLC056_Bootloader_Update_9901_Default.frw";
+            string folderPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData);
+            string dbPath = Path.Combine(folderPath, FIRMWARE_FILENAME);
+
+            if (System.IO.File.Exists(dbPath))
+                System.IO.File.Delete(dbPath);
+
+            using (BinaryReader br = new BinaryReader(Android.App.Application.Context.Assets.Open(FIRMWARE_FILENAME)))
+            {
+                using (BinaryWriter bw = new BinaryWriter(new FileStream(dbPath, FileMode.Create)))
+                {
+                    byte[] buffer = new byte[2048];
+                    int len = 0;
+                    while ((len = br.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        bw.Write(buffer, 0, len);
+                    }
+                    bw.Flush();
+                }
+            }
+            return dbPath;
+        }
+
+        private StringBuilder ByteArrayToStringBuilder(byte[] buffer)
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < buffer.Length; i++)
+                sb.Append((char)buffer[i]);
+            return sb;
+        }
+
+        private byte[] StringBuilderToByteArray(StringBuilder sb)
+        {
+            byte[] ret = new byte[sb.Length];
+            for (int i = 0; i < sb.Length; i++)
+                ret[i] = (byte)sb[i];
+            return ret;
+        }
+    }
+}

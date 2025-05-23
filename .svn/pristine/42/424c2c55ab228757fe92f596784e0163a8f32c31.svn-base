@@ -1,0 +1,39 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class MaquinaConceptoRecaudacion
+    {
+        [Key]
+        public int id { get; set; }
+        public int idConceptoRecaudacionGeo { get; set; }
+        public decimal fijo { get; set; }
+        public decimal diario { get; set; }
+        public decimal semanal { get; set; }
+        public int pct { get; set; }
+        public bool acumular { get; set; }
+        public decimal pendiente { get; set; }
+        public int idMaquina { get; set; }
+
+        [ForeignKey("idMaquina")]
+        public virtual Maquina maquina { get; set; }
+
+
+        public decimal pct_d
+        {
+            get
+            {
+                decimal d = pct;
+                if (d > 100)
+                    d = d / 10;
+                return d;
+            }
+        }
+    }
+}

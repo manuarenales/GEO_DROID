@@ -1,0 +1,25 @@
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace GeoDroid.Data
+{
+    public class GeoDroidDbContext : DbContext
+    {
+        public DbSet<Averia> Averias { get; set; }
+        public DbSet<AveriaEstado> AveriasEstados { get; set; }
+        public DbSet<Carga> Cargas { get; set; }
+        public DbSet<ConceptoAveria> ConceptoAverias { get; set; }
+        public DbSet<Establecimiento> Establecimientos { get; set; }
+        public DbSet<Incidencia> Incidencias { get; set; }
+        public DbSet<Maquina> Maquinas { get; set; }
+        public DbSet<Ruta> Rutas { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            string connectionDb = $"Filename={PathDB.GetPath("test.db")}";
+            optionsBuilder.UseSqlite(connectionDb);
+            optionsBuilder.EnableSensitiveDataLogging();
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder) { }
+    }
+}

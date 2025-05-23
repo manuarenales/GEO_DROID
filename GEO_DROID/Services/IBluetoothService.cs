@@ -1,0 +1,13 @@
+﻿ 
+
+namespace GEO_DROID
+{
+    public interface IBluetoothService
+    {
+        bool PairDevice(string address, string pin);
+        void ConnectToDevice(string address);
+        void DisconnectDevice();
+        string ReadData();
+        void WriteData(string data);
+    }
+}

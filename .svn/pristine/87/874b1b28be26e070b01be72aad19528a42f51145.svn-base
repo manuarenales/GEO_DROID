@@ -1,0 +1,40 @@
+﻿@using System.Globalization
+@using GEO_DROID.Services
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Navegation
+
+@inject IDispatcher Dispatcher
+@inject IState<NavigationState> navegation
+
+
+<Fluxor.Blazor.Web.StoreInitializer />
+@* <NavigationLock OnBeforeInternalNavigation=OnLocationChanging /> *@
+
+<Microsoft.AspNetCore.Components.Routing.Router AppAssembly="@typeof(Main).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p role="alert">Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Microsoft.AspNetCore.Components.Routing.Router>
+
+@code {
+    // private async Task OnLocationChanging(LocationChangingContext context)
+    // {
+    //     if (navegation.Value.AllowNavigation)
+    //     {
+    //         Dispatcher.Dispatch(new ChangeAllowNavegationAction(false));
+    //     }
+    //     else
+    //     {
+    //         context.PreventNavigation();
+    //         Dispatcher.Dispatch(new NavigationAction(context));
+    //     }
+
+    //     await Task.CompletedTask;
+    // }
+}

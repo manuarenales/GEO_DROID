@@ -1,0 +1,35 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Cambio
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        public int idPersonalEntrega { get; set; }
+        public int idPersonalRecuperacion { get; set; }
+        public int idEmpresa { get; set; }
+        public DateTime fechaRecuperacion { get; set; }
+        public DateTime fechaEntrega { get; set; }
+        public decimal importe { get; set; }
+        public string comentarios { get; set; }
+        public bool bloqueado { get; set; }
+        public DateTime fechaModificacion { get; set; }
+        //////////////////////////////////////////////////////////
+        public int idEstablecimientos { get; set; }
+
+        //////////////////////////////////////////////////////////
+        [ForeignKey("idEstablecimientos")]
+        public virtual Establecimiento establecimiento { get; set; }
+
+        //////////////////////////////////////////////////////////
+
+    }
+}

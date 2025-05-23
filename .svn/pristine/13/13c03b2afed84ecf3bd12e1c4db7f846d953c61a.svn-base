@@ -1,0 +1,161 @@
+﻿@page "/rutas"
+
+ 
+@using GEO_DROID.Services
+
+@inject NavigationManager Navigation
+@inject EstablecimientosService Builder
+@inject CultureService Cultureservice
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject EstablecimientosService EstablecimientoService
+
+
+<div class=" row  border mb-2 ">
+
+    <div class="col-12 col-sm-12  col-md-6 col-lg-6 additem ">
+        <div class="row " @onclick="() => OpenModal()">
+            <div class=" p-2 col-3 col-sm-3 col-md-2 col-lg-2  d-flex justify-content-center align-items-center">
+                <img src="img/add.png" class="img-fluid " style="max-height: 3em ; " />
+            </div>
+
+            <div class=" col-9 col-sm-9 col-md-10 col-lg-10 d-flex justify-content-center align-items-center">
+                <span class="m-1 SubTitulo font-weight-bold"> @Localizer["añadirestablecimiento"]</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-12  col-md-6 col-lg-6 ">
+        <div class=" row border position-relative">
+            <div class="col-9 col-sm-9 col-md-10 col-lg-10 d-flex justify-content-center align-items-center">
+                <span class="m-1 font-weight-bold SubTitulo ">@FormattedDate(selectedDate)</span>
+            </div>
+
+            <div class="p-2 col-3 col-sm-3 col-md-2 col-lg-2  d-flex justify-content-center align-items-center ">
+                <img src="img/calendar.png" class="img-fluid" style="max-height: 3em ; " />
+            </div>
+            <input type="date" @ref="dateInput"
+                   style=" position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 1;"
+                   @bind="selectedDate" />
+        </div>
+    </div>
+
+</div>
+
+
+@foreach (Establecimiento establecimiento in MenuItems)
+{
+    <div class="row border overflow-auto " @onclick='() => NavigateTo("opciones/"+ establecimiento.id)'>
+        <div class="col-8">
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-12 col-lg-6 ">
+                    <span class="m-2 TextoGrande "> @establecimiento.nombre</span>
+                </div>
+                <div class="col-12 col-sm-12 col-md-12 col-lg-6 d-flex justify-content-start align-items-center ">
+                    <img src="img/maquinaJuego.jpg" class="img-fluid p-1 " style="max-height: 3em ; " />
+                    <img src="img/repare.jpg" class="img-fluid p-1 " style="max-height: 3em ; max-width: 3em; min-width : 3em; min-height: 3em;" />
+                    <img src="img/flechas.jpg" class="img-fluid p-1 " style="max-height: 3em ; max-width: 3em; min-width : 3em; min-height: 3em;" />
+                    <img src="img/recaudo.jpg" class="img-fluid p-1 " style="max-height: 3em ; max-width: 3em; min-width : 3em; min-height: 3em;" />
+                </div>
+
+            </div>
+        </div>
+        <div class="col-4 d-flex  justify-content-center align-items-center  ">
+            <GEO_DROID.Shared.Components.Otros.Recaudacion CodigoEstablecimiento="@establecimiento.codigo"></GEO_DROID.Shared.Components.Otros.Recaudacion>
+        </div>
+    </div>
+}
+
+
+<div class="modal show" tabindex="-1" role="dialog" style="display: @(modalVisible ? "block" : "none");">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 95vw; height: 85vh;">
+        <div class="modal-content bg-light " style="height: 100%;">
+            <div class="modal-header">
+                <span class="modal-title Titulo">@Localizer["añadirestablecimiento"]</span>
+                <button type="button" class="close" aria-label="Close" @onclick="HideModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto;">
+                <input type="text" @bind="busqueda" placeholder="Buscar" class="w-100 p-2" @oninput="FilterEstados" style="height:2em;" />
+                <div class="m-2">
+                    <div class="row">
+                        @foreach (Establecimiento item in establecimientosList.Where(e => string.IsNullOrEmpty(busqueda) || e.nombre.ToLower().Contains(busqueda.ToLower())))
+                        {
+                            <div class="col-12 border p-2 bg-white TextoMedio" @onclick='() => AddItemToList(item)'><span>@item.nombre</span></div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    public List<Establecimiento> MenuItems = new List<Establecimiento>();
+    private ElementReference dateInput;
+    private DateTime selectedDate = DateTime.Now;
+    private string name;
+    bool modalVisible = false;
+    string busqueda = "";
+    private List<Establecimiento> establecimientosList = new List<Establecimiento>();
+    private EstablecimientosService establecimientoService;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        Cultureservice.CultureChanged += StateHasChanged;
+        MenuItems = EstablecimientoService.GetEstablecimientosAsync().ToList();
+        establecimientosList = EstablecimientoService.GetEstablecimientosAsync().ToList();
+    }
+
+    async void OnNameChanged(string value)
+    {
+        name = value;
+        MenuItems = Builder.GetEstablecimientosAsync().ToList();
+    }
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, false);
+    }
+    private async void DeleteItem(Establecimiento establecimiento)
+    {
+        await EstablecimientoService.DeleteEstablecimientoAsync(establecimiento);
+        MenuItems.Remove(establecimiento);
+        StateHasChanged();
+    }
+    public string FormattedDate(DateTime date)
+    {
+        return $"{date.ToString("dddd, dd")} de {date.ToString("MMMM")}, {date.Year}";
+    }
+
+
+
+    void OpenModal()
+    {
+        modalVisible = true;
+    }
+
+    void HideModal()
+    {
+        modalVisible = false;
+    }
+
+
+    private void AddItemToList(Establecimiento item)
+    {
+        MenuItems.Add(item);
+        StateHasChanged();
+        HideModal();
+    }
+
+    public void FilterEstados(ChangeEventArgs filter)
+    {
+        busqueda = filter.Value.ToString();
+    }
+
+
+}

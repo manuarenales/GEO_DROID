@@ -1,0 +1,68 @@
+﻿using SQLite;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class Maquina
+    {
+        [DataMember, PrimaryKey, AutoIncrement]
+        public int id { get; set; }
+        [DataMember]
+        public int idGeo { get; set; }
+        [DataMember, MaxLength(10)]
+        public string codigo { get; set; }
+        [DataMember, MaxLength(50)]
+
+        public int idEstablecimiento { get; set; }
+        [DataMember, MaxLength(10)]
+        public int idInstalaciones { get; set; }
+        /// <summary>
+        /// Campo asociado con PatContDetalles.idPatronContadores, ya que la tabla PatronContadores no existe porque no aporta información adicional
+        /// </summary>
+        [DataMember]
+        public int idPatronContadores { get; set; }
+        /// <summary>
+        /// Campo asociado con TipoDistribucionConceptoRecaudacion.idTipoDistribucion, ya que la tabla TipoDistribucion no existe porque no aporta información adicional
+        /// </summary>
+
+        [DataMember]
+        public DateTime fechaInstalacion { get; set; }
+        [DataMember]
+        public int idTipoDistribucion { get; set; }
+        [DataMember, MaxLength(50)]
+        public string descripcionDistribucion { get; set; }
+        [DataMember]
+        public int pctEstablecimiento { get; set; }
+        [DataMember]
+        public DateTime fechaUltimoArqueo { get; set; }
+        [DataMember]
+        public decimal ultimoArqueo { get; set; }
+        [DataMember]
+        public decimal arqueoEstablecido { get; set; }
+        [DataMember]
+        public decimal diferenciaArqueo { get; set; }
+        [DataMember]
+        public decimal redondeoValor { get; set; }
+        [DataMember]
+        public bool redondeoParaEmpresa { get; set; }
+        [DataMember]
+        public DateTime fechaUltimaRecaudacion { get; set; }
+        [DataMember]
+        public decimal empresaSaldo { get; set; }
+        [DataMember]
+        public decimal establecimientoSaldo { get; set; }
+        [DataMember]
+        public int protocolosMaquinas { get; set; }
+        [DataMember, MaxLength(50)]
+        public string password { get; set; }
+        [DataMember, MaxLength(20)]
+        public string permiso { get; set; }
+        [DataMember]
+        public int idEmpresas { get; set; }
+    }
+}

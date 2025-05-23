@@ -1,0 +1,37 @@
+﻿@using GEO_DROID.Services
+@using System.Text.RegularExpressions
+@using System;
+@inherits LayoutComponentBase
+@inject CustomNavigationManager navigation
+@inject CultureService Cultureservice
+<div class="page">
+    <main>
+        <div style="height:fit-content;" class="row  bg-dark fixed-top">
+            <NavMenu />
+        </div>
+
+        <article class="content px-4 " style="margin-top: 42px;">
+            @Body
+        </article>
+    </main>
+</div>
+@code
+{
+    [Inject]
+    private NavigationManager MyNavigationManager { get; set; }
+
+    private string Url;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Url = MyNavigationManager.Uri;
+    }
+
+
+    private void OnCultureChanged()
+    {
+        Console.WriteLine("CultureChanged event received, updating component.");
+        StateHasChanged();
+    }
+}

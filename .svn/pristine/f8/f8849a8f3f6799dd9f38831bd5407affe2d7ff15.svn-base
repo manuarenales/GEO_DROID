@@ -1,0 +1,161 @@
+﻿@page "/carga/{establecimientoid:int}/"
+
+@using GEO_DROID.Services
+@using System.Text.Json
+
+@inject AveriasService AveriasService
+@inject MaquinaService MaquinaServce
+@inject EstablecimientosService EstablecimientosService
+@inject EstadoAveriaService EstadoAveriaService
+@inject ConceptoAveriaService ConceptoAveriaService
+@inject NavigationManager Navigation
+@inject CultureService Cultureservice
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IJSRuntime JS
+
+<NavigationLock OnBeforeInternalNavigation=OnLocationChanging />
+
+<form class="w-100 content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start " needs-validation>
+
+    <div class="row w-100 bg-dark ">
+        <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
+            @if (establecimiento != null)
+            {
+                <span style="color:white" class="SubTitulo">@establecimiento.nombre</span>
+            }
+        </div>
+        <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
+            @if (averia != null)
+            {
+                @if (averia.incidencia.maquina != null)
+                {
+                    <span style="color:white" class="SubTitulo">@averia.incidencia.maquina.descripcionDistribucion</span>
+                }
+            }
+        </div>
+    </div>
+
+    @if (carga != null)
+    {
+        <div class="row w-100 ">
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>Carga</span>
+                <input @bind="carga.cargaEmpresa" type="number" class="mb-1" />
+            </div>
+
+            <div class="col-12 w-100 border d-flex flex-column justify-content-start">
+                <span>Recuperacion </span>
+                <input @bind="carga.recuperacionEmpresa" type="number" class="mb-1" />
+            </div>
+        </div>
+    }
+
+
+</form>
+
+<div class="w-100 bg-red" style="height:8vw;"></div>
+
+<div class="row m-1 fixed-bottom  ">
+    <div class="col-6 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="GuardarCarga">Guardar</button>
+    </div>
+    <div class="col-6 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick="CancelarCarga">Cancelar </button>
+    </div>
+</div>
+
+
+
+@code {
+
+    [Parameter]
+    public int establecimientoid { get; set; }
+
+    Averia averia { get; set; }
+
+    public Establecimiento establecimiento { get; set; }
+
+    public Carga carga { get; set; }
+
+    public Carga original { get; set; }
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        this.establecimiento = await EstablecimientosService.GetEstablecimientoById(establecimientoid);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var averiaJson = await JS.InvokeAsync<string>("localStorage.getItem", "averia");
+        averia = JsonSerializer.Deserialize<Averia>(averiaJson);
+
+        if (averia.carga != null)
+        {
+
+            carga = new Carga();
+            carga.cargaEmpresa = averia.carga.cargaEmpresa;
+            carga.recuperacionEmpresa = averia.carga.recuperacionEmpresa;
+
+        }
+        else
+        {
+            carga = new Carga();
+
+        }
+
+
+    }
+
+    public async void GuardarCarga()
+    {
+        averia.carga = carga;
+        var averiaJson = JsonSerializer.Serialize(averia);
+        await JS.InvokeVoidAsync("localStorage.setItem", "averia", averiaJson);
+
+        if (averia.id == 0)
+        {
+            string rute = $"/averiaform1/" + -1 + "/" + establecimientoid + "/" + true;
+            Navigation.NavigateTo(rute, false, true);
+        }
+        else
+        {
+            string rute = $"/averiaform1/" + averia.id + "/" + establecimientoid + "/" + true;
+            Navigation.NavigateTo(rute, false, true);
+
+        }
+
+    }
+
+    public void CancelarCarga()
+    {
+        carga = null;
+
+        if (averia.id == 0)
+        {
+            Navigation.NavigateTo($"/averiaform1/" + -1 + "/" + establecimientoid + "/" + true, false, true);
+
+        }
+        else
+        {
+            Navigation.NavigateTo($"/averiaform1/" + averia.id + "/" + establecimientoid + "/" + true, false, true);
+        }
+    }
+
+
+    private void OnLocationChanging(LocationChangingContext context)
+    {
+        if (context.TargetLocation.Contains("opciones"))
+        {
+            context.PreventNavigation();
+            Navigation.NavigateTo($"/averiaform1/" + averia.id + "/" + establecimientoid + "/" + true, false, true);
+        }
+        else
+        {
+            var sis = context;
+        }
+
+    }
+
+}

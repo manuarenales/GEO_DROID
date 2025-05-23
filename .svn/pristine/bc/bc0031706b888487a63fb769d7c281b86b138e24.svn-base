@@ -1,0 +1,9 @@
+﻿img {
+    height: 25px;
+    width: 25px;
+    filter: invert(100%);
+}
+
+.front {
+    z-index: 10;
+}

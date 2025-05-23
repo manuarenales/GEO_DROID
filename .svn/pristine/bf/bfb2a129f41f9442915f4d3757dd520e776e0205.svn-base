@@ -1,0 +1,17 @@
+﻿
+using System.Globalization;
+
+
+namespace GEO_DROID.Services
+{
+    public class CultureService
+    {
+        public event Action CultureChanged;
+
+        public void notifiCulture()
+        {
+            CultureChanged?.Invoke();
+        }
+
+    }
+}

@@ -1,0 +1,95 @@
+﻿@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject MaquinaService MaquinaServce
+
+
+<div Class=" d-flex flex-column justify-content-start  " @onclick='() => ShowModal( )'>
+    <label>
+        Maquina
+    </label>
+    @if (maquinaAveria != null)
+    {
+        <input Style="color: blue" @bind="@maquinaAveria.codigo" readonly ontouchstart="" />
+    }
+    else
+    {
+        <input readonly ontouchstart="" />
+    }
+
+</div>
+
+
+<div class="modal" tabindex="-1" role="dialog" style="display: @(modalVisible ? "block" : "none")">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Maquina</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="HideModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input class="form-control mb-2" @bind="Bmaquina" placeholder="Buscar" />
+                <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                    @foreach (Maquina maquina in maquinas.Where(m => string.IsNullOrEmpty(Bmaquina) || m.codigo.Contains(Bmaquina)))
+                    {
+                        <li class="list-group-item" @onclick="() => SetMaquinaAveria(maquina)">
+                            <span>@maquina.codigo</span> / <span>@maquina.descripcionDistribucion</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    [Parameter]
+    public Maquina maquinaAveria { get; set; }
+    [Parameter]
+    public EventCallback<Maquina> maquinaAveriaChanged { get; set; }
+    [Parameter]
+    public EventCallback OnValueChanged { get; set; }
+    [Parameter]
+    public int idEstablecimiento { get; set; }
+
+    bool modalVisible = false;
+
+    public List<Maquina> maquinas = new List<Maquina>();
+    private string Bmaquina = "";
+    private bool IsIdMaquinaValid { get; set; } = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (idEstablecimiento == 0)
+        {
+            maquinas = await MaquinaServce.Getmaquinas();
+        }
+        else
+        {
+            maquinas = await MaquinaServce.GetmaquinasByEstablecimiento(idEstablecimiento);
+        }
+        maquinas = await MaquinaServce.Getmaquinas();
+    }
+
+    private void ShowModal()
+    {
+        modalVisible = true;
+    }
+
+    private void HideModal()
+    {
+        modalVisible = false;
+    }
+    private void SetMaquinaAveria(Maquina maquina)
+    {
+        // maquinaAveria = maquina;
+        maquinaAveriaChanged.InvokeAsync(maquina);
+        OnValueChanged.InvokeAsync();
+        HideModal();
+    }
+
+}

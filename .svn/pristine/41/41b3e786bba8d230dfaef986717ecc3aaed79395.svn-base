@@ -1,0 +1,57 @@
+﻿@page "/averias/{establecimientoid:int}"
+@using GEO_DROID.Models
+@using GEO_DROID.Services
+@using GEO_DROID.Shared.Components
+@inject CultureService Cultureservice
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject AveriasService AveriasService
+@inject MaquinaService MaquinaService
+@inject EstadoAveriaService EstadoAveriaService
+@inject NavigationManager Navigation
+
+
+<ul class="list-group mb-3  ">
+    <li class="  list-group-item d-flex justify-content-start align-items-lg-center" @onclick='() => NavigateTo("averiaform1/-1/" + establecimientoid)'>
+        <img class="m-1" src="img/add.png" />
+        <h7 class="m-2"> @Localizer["Añadir Averia"]</h7>
+    </li>
+    <li class=" list-group-item d-flex justify-content-start align-items-lg-center">
+        <h5> Mis averías</h5>
+    </li>
+    @foreach (Averia averia in averiasList)
+    {
+        <li class="list-group-item d-flex flex-column" @onclick='() => NavigateTo("averiaform1/"+ averia.id + "/" + establecimientoid)'>
+            @if (@averia.maquina != null)
+            {
+                <span>@averia.maquina.codigo</span>
+            }
+            @if (@averia.averiaEstado != null)
+            {
+                <span style="color:blue;">@averia.averiaEstado.descripcion</span>
+            }
+        </li>
+    }
+    <li class="  list-group-item d-flex justify-content-start align-items-lg-center">
+        <h5>Otras</h5>
+    </li>
+</ul>
+
+@code {
+
+    [Parameter]
+    public int establecimientoid { get; set; }
+
+    List<Averia> averiasList = new List<Averia>();
+    Averia passav;
+
+    protected override async Task OnInitializedAsync()
+    {
+        averiasList = await AveriasService.GetAveriasAsync();
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}", false, true);
+    }
+
+}

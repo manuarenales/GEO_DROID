@@ -1,0 +1,21 @@
+﻿using System.ComponentModel.DataAnnotations;
+ 
+
+namespace GeoDroid.Data.Models
+{
+    public class ModeloMaquina
+    {
+        [Key]
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        public string nombre { get; set; }
+
+        public string TextoModeloMaquina
+        {
+            get
+            {
+                return nombre;
+            }
+        }
+    }
+}

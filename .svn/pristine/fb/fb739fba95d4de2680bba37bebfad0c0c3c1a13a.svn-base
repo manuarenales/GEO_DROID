@@ -1,0 +1,145 @@
+﻿@page "/averiaform/{averiaid:int}/{establecimiento:int}"
+@using GEO_DROID.Models
+@using GEO_DROID.Services
+@inject AveriasService AveriasService
+@inject MaquinaService MaquinaServce
+@inject EstadoAveriaService EstadoAveriaService
+@inject ConceptoAveriaService ConceptoAveriaService
+@inject NavigationManager Navigation
+@inject CultureService Cultureservice
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+<h3>@title</h3>
+<ListGroup Flush>
+    <Div Class="d-flex flex-column justify-content-start  ">
+        <span>Detalles</span>
+    </Div>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <input type="text" @bind="busqueda" placeholder="Maquina" />
+        <select required @bind="averia.idMaquina">
+            @foreach (Maquina maquina in maquinas.Where(m => m.codigo.Contains(busqueda)))
+            {
+                <option value="@maquina.id"> <span class="bluetext"> @maquina.codigo</span> </option>
+            }
+        </select>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <input type="text" @bind="concepto" placeholder="Concepto" />
+        <select required @bind="averia.idConceptoAverias">
+            @foreach (ConceptoAveria concepto in conceptos.Where(m => m.descripcion.Contains(concepto)))
+            {
+                <option value="@concepto.id"> <span class="bluetext"> @concepto.descripcion </span></option>
+            }
+        </select>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <input type="text" @bind="estado" placeholder="Estado" />
+        <select required @bind="averia.idAveriasEstados">
+            @foreach (AveriaEstado estado in estados.Where(m => m.descripcion.Contains(estado)))
+            {
+                <option value="@estado.id"> <span class="bluetext"> @estado.descripcion</span> </option>
+            }
+        </select>
+    </ListGroupItem>
+
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span> Descripcion </span>
+        <textarea class="bluetext" type="text" @bind="averia.observaciones " placeholder="Descripcion" />
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span> Detalle </span>
+        <textarea class="bluetext" type="text" @bind="averia.detalle" placeholder="Detalle" />
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span> Comentarios </span>
+        <textarea class="bluetext" type="text" @bind="averia.comentarios" placeholder="Comentarios" />
+    </ListGroupItem>
+    <Div Class="d-flex flex-column justify-content-start  ">
+        <span style="font-size: bold">Acciones</span>
+    </Div>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span> Realizar carga  </span>
+        <span class="bluetext">No realizada</span>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span>Lectura inicial de contadores </span>
+        <span class="bluetext">No realizada</span>
+    </ListGroupItem>
+    <ListGroupItem Class="d-flex flex-column justify-content-start  ">
+        <span>Lectura final contadores </span>
+        <span class="bluetext">No realizada</span>
+    </ListGroupItem>
+</ListGroup>
+ 
+<Div Class="row m-1">
+    <Div Class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100 " @onclick='() => GuardarAveria()'>Guardar</button>
+    </Div>
+    <Div Class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" disabled="@((averiaid == -1))" @onclick='() => EliminarAveria()'>Eliminar</button>
+    </Div>
+    <Div Class="col-4 p-1">
+        <button type="button" class="btn btn-secondary w-100" @onclick='() => NavigateTo("averias/" + establecimiento)'>Cancelar</button>
+    </Div>
+</Div>
+
+@code {
+
+    [Parameter]
+    public int averiaid { get; set; }
+    [Parameter]
+    public int establecimiento { get; set; }
+    private string busqueda = "";
+    private string concepto = "";
+    private string estado = "";
+
+    private Modal modalSIS;
+    private string title;
+    private Averia averia = new Averia();
+
+    public Maquina opcionSeleccionada;
+
+    public List<Maquina> maquinas = new List<Maquina>();
+    public List<ConceptoAveria> conceptos = new List<ConceptoAveria>();
+    public List<AveriaEstado> estados = new List<AveriaEstado>();
+
+    private Task OpenConfig()
+    {
+        return modalSIS.Show();
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (averiaid == -1)
+        {
+            title = "Añadir Averia";
+            averia = new Averia();
+        }
+        else
+        {
+            title = "Editando Averia";
+            averia = await AveriasService.GetAveriaByIdAsync(averiaid);
+        }
+        maquinas = await MaquinaServce.Getmaquinas();
+        conceptos = await ConceptoAveriaService.Getconceptos();
+        estados = await EstadoAveriaService.GetEstadosAsync();
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+
+    public async void EliminarAveria()
+    {
+        int res = await AveriasService.DeleteAveriaAsync(averia);
+        NavigateTo("averias/" + establecimiento);
+    }
+
+    public async void GuardarAveria()
+    {
+        int res = await AveriasService.SaveAveriaAsync(averia);
+        NavigateTo("averias/" + establecimiento);
+    }
+}

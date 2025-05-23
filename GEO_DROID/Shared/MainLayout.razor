@@ -1,0 +1,52 @@
+﻿@using GEO_DROID.Services
+@using System.Text.RegularExpressions
+@using System;
+@using Microsoft.FluentUI.AspNetCore.Components
+
+@inherits FluentMainLayout
+
+<div class="page">
+    <main>
+        <FluentHeader>
+            <NavMenu />
+        </FluentHeader>
+
+        <FluentBodyContent>
+            @Body
+
+            <GEO_DROID.Shared.Components.ConfirmationPopUp />
+            <GEO_DROID.Shared.Components.BlockingSpinner />
+
+
+            <FluentToastProvider />
+            <FluentDialogProvider />
+            <FluentTooltipProvider />
+            <FluentMessageBarProvider />
+            <FluentMenuProvider />
+
+        </FluentBodyContent>
+
+        <FluentFooter>
+
+        </FluentFooter>
+
+    </main>
+</div>
+
+
+
+
+@code
+{
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    private void OnCultureChanged()
+    {
+        Console.WriteLine("CultureChanged event received, updating component.");
+        StateHasChanged();
+    }
+}

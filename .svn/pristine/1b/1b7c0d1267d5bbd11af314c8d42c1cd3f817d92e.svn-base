@@ -1,0 +1,22 @@
+﻿.bluetext {
+    color: blue;
+}
+
+option:not(:first-of-type) {
+    color: blue;
+}
+
+select {
+    color: blue;
+}
+
+subtitle {
+    font-size: 1.5em;
+    color: white;
+}
+
+.invalid {
+    border: 3px solid red;
+}
+
+   

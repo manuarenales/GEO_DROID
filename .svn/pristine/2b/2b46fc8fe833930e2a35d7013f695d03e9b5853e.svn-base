@@ -1,0 +1,21 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Models
+{
+    public class NDB_BreakDownByEstablishment
+    {
+        public int id { get; set; }
+        public int idGeo { get; set; }
+        public int idIncidencias { get; set; }
+        public int idMaquina { get; set; }
+        public int idEstablecimiento { get; set; }
+        public string modeloMaquina { get; set; }
+        public int idConceptoAveria { get; set; }
+        public int idAveriasEstados { get; set; }
+        public string observaciones { get; set; }
+    }
+}

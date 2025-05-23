@@ -1,0 +1,18 @@
+﻿
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+
+namespace GeoDroid.Data.Models
+{
+    public class LecturaContador
+    {
+        [Key]
+        public int id { get; set; }
+        public int? idGeo { get; set; }
+
+        [ForeignKey("incidencia")]
+        public int idIncidencias { get; set; }
+        public virtual Incidencia incidencia { get; set; }
+    }
+}

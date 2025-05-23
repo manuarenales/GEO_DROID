@@ -1,0 +1,691 @@
+﻿//using Android.App;
+//using GeoDroid.Data;
+//using GeoDroid.Data.Models;
+//using Microsoft.EntityFrameworkCore;
+//using static GEO_DROID.Services.Commands;
+//using static GeoDroid.Data.Models.PatronContadorDetalle;
+
+//namespace GEO_DROID.Services.SincroService
+//{
+//    public class SincroServiceOLD
+//    {
+//        EstablecimientosService establecimientosService;
+//        MaquinaService maquinaService;
+//        ConceptoAveriaService conceptoAveriaService;
+//        EstadoAveriaService estadoAveriaService;
+//        AveriasService averiaService;
+//        PatronContadorService patronContadorService;
+//        PatronContadorDetalleService patronContadorDetalleService;
+//        ModuloCapturaService moduloCapturaService;
+
+
+//        System.Timers.Timer t1;
+//        AlertDialog _alertDialog = null;
+//        ProgressDialog _pd = null;
+//        SyncProcess _sp = null;
+
+//        public SincroServiceOLD(GeoDroidDbContext dbContext)
+//        {
+//            establecimientosService = new EstablecimientosService();
+//            maquinaService = new MaquinaService();
+//            conceptoAveriaService = new ConceptoAveriaService();
+//            estadoAveriaService = new EstadoAveriaService();
+//            averiaService = new AveriasService();
+//            patronContadorService = new PatronContadorService();
+//            patronContadorDetalleService = new PatronContadorDetalleService();
+//            moduloCapturaService = new ModuloCapturaService();
+//        }
+
+//        public void Sincro()
+//        {
+//            //// GENERAMOS ESTABLECIMIENTOS ///
+//            CleanPatrones();
+//            CleanMaquinas();
+//            CleanEstablecimientos();
+
+//            //// GENERAMOS MAQUINA ////
+//            CreatePatronesMoc();
+//            CreateEstablecimientosMoc();
+//            CreateMaquinasMoc();
+
+//            //// GENERAMOS CONCEPTOS ////
+//            CleanConceptos();
+//            CreateConceptos();
+
+//            //// GENERAMOS ESTADOS ////
+//            CleanEstados();
+//            CreateEstados();
+
+//        }
+//        public void SincroGEO()
+//        {
+//            AlertDialog.Builder builder = new AlertDialog.Builder(Android.App.Application.Context);
+
+//            builder.SetTitle("Aviso");
+//            builder.SetMessage("Pulse Aceptar para iniciar el proceso de sincronización");
+//            builder.SetPositiveButton("Aceptar", (s, e) =>
+//            {
+//                _pd = ProgressDialog.Show(Android.App.Application.Context, "Sincronizando...", "", true);
+//                _sp = new SyncProcess(ActivityHelper.GetCurrentActivity());
+//                _sp.DebugLoginHandler = _SyncDebugHandler;
+//                _sp.EndHandler = _SyncEndendHandler;
+//                _sp.ProgressHandler = _SyncProgressHandler;
+//                _sp.ErrorHandler = _SyncErrorHandler;
+//                _sp.Start(_pd, LogInCommand.Motivo.SincronizacionCompleta);
+
+//                if (t1 != null)
+//                    t1.Stop();
+
+//                /*t1 = new System.Timers.Timer();
+//                t1.Elapsed += (sender, args) => CancelProcess();
+//                t1.Interval = 80000;
+//                t1.Enabled = true;
+//                t1.Start();*/
+
+//            });
+//            builder.SetNegativeButton("Cancelar", (s, e) => { });
+//            builder.SetIcon(2130837513);
+//            builder.Create().Show();
+//        }
+//        protected void _SyncDebugHandler(string str)
+//        {
+//        }
+//        protected void _SyncEndendHandler()
+//        {
+//            _sp = null;
+//            _pd.Dismiss();
+
+//            //ReiniciarServicioGeolocalizacion(null);
+//        }
+//        protected void _SyncProgressHandler(string str, int step)
+//        {
+//            Task.Run(() =>
+//            {
+//                _pd.SetMessage(str);
+//            });
+
+//        }
+//        protected void _SyncErrorHandler()
+//        {
+//            Task.Run(() =>
+//             {
+//                 AlertDialog.Builder builder = new AlertDialog.Builder(Android.App.Application.Context);
+//                 builder.SetTitle("Aviso");
+//                 builder.SetIcon(2130837513);
+//                 builder.SetMessage("Se ha producido un error al sincronizar. Reintentelo de nuevo.");
+//                 builder.SetPositiveButton("Aceptar", (s, e) => { _SyncEndendHandler(); });
+//                 builder.SetIcon(2130837513);
+//                 builder.Create().Show();
+//             });
+//        }
+//        //-------------------------------------------------------------------------------------------------------------------
+//        public async void CleanAverias()
+//        {
+//            List<Averia> averiaList = averiaService.GetAveriasAsync().ToList();
+//            foreach (Averia averia in averiaList)
+//            {
+//                await averiaService.DeleteAveriaAsync(averia);
+//            }
+//        }
+//        public async void CleanConceptos()
+//        {
+//            List<ConceptoAveria> establecimientos = await conceptoAveriaService.GetConceptosAveriasAsync();
+//            foreach (ConceptoAveria item in establecimientos)
+//            {
+//                await conceptoAveriaService.DeleteConceptosAveriasAsync(item);
+//            }
+//        }
+//        public async void CleanEstados()
+//        {
+//            List<AveriaEstado> establecimientos = await estadoAveriaService.GetEstadoAveriaAsync();
+//            foreach (AveriaEstado item in establecimientos)
+//            {
+//                await estadoAveriaService.DeleteEstadoAveriaAsync(item);
+//            }
+//        }
+//        public async void CleanEstablecimientos()
+//        {
+
+//            List<Establecimiento> establecimientos = establecimientosService.GetEstablecimientosAsync().ToList();
+//            foreach (Establecimiento item in establecimientos)
+//            {
+//                try
+//                {
+//                    await establecimientosService.DeleteEstablecimientoAsync(item);
+//                }
+//                catch (Exception)
+//                {
+
+//                    throw;
+//                }
+
+//            }
+//        }
+//        public async void CleanMaquinas()
+//        {
+//            List<Maquina> mquinas = await maquinaService.GetMaquinasAsync();
+//            foreach (Maquina item in mquinas)
+//            {
+//                await maquinaService.DeleteMaquinaAsync(item);
+//            }
+//        }
+//        public async void CleanPatrones()
+//        {
+//            List<PatronContador> mquinas = await patronContadorService.GetPatronesAsync();
+//            foreach (PatronContador item in mquinas)
+//            {
+//                await patronContadorService.DeletePatronAsync(item);
+//            }
+//        }
+//        public async void CreateEstablecimientosMoc()
+//        {
+//            Establecimiento establecimiento1 = new Establecimiento();
+//            Establecimiento establecimiento2 = new Establecimiento();
+//            Establecimiento establecimiento3 = new Establecimiento();
+//            Establecimiento establecimiento4 = new Establecimiento();
+//            Establecimiento establecimiento5 = new Establecimiento();
+
+//            establecimiento1.nombre = "ASADOR ZUBIA";
+//            establecimiento1.codigo = "00003";
+//            establecimiento1.direccion = "BAINUETXEKO ZUMALDIA., 2 BAJO";
+
+//            establecimiento2.nombre = "HAIZEA ELGETA";
+//            establecimiento2.codigo = "00004";
+//            establecimiento2.direccion = "BARRENA,48";
+
+//            establecimiento3.nombre = "BOLA TOKI";
+//            establecimiento3.codigo = "00005";
+//            establecimiento3.direccion = "CHONTA,35";
+
+//            establecimiento4.nombre = "CASA CULTURAL DE GALICIA";
+//            establecimiento4.codigo = "00006";
+//            establecimiento4.direccion = "SAN ANDRES, 6";
+
+//            establecimiento5.nombre = "GURE KAIOLA";
+//            establecimiento5.codigo = "00007";
+//            establecimiento5.direccion = "BISTA EDER S/N";
+
+//            await establecimientosService.SaveEstablecimientoAsync(establecimiento1);
+//            await establecimientosService.SaveEstablecimientoAsync(establecimiento2);
+//            await establecimientosService.SaveEstablecimientoAsync(establecimiento3);
+//            await establecimientosService.SaveEstablecimientoAsync(establecimiento4);
+//            await establecimientosService.SaveEstablecimientoAsync(establecimiento5);
+//        }
+//        public async void CreatePatronesMoc()
+//        {
+//            PatronContador patron1 = new PatronContador();
+//            PatronContador patron2 = new PatronContador();
+//            PatronContador patron3 = new PatronContador();
+//            PatronContador patron4 = new PatronContador();
+
+//            await patronContadorService.SavePatronAsync(patron1);
+//            await patronContadorService.SavePatronAsync(patron2);
+//            await patronContadorService.SavePatronAsync(patron3);
+//            await patronContadorService.SavePatronAsync(patron4);
+
+//            PatronContadorDetalle patrondetalle1 = new PatronContadorDetalle();
+//            patrondetalle1.idPatronContador = patron1.id;
+//            patrondetalle1.orden = 1;
+//            patrondetalle1.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle1.valorPaso = 0.10m;
+//            patrondetalle1.tipoContadores = "Entrada";
+//            patrondetalle1.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle2 = new PatronContadorDetalle();
+//            patrondetalle2.idPatronContador = patron1.id;
+//            patrondetalle2.orden = 2;
+//            patrondetalle2.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle2.valorPaso = 0.10m;
+//            patrondetalle2.tipoContadores = "Salida";
+//            patrondetalle2.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle3 = new PatronContadorDetalle();
+//            patrondetalle3.idPatronContador = patron1.id;
+//            patrondetalle3.orden = 3;
+//            patrondetalle3.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle3.valorPaso = 0.10m;
+//            patrondetalle3.tipoContadores = "Entradas Mecanico";
+//            patrondetalle3.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle4 = new PatronContadorDetalle();
+//            patrondetalle4.idPatronContador = patron2.id;
+//            patrondetalle4.orden = 1;
+//            patrondetalle4.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle4.valorPaso = 0.20m;
+//            patrondetalle4.tipoContadores = "Entrada";
+//            patrondetalle4.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle5 = new PatronContadorDetalle();
+//            patrondetalle5.idPatronContador = patron2.id;
+//            patrondetalle5.orden = 2;
+//            patrondetalle5.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle5.valorPaso = 0.20m;
+//            patrondetalle5.tipoContadores = "Salida";
+//            patrondetalle5.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle6 = new PatronContadorDetalle();
+//            patrondetalle6.idPatronContador = patron2.id;
+//            patrondetalle6.orden = 3;
+//            patrondetalle6.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle6.valorPaso = 0.20m;
+//            patrondetalle6.tipoContadores = "Entradas Mecanico";
+//            patrondetalle6.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle7 = new PatronContadorDetalle();
+//            patrondetalle7.idPatronContador = patron3.id;
+//            patrondetalle7.orden = 1;
+//            patrondetalle7.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle7.valorPaso = 0.30m;
+//            patrondetalle7.tipoContadores = "Entrada";
+//            patrondetalle7.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle8 = new PatronContadorDetalle();
+//            patrondetalle8.idPatronContador = patron3.id;
+//            patrondetalle8.orden = 2;
+//            patrondetalle8.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle8.valorPaso = 0.30m;
+//            patrondetalle8.tipoContadores = "Salida";
+//            patrondetalle8.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle9 = new PatronContadorDetalle();
+//            patrondetalle9.idPatronContador = patron3.id;
+//            patrondetalle9.orden = 3;
+//            patrondetalle9.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle9.valorPaso = 0.30m;
+//            patrondetalle9.tipoContadores = "Entradas Mecanico";
+//            patrondetalle9.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle10 = new PatronContadorDetalle();
+//            patrondetalle10.idPatronContador = patron4.id;
+//            patrondetalle10.orden = 1;
+//            patrondetalle10.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle10.valorPaso = 0.40m;
+//            patrondetalle10.tipoContadores = "Entrada";
+//            patrondetalle10.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle11 = new PatronContadorDetalle();
+//            patrondetalle11.idPatronContador = patron4.id;
+//            patrondetalle11.orden = 2;
+//            patrondetalle11.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle11.valorPaso = 0.40m;
+//            patrondetalle11.tipoContadores = "Salida";
+//            patrondetalle11.tipoProtocolos = 1;
+
+//            PatronContadorDetalle patrondetalle12 = new PatronContadorDetalle();
+//            patrondetalle12.idPatronContador = patron4.id;
+//            patrondetalle12.orden = 3;
+//            patrondetalle12.tipoBasico = (int)TipoBasico.Jugadas;
+//            patrondetalle12.valorPaso = 0.40m;
+//            patrondetalle12.tipoContadores = "Entradas Mecanico";
+//            patrondetalle12.tipoProtocolos = 1;
+
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle1);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle2);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle3);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle4);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle5);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle6);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle7);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle8);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle9);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle10);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle11);
+//            await patronContadorDetalleService.SavePatronDetalleAsync(patrondetalle12);
+
+//        }
+//        public async void CreateMaquinasMoc()
+//        {
+//            Maquina maquina1 = new Maquina();
+//            Maquina maquina2 = new Maquina();
+//            Maquina maquina3 = new Maquina();
+//            Maquina maquina4 = new Maquina();
+//            Maquina maquina5 = new Maquina();
+//            Maquina maquina6 = new Maquina();
+//            Maquina maquina7 = new Maquina();
+//            Maquina maquina8 = new Maquina();
+//            Maquina maquina9 = new Maquina();
+//            Maquina maquina10 = new Maquina();
+//            Maquina maquina11 = new Maquina();
+//            Maquina maquina12 = new Maquina();
+//            Maquina maquina13 = new Maquina();
+//            Maquina maquina14 = new Maquina();
+//            Maquina maquina15 = new Maquina();
+//            Maquina maquina16 = new Maquina();
+//            Maquina maquina17 = new Maquina();
+//            Maquina maquina18 = new Maquina();
+//            Maquina maquina19 = new Maquina();
+//            Maquina maquina20 = new Maquina();
+
+
+//            List<PatronContador> Patrones = await patronContadorService.GetPatronesAsync();
+
+//            maquina1.codigo = "SKIBILB001";
+//            maquina1.descripcionDistribucion = "SKIBILB001 / LOS 777 MAGNIFICOS";
+//            maquina1.idPatronContadores = Patrones[0].id;
+
+//            maquina2.codigo = "SZU0120012";
+//            maquina2.descripcionDistribucion = "SZU0120012 / BINGO LOTTO";
+//            maquina2.idPatronContadores = Patrones[0].id;
+
+//            maquina3.codigo = "B099067759";
+//            maquina3.descripcionDistribucion = "B099067759 / SUPER BANCO DEL TESORO";
+//            maquina3.idPatronContadores = Patrones[0].id;
+
+//            maquina4.codigo = "SZU0120018";
+//            maquina4.descripcionDistribucion = "SZU0120018 / CASH LINE 2000";
+//            maquina4.idPatronContadores = Patrones[0].id;
+
+//            maquina5.codigo = "B102000263";
+//            maquina5.descripcionDistribucion = "B102000263 / BOWLING";
+//            maquina5.idPatronContadores = Patrones[0].id;
+
+//            maquina6.codigo = "B098071066";
+//            maquina6.descripcionDistribucion = "B098071066 / RF BURLESQUE";
+//            maquina6.idPatronContadores = Patrones[0].id;
+
+//            maquina7.codigo = "B101072713";
+//            maquina7.descripcionDistribucion = "B101072713 / CIRSA GUAY PLUS";
+//            maquina7.idPatronContadores = Patrones[0].id;
+
+//            maquina8.codigo = "B096053516";
+//            maquina8.descripcionDistribucion = "B096053516 / CASH LINE 2000";
+//            maquina8.idPatronContadores = Patrones[1].id;
+
+//            maquina9.codigo = "B099068535";
+//            maquina9.descripcionDistribucion = "B099068535 / GRAN CABARET 500";
+//            maquina9.idPatronContadores = Patrones[1].id;
+
+//            maquina10.codigo = "B081000791";
+//            maquina10.descripcionDistribucion = "B081000791 / CAVERNICOLA";
+//            maquina10.idPatronContadores = Patrones[1].id;
+
+//            maquina11.codigo = "B098070253";
+//            maquina11.descripcionDistribucion = "B098070253 / CHARLESTON";
+//            maquina11.idPatronContadores = Patrones[1].id;
+
+//            maquina12.codigo = "B098070244";
+//            maquina12.descripcionDistribucion = "B098070244 / CHICAGO FIVE";
+//            maquina12.idPatronContadores = Patrones[1].id;
+
+//            maquina13.codigo = "B096053517";
+//            maquina13.descripcionDistribucion = "B096053517 / CHICAGO";
+//            maquina13.idPatronContadores = Patrones[2].id;
+
+//            maquina14.codigo = "B089000741";
+//            maquina14.descripcionDistribucion = "B089000741 / KONG CHITA";
+//            maquina14.idPatronContadores = Patrones[2].id;
+
+//            maquina15.codigo = "S098000014";
+//            maquina15.descripcionDistribucion = "S098000014 / LATIN DANCER";
+//            maquina15.idPatronContadores = Patrones[2].id;
+
+//            maquina16.codigo = "S098000004";
+//            maquina16.descripcionDistribucion = "S098000004 / MANOS A LA OBRA";
+//            maquina16.idPatronContadores = Patrones[2].id;
+
+
+//            maquina17.codigo = "S098000062";
+//            maquina17.descripcionDistribucion = "S098000062 / MONEDIN JOKER";
+//            maquina17.idPatronContadores = Patrones[3].id;
+
+//            maquina18.codigo = "B112004926";
+//            maquina18.descripcionDistribucion = "B112004926 / NO VA MAS";
+//            maquina18.idPatronContadores = Patrones[3].id;
+
+//            maquina19.codigo = "B112004925";
+//            maquina19.descripcionDistribucion = "B112004925 / NEOPOLIS 2";
+//            maquina19.idPatronContadores = Patrones[3].id;
+
+//            maquina20.codigo = "B098080303";
+//            maquina20.descripcionDistribucion = "B098080303 / PANCHO VILLA";
+//            maquina20.idPatronContadores = Patrones[3].id;
+
+//            var establecimientos = await establecimientosService.GetEstablecimientosAsync()
+//                                                      .Take(4)
+//                                                      .ToListAsync();
+
+//            int? establecimientoId1 = establecimientos.ElementAtOrDefault(0)?.id;
+//            int? establecimientoId2 = establecimientos.ElementAtOrDefault(1)?.id;
+//            int? establecimientoId3 = establecimientos.ElementAtOrDefault(2)?.id;
+//            int? establecimientoId4 = establecimientos.ElementAtOrDefault(3)?.id;
+
+//            maquina1.idestablecimientos = (int)establecimientoId1;
+//            maquina2.idestablecimientos = (int)establecimientoId1;
+//            maquina3.idestablecimientos = (int)establecimientoId1;
+//            maquina4.idestablecimientos = (int)establecimientoId1;
+//            maquina5.idestablecimientos = (int)establecimientoId1;
+//            maquina18.idestablecimientos = (int)establecimientoId1;
+//            maquina19.idestablecimientos = (int)establecimientoId1;
+//            maquina20.idestablecimientos = (int)establecimientoId1;
+
+//            maquina6.idestablecimientos = (int)establecimientoId2;
+//            maquina7.idestablecimientos = (int)establecimientoId2;
+//            maquina8.idestablecimientos = (int)establecimientoId2;
+//            maquina9.idestablecimientos = (int)establecimientoId2;
+
+//            maquina10.idestablecimientos = (int)establecimientoId3;
+//            maquina11.idestablecimientos = (int)establecimientoId3;
+//            maquina12.idestablecimientos = (int)establecimientoId3;
+//            maquina13.idestablecimientos = (int)establecimientoId3;
+
+//            maquina14.idestablecimientos = (int)establecimientoId4;
+//            maquina15.idestablecimientos = (int)establecimientoId4;
+//            maquina16.idestablecimientos = (int)establecimientoId4;
+//            maquina17.idestablecimientos = (int)establecimientoId4;
+
+//            await maquinaService.SaveMaquinaAsync(maquina1);
+//            await maquinaService.SaveMaquinaAsync(maquina2);
+//            await maquinaService.SaveMaquinaAsync(maquina3);
+//            await maquinaService.SaveMaquinaAsync(maquina4);
+//            await maquinaService.SaveMaquinaAsync(maquina5);
+//            await maquinaService.SaveMaquinaAsync(maquina6);
+//            await maquinaService.SaveMaquinaAsync(maquina7);
+//            await maquinaService.SaveMaquinaAsync(maquina8);
+//            await maquinaService.SaveMaquinaAsync(maquina9);
+//            await maquinaService.SaveMaquinaAsync(maquina10);
+//            await maquinaService.SaveMaquinaAsync(maquina11);
+//            await maquinaService.SaveMaquinaAsync(maquina12);
+//            await maquinaService.SaveMaquinaAsync(maquina13);
+//            await maquinaService.SaveMaquinaAsync(maquina14);
+//            await maquinaService.SaveMaquinaAsync(maquina15);
+//            await maquinaService.SaveMaquinaAsync(maquina16);
+//            await maquinaService.SaveMaquinaAsync(maquina17);
+//            await maquinaService.SaveMaquinaAsync(maquina18);
+//            await maquinaService.SaveMaquinaAsync(maquina19);
+//            await maquinaService.SaveMaquinaAsync(maquina20);
+
+
+//            ModuloCaptura modulocaptura1 = new ModuloCaptura();
+//            modulocaptura1.mac = "";
+//            modulocaptura1.imei = "";
+//            modulocaptura1.password = "";
+//            modulocaptura1.idMaquinas = maquina1.id;
+
+//            ModuloCaptura modulocaptura2 = new ModuloCaptura();
+//            modulocaptura2.mac = "";
+//            modulocaptura2.imei = "";
+//            modulocaptura2.password = "";
+//            modulocaptura2.idMaquinas = maquina2.id;
+
+//            ModuloCaptura modulocaptura3 = new ModuloCaptura();
+//            modulocaptura3.mac = "";
+//            modulocaptura3.imei = "";
+//            modulocaptura3.password = "";
+//            modulocaptura3.idMaquinas = maquina3.id;
+
+//            ModuloCaptura modulocaptura4 = new ModuloCaptura();
+//            modulocaptura4.mac = "";
+//            modulocaptura4.imei = "";
+//            modulocaptura4.password = "";
+//            modulocaptura4.idMaquinas = maquina4.id;
+
+//            ModuloCaptura modulocaptura5 = new ModuloCaptura();
+//            modulocaptura5.mac = "";
+//            modulocaptura5.imei = "";
+//            modulocaptura5.password = "";
+//            modulocaptura5.idMaquinas = maquina5.id;
+
+//            ModuloCaptura modulocaptura6 = new ModuloCaptura();
+//            modulocaptura6.mac = "";
+//            modulocaptura6.imei = "";
+//            modulocaptura6.password = "";
+//            modulocaptura6.idMaquinas = maquina6.id;
+
+//            ModuloCaptura modulocaptura7 = new ModuloCaptura();
+//            modulocaptura7.mac = "";
+//            modulocaptura7.imei = "";
+//            modulocaptura7.password = "";
+//            modulocaptura7.idMaquinas = maquina7.id;
+
+//            ModuloCaptura modulocaptura8 = new ModuloCaptura();
+//            modulocaptura8.mac = "";
+//            modulocaptura8.imei = "";
+//            modulocaptura8.password = "";
+//            modulocaptura8.idMaquinas = maquina8.id;
+
+//            ModuloCaptura modulocaptura9 = new ModuloCaptura();
+//            modulocaptura9.mac = "";
+//            modulocaptura9.imei = "";
+//            modulocaptura9.password = "";
+//            modulocaptura9.idMaquinas = maquina9.id;
+
+//            ModuloCaptura modulocaptura10 = new ModuloCaptura();
+//            modulocaptura10.mac = "";
+//            modulocaptura10.imei = "";
+//            modulocaptura10.password = "";
+//            modulocaptura10.idMaquinas = maquina10.id;
+
+//            ModuloCaptura modulocaptura11 = new ModuloCaptura();
+//            modulocaptura11.mac = "";
+//            modulocaptura11.imei = "";
+//            modulocaptura11.password = "";
+//            modulocaptura11.idMaquinas = maquina11.id;
+
+//            ModuloCaptura modulocaptura12 = new ModuloCaptura();
+//            modulocaptura12.mac = "";
+//            modulocaptura12.imei = "";
+//            modulocaptura12.password = "";
+//            modulocaptura12.idMaquinas = maquina12.id;
+
+//            ModuloCaptura modulocaptura13 = new ModuloCaptura();
+//            modulocaptura13.mac = "";
+//            modulocaptura13.imei = "";
+//            modulocaptura13.password = "";
+//            modulocaptura13.idMaquinas = maquina13.id;
+
+//            ModuloCaptura modulocaptura14 = new ModuloCaptura();
+//            modulocaptura14.mac = "";
+//            modulocaptura14.imei = "";
+//            modulocaptura14.password = "";
+//            modulocaptura14.idMaquinas = maquina14.id;
+
+//            ModuloCaptura modulocaptura15 = new ModuloCaptura();
+//            modulocaptura15.mac = "";
+//            modulocaptura15.imei = "";
+//            modulocaptura15.password = "";
+//            modulocaptura15.idMaquinas = maquina15.id;
+
+//            ModuloCaptura modulocaptura16 = new ModuloCaptura();
+//            modulocaptura16.mac = "";
+//            modulocaptura16.imei = "";
+//            modulocaptura16.password = "";
+//            modulocaptura16.idMaquinas = maquina16.id;
+
+//            ModuloCaptura modulocaptura17 = new ModuloCaptura();
+//            modulocaptura17.mac = "";
+//            modulocaptura17.imei = "";
+//            modulocaptura17.password = "";
+//            modulocaptura17.idMaquinas = maquina17.id;
+
+//            ModuloCaptura modulocaptura18 = new ModuloCaptura();
+//            modulocaptura18.mac = "";
+//            modulocaptura18.imei = "";
+//            modulocaptura18.password = "";
+//            modulocaptura18.idMaquinas = maquina18.id;
+
+//            ModuloCaptura modulocaptura19 = new ModuloCaptura();
+//            modulocaptura19.mac = "";
+//            modulocaptura19.imei = "";
+//            modulocaptura19.password = "";
+//            modulocaptura19.idMaquinas = maquina19.id;
+
+//            ModuloCaptura modulocaptura20 = new ModuloCaptura();
+//            modulocaptura20.mac = "";
+//            modulocaptura20.imei = "";
+//            modulocaptura20.password = "";
+//            modulocaptura20.idMaquinas = maquina20.id;
+
+
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura1);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura2);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura3);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura4);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura5);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura6);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura7);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura8);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura9);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura10);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura11);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura12);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura13);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura14);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura15);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura16);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura17);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura18);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura19);
+//            await moduloCapturaService.SaveModuloCapturaAsync(modulocaptura20);
+
+
+
+//        }
+//        public async void CreateConceptos()
+//        {
+//            ConceptoAveria concepto1 = new ConceptoAveria();
+//            ConceptoAveria concepto2 = new ConceptoAveria();
+//            ConceptoAveria concepto3 = new ConceptoAveria();
+//            ConceptoAveria concepto4 = new ConceptoAveria();
+//            ConceptoAveria concepto5 = new ConceptoAveria();
+//            ConceptoAveria concepto6 = new ConceptoAveria();
+//            ConceptoAveria concepto7 = new ConceptoAveria();
+//            ConceptoAveria concepto8 = new ConceptoAveria();
+
+//            concepto1.descripcion = "AJUSTE";
+//            concepto2.descripcion = "CARGA";
+//            concepto3.descripcion = "LIMPIEZA DE LA MAQUINA";
+//            concepto4.descripcion = "PROBLEMA DE HARDWARE";
+//            concepto5.descripcion = "REVISION DE LAS LUCES";
+//            concepto6.descripcion = "REVISION DE LOS RODILLOS";
+//            concepto7.descripcion = "REVISION MONEDAS ATASCADAS";
+//            concepto8.descripcion = "VALIDACION";
+
+//            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto1);
+//            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto2);
+//            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto3);
+//            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto4);
+//            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto5);
+//            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto6);
+//            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto7);
+//            await conceptoAveriaService.SaveConceptosAveriasAsync(concepto8);
+//        }
+//        public async void CreateEstados()
+//        {
+//            AveriaEstado concepto1 = new AveriaEstado();
+//            AveriaEstado concepto2 = new AveriaEstado();
+
+
+//            concepto1.descripcion = "FINALIZADA";
+//            concepto2.descripcion = "PENDIENTE";
+
+
+//            await estadoAveriaService.SaveEstadoAveriaAsync(concepto1);
+//            await estadoAveriaService.SaveEstadoAveriaAsync(concepto2);
+
+//        }
+//        public void Dispose()
+//        {
+//            throw new NotImplementedException();
+//        }
+//    }
+//}

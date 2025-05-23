@@ -1,0 +1,17 @@
+﻿using Fluxor;
+using GeoDroid.Data;
+
+
+namespace GEO_DROID.Store.Rutas
+{
+    [FeatureState]
+    public record RutasState
+    {
+        public RutasState() { }
+
+        public List<Ruta> RutasListSelected { get; init; }
+
+        public Ruta RutaSelected { get; init; }
+    }
+
+}
