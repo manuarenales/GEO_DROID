@@ -20,7 +20,7 @@ namespace GEO_DROID.Store.Rutas
         {
             try
             {
-                List<Establecimiento> establecimientos = await _database._database.Table<Establecimiento>().ToListAsync();
+                List<GeoDroid.Data.Establecimiento> establecimientos = await _database._database.Table<GeoDroid.Data.Establecimiento>().ToListAsync();
                 List<Ruta> rutas = await _database._database.Table<Ruta>().ToListAsync();
 
                 rutas = rutas.Select(r =>

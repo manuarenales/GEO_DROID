@@ -150,6 +150,52 @@ namespace GEO_DROID.Store.Forms
             };
         }
 
+        [ReducerMethod]
+        public static AveriaFormState OnUpdateAveriaFormLecturaDetalleValueAction(AveriaFormState state, UpdateAveriaFormLecturaDetalleValueAction action)
+        {
+            var newLecturaDetallesSelected = state.LecturaDetallesSelected != null
+                ? new Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle>(state.LecturaDetallesSelected)
+                : new Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle>();
+
+            GeoDroid.Data.LecturaDetalle detalleToUpdate;
+
+            if (newLecturaDetallesSelected.TryGetValue(action.PatronDetalleKey, out var existingDetalle))
+            {
+                // existingDetalle is the reference from the new dictionary's copy (or original if not copied yet).
+                // We will modify its properties directly.
+                detalleToUpdate = existingDetalle;
+            }
+            else
+            {
+                detalleToUpdate = new GeoDroid.Data.LecturaDetalle
+                {
+                    // Assuming action.PatronDetalleKey.id (from SQLite PatContDetalle) is the intended FK
+                    // for the EF Core PatronContadorDetalle. This is a critical assumption.
+                    idPatContDetalles = action.PatronDetalleKey.id,
+                    PatronContadorDetalle = null, // Cannot directly assign SQLite PatContDetalle to EF Core PatronContadorDetalle navigation property.
+                    idLecturaContadores = state.lecturacontadorId,
+                    valor = 0, // Initial default
+                    valorAntes = 0, // Initial default
+                    tieneAjuste = false
+                };
+            }
+
+            if (action.IsValorAntes)
+            {
+                detalleToUpdate.valorAntes = action.NewValor;
+            }
+            else
+            {
+                detalleToUpdate.valor = action.NewValor;
+            }
+
+            // Determine if there's an adjustment
+            detalleToUpdate.tieneAjuste = detalleToUpdate.valor != detalleToUpdate.valorAntes;
+
+            newLecturaDetallesSelected[action.PatronDetalleKey] = detalleToUpdate;
+
+            return state with { LecturaDetallesSelected = newLecturaDetallesSelected };
+        }
     }
 
 }

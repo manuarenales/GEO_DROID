@@ -1,102 +1,70 @@
-﻿@page "/lecturaInicialForm"
+﻿@* Removed @page "/lecturaInicialForm" *@
 
-@using Dispatcher = Fluxor.Dispatcher
+@using Fluxor
 @using GEO_DROID.Store.Forms
+@using GEO_DROID.Store
+@using GeoDroid.Data @* For PatContDetalle *@
+@using Microsoft.Extensions.Localization
+@using GEO_DROID.Resources.Languages @* For StringLocalizer, assuming it's GEO_DROID.Resources.Languages.StringLocalizer *@
+@using Microsoft.FluentUI.AspNetCore.Components @* Assuming FluentUI might be used for consistency *@
+
+@* Removed: @using static BLL.LeerInfoMaquina.ModuloBluetooth - Re-evaluate if needed for "Leer" functionality if reimplemented *@
+
+@inject IState<AveriaFormState> AveriaFormState
 @inject IDispatcher Dispatcher
-@inject IState<AveriaFormState> AveriaEstadoState
-@inherits Fluxor.Blazor.Web.Components.FluxorComponent
 @inject IStringLocalizer<StringLocalizer> Localizer
-@inject IJSRuntime JS
+@* Removed: @inject IJSRuntime JS - Not needed if GoBack is removed *@
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
 
-@using static BLL.LeerInfoMaquina.ModuloBluetooth
 
-
-@if (AveriaEstadoState?.Value.AveriaSelected != null)
+@if (AveriaFormState?.Value.AveriaSelected != null && AveriaFormState.Value.LecturaDetallesSelected != null)
 {
-    <form class="w-100 content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start " needs-validation>
-        <div class="row w-100 bg-dark ">
-            <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
 
-                <span style="color:white" class="SubTitulo">
-                    Tipo Lectura  GEOLINE
-                </span>
-                @* <span style="color:white" class="SubTitulo"> </span>  *@
-            </div>
-            <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center  ">
-            </div>
-        </div>
-        @if (AveriaEstadoState.Value.LecturaDetallesSelected != null)
+    <FluentStack Orientation="Orientation.Vertical" Class="w-100">
+        <FluentLabel Typo="Typography.H6">@Localizer["LecturaInicialContadores"]</FluentLabel>
+        @foreach (var entry in AveriaFormState.Value.LecturaDetallesSelected.OrderBy(e => e.Key.orden))
         {
-            @foreach (var entry in AveriaEstadoState.Value.LecturaDetallesSelected)
-            {
-                var item = entry.Key;
-                var lecturaDetalle = entry.Value;
+            var patContDetalleKey = entry.Key;
+            var lecturaDetalle = entry.Value;
 
-                <div class="row w-100">
-                    <div class="col-12 w-100 border d-flex flex-column justify-content-start mb-2">
-                        <span>@item.tipoContadores (@item.valorPaso)</span>
-                        <input type="number" class="mb-1" @bind="lecturaDetalle.valorAntes" />
-                    </div>
-                </div>
-            }
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentLabel Typo="Typography.Body">@patContDetalleKey.tipoContadores (@patContDetalleKey.valorPaso)</FluentLabel>
+                <FluentNumberField Label="@Localizer["ValorAnterior"]"
+                                   Value="lecturaDetalle?.valorAntes ?? 0"
+                                   ValueChanged="(long newValue) => HandleValueChanged(patContDetalleKey, newValue)"
+                                   Style="width: 100%;" />
+            </FluentStack>
         }
-    </form>
 
-    <div class="w-100 bg-red" style="height:8vw;"></div>
-
-    <div class="row m-1 fixed-bottom  ">
-        <div class="col-4 p-1">
-            <button type="button" class="btn btn-secondary w-100" @onclick="GuardarLectura ">Guardar</button>
-        </div>
-        <div class="col-4 p-1">
-            <button type="button" class="btn btn-secondary w-100" @onclick="LeerLectura ">Leer</button>
-        </div>
-        <div class="col-4 p-1">
-            <button type="button" class="btn btn-secondary w-100" @onclick="CancelarLectura ">Cancelar </button>
-        </div>
-    </div>
+    </FluentStack>
+}
+else if (AveriaFormState?.Value.AveriaSelected != null)
+{
+    <FluentLabel Typo="Typography.Body">@Localizer["ContadoresNoCargados"]</FluentLabel>
 }
 
 
-
 @code {
+    // protected override void OnInitialized()
+    // {
+    //     base.OnInitialized();
+    //     // Loading logic is expected to be handled by the parent component (AveriaForm1.razor)
+    //     // if (AveriaFormState?.Value.AveriaSelected is not null)
+    //     // {
+    //     //     if (AveriaFormState.Value.AveriaSelected.Incidencia?.maquina?.patronContador is not null &&
+    //     //         (AveriaFormState.Value.LecturaDetallesSelected == null || !AveriaFormState.Value.LecturaDetallesSelected.Any()))
+    //     //     {
+    //     //         Dispatcher.Dispatch(new LoadLecturaDetalleForAveriaForm(AveriaFormState.Value.AveriaSelected.Incidencia.maquina.patronContador, AveriaFormState.Value.AveriaSelected.Incidencia));
+    //     //     }
+    //     // }
+    // }
 
-    // public Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle> LecturasDetalle = new Dictionary<PatContDetalle, LecturaDetalle>();
-
-    protected override void OnInitialized()
+    private void HandleValueChanged(PatContDetalle patKey, long newValue)
     {
-        base.OnInitialized();
-        if (AveriaEstadoState?.Value.AveriaSelected is not null)
-        {
-            //tenemos un averia seleccionada estamos modificando
-            if (AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.patronContador is not null)
-            {
-                Dispatcher.Dispatch(new LoadLecturaDetalleForAveriaForm(AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.patronContador, AveriaEstadoState.Value.AveriaSelected.Incidencia));
-            }
-        }
-
+        // Dispatch the granular update action
+        Dispatcher.Dispatch(new UpdateAveriaFormLecturaDetalleValueAction(patKey, newValue, true)); // true for IsValorAntes
     }
 
-    public async void GuardarLectura()
-    {
-        Dispatcher.Dispatch(new changeLecturasDetalleSelectedForAveriasForm(AveriaEstadoState.Value.LecturaDetallesSelected, AveriaEstadoState.Value.lecturacontadorId));
-        GoBack();
-    }
-
-    public async void CancelarLectura()
-    {
-        Dispatcher.Dispatch(new changeLecturasDetalleSelectedForAveriasForm(null, 0));
-        GoBack();
-    }
-
-    public async void LeerLectura()
-    {
-        //10 into 11 into 12 into
-    }
-
-    private async void GoBack()
-    {
-        await JS.InvokeVoidAsync("history.back");
-    }
-
+    // Removed GuardarLectura, CancelarLectura, LeerLectura, GoBack methods
+    // These functionalities will be handled by the parent AveriaForm1.razor or re-evaluated.
 }

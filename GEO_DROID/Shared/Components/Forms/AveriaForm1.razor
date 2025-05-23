@@ -4,6 +4,7 @@
 @using GEO_DROID.Store
 @using GEO_DROID.Store.AveriaEstado
 @using GEO_DROID.Store.Concepto
+@using GEO_DROID.Store.Establecimiento
 @using GEO_DROID.Store.Forms
 @using GEO_DROID.Store.LecturaDetalles
 @using GEO_DROID.Store.Maquinas
@@ -22,78 +23,108 @@
 @if (AveriaEstadoState?.Value.AveriaSelected != null)
 {
 
-    <EditForm Style="padding: 1rem; gap: 1rem;" Model="Model">
-        <FluentStack Orientation="Orientation.Vertical">
-            @if (EstablecimientoState.Value.EstablecimientoSelected is not null)
-            {
-                <FluentLabel Typo="Typography.H3"> @EstablecimientoState.Value.EstablecimientoSelected.nombre  </FluentLabel>
-            }
-        </FluentStack>
-        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    <EditForm Model="Model">
+        <FluentGrid Spacing="0">
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    @if (EstablecimientoState.Value.EstablecimientoSelected is not null)
+                    {
+                        <FluentLabel Typo="Typography.H3"> @EstablecimientoState.Value.EstablecimientoSelected.nombre  </FluentLabel>
+                    }
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
 
-        <FluentStack Orientation="Orientation.Vertical"
-                     @onclick="() => Dispatcher.Dispatch(new LaunchMaquinaSelecter())"
-                     Style="cursor: pointer;">
-            <FluentLabel Typo="Typography.H4">@Localizer["Maquina"]</FluentLabel>
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical"
+                             @onclick="() => Dispatcher.Dispatch(new LaunchMaquinaSelecter())"
+                             Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">@Localizer["Maquina"]</FluentLabel>
 
-            <FluentLabel Typo="Typography.H4"
-                         Color="@(AveriaEstadoState.Value.AveriaSelected.Incidencia is not null ? Color.Accent : Color.Error)">
-                @(AveriaEstadoState.Value.AveriaSelected.Incidencia is not null
-                    ? $"{AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.codigo} / {AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.modeloMaquina}"
-                    : Localizer["Selecciona una máquina"])
-            </FluentLabel>
-        </FluentStack>
-        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+                    <FluentLabel Typo="Typography.H4"
+                                 Color="@(AveriaEstadoState.Value.AveriaSelected.Incidencia is not null ? Color.Accent : Color.Error)">
+                        @(AveriaEstadoState.Value.AveriaSelected.Incidencia is not null
+                            ? $"{AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.codigo} / {AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.modeloMaquina}"
+                            : Localizer["Selecciona una máquina"])
+                    </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
 
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> Dispatcher.Dispatch(new LaunchConceptoSelecter()) )">
+                    <FluentLabel Typo="Typography.H4">@Localizer["Concepto"]</FluentLabel>
+                    <FluentLabel Typo="Typography.H4"
+                                 Color="@(AveriaEstadoState.Value.AveriaSelected.ConceptoAveria is not null ? Color.Accent : Color.Error)">
+                        @(AveriaEstadoState.Value.AveriaSelected.ConceptoAveria is not null
+                            ? $"{AveriaEstadoState.Value.AveriaSelected.ConceptoAveria?.descripcion}"
+                            : Localizer["Selecciona un concepto"])
+                    </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
 
-        <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> Dispatcher.Dispatch(new LaunchConceptoSelecter()) )">
-            <FluentLabel Typo="Typography.H4">@Localizer["Concepto"]</FluentLabel>
-            <FluentLabel Typo="Typography.H4"
-                         Color="@(AveriaEstadoState.Value.AveriaSelected.ConceptoAveria is not null ? Color.Accent : Color.Error)">
-                @(AveriaEstadoState.Value.AveriaSelected.ConceptoAveria is not null
-                    ? $"{AveriaEstadoState.Value.AveriaSelected.ConceptoAveria?.descripcion}"
-                    : Localizer["Selecciona un concepto"])
-            </FluentLabel>
-        </FluentStack>
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> Dispatcher.Dispatch(new LaunchEstadoSelecter()) )">
+                    <FluentLabel Typo="Typography.H4">@Localizer["Estado"]</FluentLabel>
+                    <FluentLabel Typo="Typography.H4"
+                                 Color="@(AveriaEstadoState.Value.AveriaSelected.AveriaEstado is not null ? Color.Accent : Color.Error)">
+                        @(AveriaEstadoState.Value.AveriaSelected.AveriaEstado is not null
+                            ? $"{AveriaEstadoState.Value.AveriaSelected.AveriaEstado?.descripcion}"
+                            : Localizer["Selecciona un estado"])
+                    </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
 
-        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentTextArea Resize="TextAreaResize.Vertical"
+                                    Label="@Localizer["Descripción"]"
+                                    @bind-Value="Model.comentarios"
+                                    Style="width: 100%;" />
 
-        <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> Dispatcher.Dispatch(new LaunchEstadoSelecter()) )">
-            <FluentLabel Typo="Typography.H4">@Localizer["Estado"]</FluentLabel>
-            <FluentLabel Typo="Typography.H4"
-                         Color="@(AveriaEstadoState.Value.AveriaSelected.AveriaEstado is not null ? Color.Accent : Color.Error)">
-                @(AveriaEstadoState.Value.AveriaSelected.AveriaEstado is not null
-                    ? $"{AveriaEstadoState.Value.AveriaSelected.AveriaEstado?.descripcion}"
-                    : Localizer["Selecciona un estado"])
-            </FluentLabel>
-        </FluentStack>
+                    <FluentTextArea Resize="TextAreaResize.Vertical"
+                                    Label="@Localizer["Detalle"]"
+                                    @bind-Value="Model.detalle"
+                                    Style="width: 100%;" />
 
-        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+                    <FluentTextArea Resize="TextAreaResize.Vertical"
+                                    Label="@Localizer["Comentarios"]"
+                                    @bind-Value="Model.comentarios"
+                                    Style="width: 100%;" />
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
 
+            <FluentGridItem xs="12" Style="margin-bottom:50px;">
+                @if (!showLecturaForms)
+                {
+                    <FluentButton Appearance="Appearance.Accent" OnClick="() => HandleAnadirCargaClick()" Style="margin-top: 1rem; width: 100%;">
+                        @Localizer["AnadirCarga"]
+                    </FluentButton>
+                }
 
-        <FluentStack Orientation="Orientation.Vertical">
-            <FluentTextArea Resize="TextAreaResize.Vertical"
-                            Label="@Localizer["Descripción"]"
-                            @bind-Value="Model.comentarios"
-                            Style="width: 100%;" />
-
-            <FluentTextArea Resize="TextAreaResize.Vertical"
-                            Label="@Localizer["Detalle"]"
-                            @bind-Value="Model.detalle"
-                            Style="width: 100%;" />
-
-            <FluentTextArea Resize="TextAreaResize.Vertical"
-                            Label="@Localizer["Comentarios"]"
-                            @bind-Value="Model.comentarios"
-                            Style="width: 100%;" />
-        </FluentStack>
-        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
-
+                @if (showLecturaForms)
+                {
+                    <FluentStack Orientation="Orientation.Vertical" Style="margin-top: 1rem;">
+                        <LecturaInicialContadoresForm />
+                        <FluentDivider Style="margin-top: 1rem; margin-bottom: 1rem;" />
+                        <LecturaFinalContadores />
+                        <FluentButton Appearance="Appearance.Stealth" OnClick="() => showLecturaForms = false" Style="margin-top: 1rem; width: 100%;">
+                            @Localizer["OcultarContadores"] @* Assuming a key for "Hide Counters" *@
+                        </FluentButton>
+                    </FluentStack>
+                }
+            </FluentGridItem>
+        </FluentGrid>
     </EditForm>
 
 
+
+
     <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
-                 Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem;">
+                 Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; gap: 1rem; ">
         <FluentButton BackgroundColor="#2596be" @onclick="GuardarAveria" Type="ButtonType.Button" Color="white" Style="flex: 1;">
             Guardar
         </FluentButton>
@@ -108,7 +139,7 @@
 
     @* <form class="w-100 content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start scrollableForm " needs-validation>
         <div class="row w-100 bg-dark ">
-    <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center"> se puede vender ?
+    <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center">
     <span style="color:white" class="SubTitulo">Detalles</span>
     </div>
     </div>
@@ -231,17 +262,6 @@
         </div>
     </form>
     *@
-    @*  <div class="row m-1 fixed-bottom ">
-        <div class="col-4 p-1">
-            <button style="overflow-wrap: break-word; " type="button" class="btn btn-secondary w-100" @onclick="GuardarAveria">Guardar</button>
-        </div>
-        <div class="col-4 p-1">
-            <button style="overflow-wrap: break-word; " type="button" class="btn btn-secondary w-100" disabled="@((AveriaEstadoState.Value.AveriaSelected is null ))" @onclick="EliminarAveria">Eliminar</button>
-        </div>
-        <div class="col-4 p-1">
-            <button style="overflow-wrap: break-word; " type="button" class="btn btn-secondary w-100" @onclick='() => GoBack()'>Cancelar</button>
-        </div>
-    </div> *@
 
 }
 
@@ -274,13 +294,26 @@
     private bool LecturaFinalContadores = false;
 
     private bool margin = false;
+    private bool showLecturaForms = false;
+
+    private void HandleAnadirCargaClick()
+    {
+        showLecturaForms = true;
+
+        if (AveriaEstadoState?.Value.AveriaSelected?.Incidencia?.maquina?.patronContador != null &&
+            (AveriaEstadoState.Value.LecturaDetallesSelected == null || !AveriaEstadoState.Value.LecturaDetallesSelected.Any()))
+        {
+
+            Dispatcher.Dispatch(new LoadLecturaDetalleSelected(AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.patronContador, AveriaEstadoState.Value.AveriaSelected.Incidencia));
+        }
+    }
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         if (AveriaEstadoState?.Value.AveriaSelected is not null)
         {
-            //tenemos un averia seleccionada estamos modificando
+            //tenemos un averia seleccionada estamos modificando 15
             Model = AveriaEstadoState.Value.AveriaSelected;
             //cargamos la carga en el formulario State si la crga selected is null
             if (AveriaEstadoState.Value.CargaSelected is null)
@@ -292,7 +325,7 @@
                 Dispatcher.Dispatch(new LoadLecturaDetalleSelected(AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.patronContador, AveriaEstadoState.Value.AveriaSelected.Incidencia));
             }
 
-
+            HandleAnadirCargaClick();
             Dispatcher.Dispatch(new ValidateAveriaFormState());
         }
         else
@@ -329,7 +362,7 @@
         }
         else
         {
-            // seleccciona maquina crack
+            // seleccciona maquina crack  
 
         }
     }

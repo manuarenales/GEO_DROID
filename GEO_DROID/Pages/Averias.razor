@@ -2,6 +2,7 @@
 @using GEO_DROID.Services
 @using GEO_DROID.Shared.Components
 @using GEO_DROID.Store
+@using GEO_DROID.Store.Establecimiento
 @using IDispatcher = Fluxor.IDispatcher;
 
 @inherits Fluxor.Blazor.Web.Components.FluxorComponent
@@ -15,19 +16,19 @@
 <FluentGrid Spacing="0">
 
     <!-- Añadir Establecimiento -->
-    <FluentGridItem xs="12" onclick="@(() => NavigateTo("averiaform1", null))">
-        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
-            <FluentIcon Value="@(new Icons.Regular.Size48.AddCircle())" />
+    @* <FluentGridItem xs="12" onclick="@(() => NavigateTo("averiaform1", null))">
+    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+    <FluentIcon Value="@(new Icons.Regular.Size48.AddCircle())" />
 
-            <FluentLabel Typo="Typography.H4">
-                @Localizer["Añadir Averia"] / @if (EstablecimientoState.Value.EstablecimientoSelected is not null)
-                {
-                    @EstablecimientoState.Value.EstablecimientoSelected.nombre
-                }
-            </FluentLabel>
-        </FluentStack>
-        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
-    </FluentGridItem>
+    <FluentLabel Typo="Typography.H4">
+    @Localizer["Añadir Averia"] / @if (EstablecimientoState.Value.EstablecimientoSelected is not null)
+    {
+    @EstablecimientoState.Value.EstablecimientoSelected.nombre
+    }
+    </FluentLabel>
+    </FluentStack>
+    <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem> *@
 
     <FluentGridItem xs="12">
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">

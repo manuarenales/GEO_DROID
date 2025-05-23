@@ -22,7 +22,14 @@ namespace GEO_DROID.Store.Application
         public static AplicacionState EstadoSelecterChangedAction(AplicacionState state, ChangeModalEstadoSelecter action)
         {
             return state with { modalEstadoSelecter = action.reference };
-            
+
+        }
+
+        [ReducerMethod]
+        public static AplicacionState ChangeModalEstadoSelecter(AplicacionState state, ChangeModalEstadoSelecter action)
+        {
+            return state with { modalEstadoSelecter = action.reference };
+
         }
 
 

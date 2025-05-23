@@ -9,13 +9,13 @@ namespace GEO_DROID.Store;
 public record ChangeCultureAction(CultureInfo culture);
 public record ChangeAveriaSelectedAction(Averia averia);
 public record changeCargaSelectedForAveriasForm(GeoDroid.Data.Carga Carga);
-public record ChangeEstablecimientoSelectedAction(Establecimiento establecimiento);
+public record ChangeEstablecimientoSelectedAction(GeoDroid.Data.Establecimiento establecimiento); // Refactored to GEO_DROID/Store/Establecimiento/EstablecimientoActions.cs
 public record ChangeRutaSelectedAction(Ruta ruta);
 public record ChangeMaquinaSelectedAction(Maquina maquina);
 public record ChangeConceptoAveriaSelectedAction(ConceptoAveria ConceptoAveria);
-public record ChangeEstablecimientosListSelected(List<Establecimiento> EstablecimientoList);
+public record ChangeEstablecimientosListSelected(List<GeoDroid.Data.Establecimiento> EstablecimientoList);
 public record ChangeRutasListSelected(List<Ruta> RutaList);
-public record ChangeEstablecimientosListForSelecter(List<Establecimiento> EstablecimientoList);
+public record ChangeEstablecimientosListForSelecter(List<GeoDroid.Data.Establecimiento> EstablecimientoList);
 public record ChangeNavigationAction(string rute, bool replace = false);
 public record ChangeAveriasListSelectedByEstablecimiento(List<Averia> averiaList);
 //-------------------------------------------------------------------------------------------------------------------//
@@ -53,13 +53,13 @@ public record GetCongiguration();
 public record GetMaquinasListFomEstablecimientoSelected();
 public record GetAveriaEstadoList();
 public record GetConceptoAveriaList();
-public record GetAveriasCount(Establecimiento establecimiento);
+public record GetAveriasCount(GeoDroid.Data.Establecimiento establecimiento);
 public record GetAveriasByEstablecimiento(int establecimientoId);
 //-------------------------------------------------------------------------------------------------------------------//
 public record AddRutaTorutasSelected(Ruta NewRute);
-public record AddRuta(Establecimiento establecimineto);
+public record AddRuta(GeoDroid.Data.Establecimiento establecimineto); // Note: This action takes Establecimiento, consider if it belongs to Establecimiento or Ruta feature
 public record AddAveria(Averia averia);
-public record AddEstablecimientoSelected(Establecimiento establecimiento);
+public record AddEstablecimientoSelected(GeoDroid.Data.Establecimiento establecimiento);
 //-------------------------------------------------------------------------------------------------------------------//
 public record ShowConfirmationDialogAction(ConfirmationDialogRequest Dialog);
 public record ConfirmationResponseAction(bool Confirmed);
@@ -83,6 +83,7 @@ public record LoadCargaForAveriaForm(Averia averia);
 public record LoadLecturaDetalleForAveriaForm(List<PatContDetalle> PatronContador, Incidencia incidencia);
 public record LoadLecturaDetalleSelected(List<PatContDetalle> PatronContador, Incidencia incidencia);
 public record ResetAveriasForm();
+public record UpdateAveriaFormLecturaDetalleValueAction(PatContDetalle PatronDetalleKey, long NewValor, bool IsValorAntes);
 //--------------------------------------------------------------------------------------------------------------------//
 public record DeleteAveria(Averia averia);
 //--------------------------------------------------------------------------------------------------------------------//

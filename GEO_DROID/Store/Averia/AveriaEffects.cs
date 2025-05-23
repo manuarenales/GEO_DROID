@@ -28,7 +28,7 @@ namespace GEO_DROID.Store.AveriaCase
                 List<Averia> result = new();
 
                 // Obtener establecimiento
-                var establecimiento = await _database._database.Table<Establecimiento>()
+                var establecimiento = await _database._database.Table<GeoDroid.Data.Establecimiento>()
                     .Where(e => e.id == action.establecimientoId).FirstOrDefaultAsync();
 
                 if (establecimiento == null)
@@ -95,7 +95,7 @@ namespace GEO_DROID.Store.AveriaCase
                                 .Where(a => a.id == averia.Incidencia.idMaquinas).FirstOrDefaultAsync();
 
                             averia.Incidencia.maquina.Empresa = await _database._database.Table<Empresa>().Where(a => a.id == averia.Incidencia.maquina.Empresaid).FirstOrDefaultAsync();
-                            averia.Incidencia.maquina.establecimiento = await _database._database.Table<Establecimiento>().Where(a => a.id == averia.Incidencia.maquina.idEstablecimiento).FirstOrDefaultAsync();
+                            averia.Incidencia.maquina.establecimiento = await _database._database.Table<GeoDroid.Data.Establecimiento>().Where(a => a.id == averia.Incidencia.maquina.idEstablecimiento).FirstOrDefaultAsync();
 
                             averia.Incidencia.maquina.patronContador = await _database._database.Table<PatContDetalle>().Where(a => a.id == averia.Incidencia.maquina.idPatronContadores).ToListAsync();
                             //List<PatContDetalle> list = await _database._database.Table<PatContDetalle>().ToListAsync();
@@ -140,7 +140,7 @@ namespace GEO_DROID.Store.AveriaCase
             try
             {
                 // Obtener establecimiento
-                Establecimiento establecimiento = await _database._database.Table<Establecimiento>()
+                GeoDroid.Data.Establecimiento establecimiento = await _database._database.Table<GeoDroid.Data.Establecimiento>()
                     .Where(e => e.id == action.establecimiento.id).FirstOrDefaultAsync();
 
                 if (establecimiento == null)

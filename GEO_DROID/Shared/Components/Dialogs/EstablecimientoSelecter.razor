@@ -1,5 +1,6 @@
 ﻿@using GEO_DROID.Store
 @using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Establecimiento
 @inject IStringLocalizer<StringLocalizer> Localizer
 @inject IState<EstablecimientoState> Establecimientostate
 @inject IState<AplicacionState> AplicacionState
@@ -17,9 +18,9 @@
 
         <div style="max-height: 60vh; overflow-y: auto;">
             <FluentGrid Spacing="0">
-                @if (Establecimientostate.Value.EstablecimientoListSelecterSelected is not null)
+                @if (Establecimientostate.Value.EstablecimientoListForSelecter is not null)
                 {
-                    @foreach (var item in Establecimientostate.Value.EstablecimientoListSelecterSelected
+                    @foreach (var item in Establecimientostate.Value.EstablecimientoListForSelecter
                    .Where(e => string.IsNullOrEmpty(busqueda) || e.nombre.ToLower().Contains(busqueda.ToLower())))
                     {
                         <FluentGridItem xs="12">
@@ -51,8 +52,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Dispatcher.Dispatch(new GetEstablecimientosList());
-        Thread.Sleep(200);
+        Dispatcher.Dispatch(new LoadEstablecimientosForSelecterAction());
+
         await base.OnInitializedAsync();
     }
 

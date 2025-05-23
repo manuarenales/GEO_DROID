@@ -1,18 +1,40 @@
 ﻿using Fluxor;
-using GeoDroid.Data;
+using System.Collections.Generic; // Required for List
 
-
-namespace GEO_DROID.Store
+namespace GEO_DROID.Store.Establecimiento // Changed namespace to be more specific
 {
-    [FeatureState]
+    [FeatureState(Name = "Establecimiento")] // Explicitly naming the feature state can be good practice
     public record EstablecimientoState
     {
-        private EstablecimientoState() { }
+        public bool IsLoading { get; init; }
+        public string CurrentError { get; init; }
+        public GeoDroid.Data.Establecimiento EstablecimientoSelected { get; init; }
+        public List<GeoDroid.Data.Establecimiento> EstablecimientoList { get; init; } // Renamed for clarity
+        public List<GeoDroid.Data.Establecimiento> EstablecimientoListForSelecter { get; init; } // Renamed for clarity
 
-        public Establecimiento EstablecimientoSelected { get; init; }
+        // Parameterless constructor for Fluxor initialization
+        public EstablecimientoState()
+        {
+            IsLoading = false;
+            CurrentError = string.Empty;
+            EstablecimientoSelected = null;
+            EstablecimientoList = new List<GeoDroid.Data.Establecimiento>();
+            EstablecimientoListForSelecter = new List<GeoDroid.Data.Establecimiento>();
+        }
 
-        public List<Establecimiento> EstablecimientoListSelected { get; init; }
-
-        public List<Establecimiento> EstablecimientoListSelecterSelected { get; init; }
+        // Optional: Parameterized constructor for creating specific states if needed
+        public EstablecimientoState(
+            bool isLoading,
+            string currentError,
+            GeoDroid.Data.Establecimiento establecimientoSelected,
+            List<GeoDroid.Data.Establecimiento> establecimientoList,
+            List<GeoDroid.Data.Establecimiento> establecimientoListForSelecter)
+        {
+            IsLoading = isLoading;
+            CurrentError = currentError;
+            EstablecimientoSelected = establecimientoSelected;
+            EstablecimientoList = establecimientoList ?? new List<GeoDroid.Data.Establecimiento>();
+            EstablecimientoListForSelecter = establecimientoListForSelecter ?? new List<GeoDroid.Data.Establecimiento>();
+        }
     }
 }

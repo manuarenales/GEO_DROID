@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 using GEO_DROID.Store.Confirmation;
 using Microsoft.FluentUI.AspNetCore.Components;
 using GEO_DROID.Shared.Components.Dialogs;
+using GEO_DROID.Store.Establecimiento;
 
 namespace GEO_DROID.Store.Application
 {
@@ -71,7 +72,7 @@ namespace GEO_DROID.Store.Application
         }
 
         [EffectMethod]
-        public async Task ChangeModalEstablecimientoSelecter(LaunchEstablecimientoSelecter action, IDispatcher dispatcher)
+        public async Task ChangeModalEstablecimientoSelecter(LaunchEstablecimientoSelecterAction action, IDispatcher dispatcher)
         {
             //Lanzamos un pop up con el temita este de Modal 
 

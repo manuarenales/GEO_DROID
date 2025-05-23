@@ -1,4 +1,5 @@
 ﻿using Fluxor;
+using GEO_DROID.Store.Establecimiento;
 using GeoDroid.Data;
 using GeoDroid.Data.SQL;
 using IDispatcher = Fluxor.IDispatcher;
@@ -53,7 +54,7 @@ namespace GEO_DROID.Store.Maquinas
                         if (maquina.idEstablecimiento.HasValue)
                         {
                             maquina.establecimiento = await _database._database
-                                .Table<Establecimiento>()
+                                .Table<GeoDroid.Data.Establecimiento>()
                                 .Where(e => e.id == maquina.idEstablecimiento.Value)
                                 .FirstOrDefaultAsync();
                         }
