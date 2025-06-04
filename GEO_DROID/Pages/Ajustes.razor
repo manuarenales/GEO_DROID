@@ -3,20 +3,20 @@
 @inject NavigationManager Navigation
 @inject IStringLocalizer<StringLocalizer> Localizer;
 @inherits Fluxor.Blazor.Web.Components.FluxorComponent
-
+ @inject IDispatcher Dispatcher
 
 <FluentGrid Justify="JustifyContent.Center" Spacing="0">
-    <FluentGridItem xs="12" OnClick='() => NavigateTo("configuracion")'>
+    <FluentGridItem xs="12" @onclick="@(() => Dispatcher.Dispatch(new NavigationToAction("configuracion")))">
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
-            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.Gear())" />
             <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">@Localizer["configuracion"]</FluentLabel>
         </FluentStack>
         <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
     </FluentGridItem>
 
-    <FluentGridItem xs="12" OnClick="OpenTestLecturaContadores">
+    <FluentGridItem xs="12" @onclick="@(() => Dispatcher.Dispatch(new LaunchTestContadoresDialog( )))">
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
-            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.TestTube())" />
             <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">@Localizer["testlecturacontadores"]</FluentLabel>
         </FluentStack>
         <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
@@ -24,7 +24,7 @@
 
     <FluentGridItem xs="12" OnClick="OpenEstablecerContadores">
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
-            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.Abacus())" />
             <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">Establecer contadores</FluentLabel>
         </FluentStack>
         <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
@@ -32,7 +32,7 @@
 
     <FluentGridItem xs="12" OnClick="OpenTestImpresora">
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
-            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.Printer())" />
             <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">Test impresora Bluetooth</FluentLabel>
         </FluentStack>
         <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
@@ -40,7 +40,7 @@
 
     <FluentGridItem xs="12" OnClick="OpenActualizarFirmware">
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
-            <FluentIcon Value="@(new Icons.Regular.Size48.Settings())" />
+            <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Symbols.Color.Default.EjectButton())" />
             <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">Actualizar firmware de módulo</FluentLabel>
         </FluentStack>
         <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
@@ -169,7 +169,6 @@
     {
         await base.OnInitializedAsync();
 
-
     }
 
     private void NavigateTo(string pageTitle)
@@ -225,6 +224,7 @@
     private void OpenActualizarFirmware()
     {
         modalActualizarFirmVisible = true;
+
     }
 
 

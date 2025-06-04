@@ -32,6 +32,19 @@ namespace GEO_DROID.Store.Application
 
         }
 
+        [ReducerMethod]
+        public static AplicacionState ChangeModalTestContadoresSelecter(AplicacionState state, ChangeModalTestContadoresSelecter action)
+        {
+            return state with { modalTestEstablecimiento = action.reference };
+
+        }
+
+        [ReducerMethod]
+        public static AplicacionState ChangeModalEstablecimientoSelecter(AplicacionState state, ChangeModalEstablecimientoSelecter action)
+        {
+            return state with { modalEstablecientoSelecter = action.reference };
+
+        }
 
     }
 }

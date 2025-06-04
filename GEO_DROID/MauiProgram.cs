@@ -6,7 +6,7 @@ Antes:
 using Microsoft.Maui.LifecycleEvents;
 Después:
 using Microsoft.Maui.LifecycleEvents;
-using GEO_DROID.Services.SincroService;
+using GEO_DROID.Services.SincroService;  
 */
 using Microsoft.Maui.LifecycleEvents;
 using GEO_DROID.Services.SincroService;
@@ -60,8 +60,11 @@ namespace GEO_DROID
                 builder.Services.AddTransient<TokenService>();
                 builder.Services.AddTransient<GeolineOdataService>();
                 builder.Services.AddTransient<AveriasService>();
+                builder.Services.AddTransient<TicketsService>();
+
                 builder.Services.AddSingleton<BluetoothServiceManager>();
                 builder.Services.AddSingleton<CustomNavigationManager>();
+                builder.Services.AddSingleton<BluetoothServiceManager>();
 
 #if ANDROID
                 builder.Services.AddSingleton<SyncProcess>();

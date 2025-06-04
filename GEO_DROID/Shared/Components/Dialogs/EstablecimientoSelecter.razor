@@ -23,13 +23,14 @@
                     @foreach (var item in Establecimientostate.Value.EstablecimientoListForSelecter
                    .Where(e => string.IsNullOrEmpty(busqueda) || e.nombre.ToLower().Contains(busqueda.ToLower())))
                     {
-                        <FluentGridItem xs="12">
+                        <FluentGridItem xs="12" Class="card-button">
                             <FluentCard>
                                 <FluentStack Orientation="Orientation.Horizontal" @onclick='() => AddItemToList(item)'>
                                     <FluentLabel Typo="Typography.H5" Color="@Color.Neutral">@item.nombre</FluentLabel>
                                 </FluentStack>
                             </FluentCard>
                         </FluentGridItem>
+
                     }
                 }
             </FluentGrid>
@@ -47,7 +48,6 @@
 
     [CascadingParameter]
     public FluentDialog? Dialog { get; set; }
-
     string busqueda = "";
 
     protected override async Task OnInitializedAsync()

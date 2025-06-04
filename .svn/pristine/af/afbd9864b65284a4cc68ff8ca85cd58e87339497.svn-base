@@ -1,0 +1,94 @@
+﻿@page "/averias"
+@using GEO_DROID.Services
+@using GEO_DROID.Shared.Components
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Establecimiento
+@using GEO_DROID.Store.Rutas
+@using IDispatcher = Fluxor.IDispatcher;
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IDispatcher Dispatcher
+@inject IState<EstablecimientoState> EstablecimientoState
+@inject IState<AveriaState> AveriaState
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IState<RutasState> RutasState;
+
+
+<!-- Botón Añadir Avería -->
+<FluentGrid Spacing="0">
+    <FluentGridItem xs="12">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentLabel Typo="Typography.H4">@Localizer["Mis Averías"] / @RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+</FluentGrid>
+
+
+@if (AveriaState?.Value.AveriaListSelected is not null)
+{
+    <FluentGridItem xs="12">
+        @foreach (Averia averia in AveriaState.Value.AveriaListSelected)
+        {
+            <FluentStack Orientation="Orientation.Vertical" onclick="@(() => NavigateTo("averiaform1", averia))">
+                @if (averia.Incidencia?.maquina is not null)
+                {
+                    <FluentLabel Typo="Typography.H4">@averia.Incidencia.maquina.codigo</FluentLabel>
+                }
+                @if (averia.AveriaEstado is not null)
+                {
+                    <FluentLabel Typo="Typography.H4" Color="@Color.Accent">@averia.AveriaEstado.descripcion</FluentLabel>
+                }
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        }
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+}
+
+<FluentGrid>
+    <FluentGridItem xs="12">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentLabel Typo="Typography.H4">@Localizer["Otras"]</FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+</FluentGrid>
+
+<FluentButton @onclick="@(() => NavigateTo("averiaform1", null))" Appearance="Appearance.Accent"
+              Style="position: fixed; bottom: 1.5rem; right: 1.5rem; border-radius: 50%; width: 56px; height: 56px; font-size: 24px;">
+    +
+</FluentButton>
+
+
+
+@code {
+
+    Averia passav;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Dispatcher.Dispatch(new GetAveriasByEstablecimiento(EstablecimientoState.Value.EstablecimientoSelected.id));
+    }
+
+
+
+    private void NavigateTo(string pageTitle, Averia averia)
+    {
+        if (averia != null)
+        {
+            Dispatcher.Dispatch(new ResetAveriasForm());
+            Dispatcher.Dispatch(new ChangeAveriaSelectedFormAction(averia));
+            Dispatcher.Dispatch(new NavigationToAction("averiaform1"));
+        }
+        else
+        {
+            Dispatcher.Dispatch(new ResetAveriasForm());
+            Dispatcher.Dispatch(new ChangeAveriaSelectedFormAction(null));
+            Dispatcher.Dispatch(new NavigationToAction("averiaform1"));
+        }
+    }
+}

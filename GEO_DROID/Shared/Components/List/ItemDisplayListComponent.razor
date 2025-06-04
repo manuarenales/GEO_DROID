@@ -20,7 +20,8 @@
 
         <FluentGridItem xs="12" onclick="@(() => HandleClick(item))">
             <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Start" VerticalAlignment="VerticalAlignment.Center">
-                <FluentIcon Value="@(new Icons.Regular.Size48.AppFolder())" />
+                <FluentEmoji Value="item.icon" style="width:64px; height:64px;" />
+
                 <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">
                     @Localizer[item.title]
                 </FluentLabel>
@@ -38,8 +39,9 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-
     }
+
+
     void HandleClick(MainMenuItem item)
     {
         if (item.ruta == "sincronizacion")
@@ -52,5 +54,5 @@
         }
     }
 
-
+    //
 }

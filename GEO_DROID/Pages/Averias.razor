@@ -3,6 +3,7 @@
 @using GEO_DROID.Shared.Components
 @using GEO_DROID.Store
 @using GEO_DROID.Store.Establecimiento
+@using GEO_DROID.Store.Rutas
 @using IDispatcher = Fluxor.IDispatcher;
 
 @inherits Fluxor.Blazor.Web.Components.FluxorComponent
@@ -10,67 +11,51 @@
 @inject IState<EstablecimientoState> EstablecimientoState
 @inject IState<AveriaState> AveriaState
 @inject IStringLocalizer<StringLocalizer> Localizer
+@inject IState<RutasState> RutasState;
 
 
 <!-- Botón Añadir Avería -->
 <FluentGrid Spacing="0">
-
-    <!-- Añadir Establecimiento -->
-    @* <FluentGridItem xs="12" onclick="@(() => NavigateTo("averiaform1", null))">
-    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
-    <FluentIcon Value="@(new Icons.Regular.Size48.AddCircle())" />
-
-    <FluentLabel Typo="Typography.H4">
-    @Localizer["Añadir Averia"] / @if (EstablecimientoState.Value.EstablecimientoSelected is not null)
-    {
-    @EstablecimientoState.Value.EstablecimientoSelected.nombre
-    }
-    </FluentLabel>
-    </FluentStack>
-    <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
-    </FluentGridItem> *@
-
     <FluentGridItem xs="12">
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
-            <FluentLabel Typo="Typography.H4">@Localizer["Mis Averías"]</FluentLabel>
+            <FluentLabel Typo="Typography.H3" Color="Color.Success">  @RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
         </FluentStack>
         <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
-
     </FluentGridItem>
-
+    <FluentGridItem xs="12">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentLabel Typo="Typography.H4">@Localizer["Mis Averías"]  </FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
 </FluentGrid>
 
 
-<FluentGrid Spacing="0">
-    @if (AveriaState?.Value.AveriaListSelected is not null)
-    {
-        <FluentGridItem xs="12">
-            <FluentStack Orientation="Orientation.Vertical">
-                @foreach (Averia averia in AveriaState.Value.AveriaListSelected)
-                {
-                    <FluentCard onclick="@(() => NavigateTo("averiaform1", averia))">
-                        <FluentStack Orientation="Orientation.Vertical">
-                            @if (averia.Incidencia?.maquina is not null)
-                            {
-                                <FluentLabel Typo="Typography.H4">@averia.Incidencia.maquina.codigo</FluentLabel>
-                            }
-                            @if (averia.AveriaEstado is not null)
-                            {
-                                <FluentLabel Typo="Typography.H4" Color="@Color.Accent">@averia.AveriaEstado.descripcion</FluentLabel>
-                            }
-                        </FluentStack>
-                    </FluentCard>
-                }
-            </FluentStack>
+@if (AveriaState?.Value.AveriaListSelected is not null)
+{
+    <FluentGridItem xs="12">
+        @foreach (Averia averia in AveriaState.Value.AveriaListSelected)
+        {
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Vertical" onclick="@(() => NavigateTo("averiaform1", averia))">
+                    @if (averia.Incidencia?.maquina is not null)
+                    {
+                        <FluentLabel Typo="Typography.H4">@averia.Incidencia.maquina.modeloMaquina / @averia.Incidencia.maquina.codigo</FluentLabel>
+                    }
+                    @if (averia.AveriaEstado is not null)
+                    {
+                        <FluentLabel Typo="Typography.H4" Color="@Color.Accent">@averia.AveriaEstado.descripcion</FluentLabel>
+                    }
+                </FluentStack>
+            </FluentCard>
+
             <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
-
-        </FluentGridItem>
-    }
-</FluentGrid>
-
+        }
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+}
 
 <FluentGrid>
-
     <FluentGridItem xs="12">
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
             <FluentLabel Typo="Typography.H4">@Localizer["Otras"]</FluentLabel>
@@ -94,7 +79,7 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
+        
         Dispatcher.Dispatch(new GetAveriasByEstablecimiento(EstablecimientoState.Value.EstablecimientoSelected.id));
     }
 

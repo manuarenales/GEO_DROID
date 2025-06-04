@@ -1,0 +1,146 @@
+﻿  @page "/cargaForm"
+  @using GEO_DROID.Services
+  @using Dispatcher = Fluxor.Dispatcher
+@using GEO_DROID.Store.Establecimiento
+@using GEO_DROID.Store.Forms
+  @inject IDispatcher Dispatcher
+  @inject IJSRuntime JS
+  @inject IStringLocalizer<StringLocalizer> Localizer
+  @inject IState<AveriaFormState> AveriaFormState
+  @inherits Fluxor.Blazor.Web.Components.FluxorComponent
+  @inject IState<AveriaFormState> FormAveriaState
+@inject IState<EstablecimientoState> EstablecimientoState
+
+@if (FormAveriaState?.Value.CargaSelected is not null)
+{
+
+    <EditForm Model="AveriaFormState.Value.CargaSelected.cargaEmpresa">
+        <FluentGrid Spacing="0">
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    @if (EstablecimientoState.Value.EstablecimientoSelected is not null)
+                    {
+                        <FluentLabel Typo="Typography.H4"> @EstablecimientoState.Value.EstablecimientoSelected.nombre  </FluentLabel>
+                        <FluentLabel Typo="Typography.H4"> @FormAveriaState.Value.AveriaSelected.Incidencia.maquina.codigo / @FormAveriaState.Value.AveriaSelected.Incidencia.maquina.modeloMaquina </FluentLabel>
+                    }
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentLabel Typo="Typography.H3"> Empresa </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentLabel Typo="Typography.H4"> Carga </FluentLabel>
+                    <FluentNumberField @bind-Value="AveriaFormState.Value.CargaSelected.cargaEmpresa"></FluentNumberField>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentLabel Typo="Typography.H4"> Recuperacion </FluentLabel>
+                    <FluentNumberField @bind-Value="AveriaFormState.Value.CargaSelected.recuperacionEmpresa"></FluentNumberField>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentLabel Typo="Typography.H4"> Saldo Empresa : @(AveriaFormState.Value.CargaSelected.cargaEmpresa - AveriaFormState.Value.CargaSelected.recuperacionEmpresa)  </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentLabel Typo="Typography.H3"> Establecimiento </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentLabel Typo="Typography.H4"> Carga </FluentLabel>
+                    <FluentNumberField @bind-Value="AveriaFormState.Value.CargaSelected.cargaEstablecimiento"></FluentNumberField>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentLabel Typo="Typography.H4"> Recuperacion </FluentLabel>
+                    <FluentNumberField @bind-Value="AveriaFormState.Value.CargaSelected.recuperacionEstablecimiento"></FluentNumberField>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentLabel Typo="Typography.H4"> Saldo Establecimiento : @(AveriaFormState.Value.CargaSelected.cargaEstablecimiento - AveriaFormState.Value.CargaSelected.recuperacionEstablecimiento)  </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+        </FluentGrid>
+    </EditForm>
+
+
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+                 Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; gap: 1rem; ">
+        <FluentButton BackgroundColor="#2596be" @onclick="GuardarCarga" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Guardar
+        </FluentButton>
+        <FluentButton @onclick='() => CancelarCarga()' BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Cancelar
+        </FluentButton>
+        <FluentButton BackgroundColor="red" Disabled="@((AveriaFormState.Value.AveriaSelected is null ))" @onclick="CancelarCarga" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Eliminar
+        </FluentButton>
+
+    </FluentStack>
+
+
+}
+
+
+@code {
+
+
+
+    protected override void OnInitialized()
+    {
+        if (AveriaFormState?.Value.CargaSelected is null)
+        {
+            Carga Carga = new Carga();
+            Dispatcher.Dispatch(new changeCargaSelectedForAveriasForm(Carga));
+        }
+        base.OnInitialized();
+    }
+
+
+
+    public async void GuardarCarga()
+    {
+        //Dispatcher.Dispatch(new changeCargaSelectedForAveriasForm(carga));
+        GoBack();
+    }
+
+    public async void CancelarCarga()
+    {
+        Dispatcher.Dispatch(new changeCargaSelectedForAveriasForm(null));
+        GoBack();
+    }
+
+
+    private async void GoBack()
+    {
+
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+}

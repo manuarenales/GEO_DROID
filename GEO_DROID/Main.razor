@@ -40,6 +40,35 @@
             context.PreventNavigation();
             return false;
         }
+        if (AplicacionState.Value.modalConceptoAveriaSelecter is not null)
+        {
+            await AplicacionState.Value.modalConceptoAveriaSelecter.CloseAsync();
+            // Previene la navegación original
+            context.PreventNavigation();
+            return false;
+        }
+        if (AplicacionState.Value.modalEstadoSelecter is not null)
+        {
+            await AplicacionState.Value.modalEstadoSelecter.CloseAsync();
+            // Previene la navegación original
+            context.PreventNavigation();
+            return false;
+        }
+        if (AplicacionState.Value.modalMaquinaSelecter is not null)
+        {
+            await AplicacionState.Value.modalMaquinaSelecter.CloseAsync();
+            // Previene la navegación original
+            context.PreventNavigation();
+            return false;
+        }
+        if (AplicacionState.Value.modalTestEstablecimiento is not null)
+        {
+            await AplicacionState.Value.modalTestEstablecimiento.CloseAsync();
+            // Previene la navegación original
+            context.PreventNavigation();
+            return false;
+        }
+
 
         return true; // Permitir navegación
     }

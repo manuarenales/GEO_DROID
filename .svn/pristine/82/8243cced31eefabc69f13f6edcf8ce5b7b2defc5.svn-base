@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- Tu tema de splash: sólo fondo -->
+	<style name="Maui.Carga" parent="Theme.AppCompat.Light.NoActionBar">
+		<!-- Pon aquí TU drawable de splash como fondo de ventana -->
+		<item name="android:windowBackground">@drawable/splash_screen</item>
+		<!-- Sin barra de título ni action bar -->
+		<item name="android:windowNoTitle">true</item>
+		<item name="android:windowFullscreen">true</item>
+	</style>
+</resources>

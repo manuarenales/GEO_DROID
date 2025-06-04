@@ -1,0 +1,65 @@
+﻿using Fluxor;
+using GEO_DROID.Database.Models.DTO;
+using Microsoft.FluentUI.AspNetCore.Components;
+
+namespace GEO_DROID.Store.Application
+{
+    [FeatureState]
+    public record AplicacionState
+    {
+        private AplicacionState()
+        {
+
+            MainMenuItems = new List<MainMenuItem>();
+
+            MainMenuItem item1 = new MainMenuItem();
+            MainMenuItem item2 = new MainMenuItem();
+            MainMenuItem item3 = new MainMenuItem();
+            MainMenuItem item4 = new MainMenuItem();
+            MainMenuItem item5 = new MainMenuItem();
+
+            item1.title = "ruta";
+            item1.icon = "img/ruta.png";
+            item1.subtitle = "Configuracion de Rutas ";
+            item1.ruta = "rutas";
+
+            item2.title = "informaciongeneral";
+            item2.icon = "img/info.png";
+            item2.subtitle = "Configuracion de Maquinas ";
+            item2.ruta = "informaciongeneral";
+
+            item3.title = "vehiculos";
+            item3.icon = "img/vehiculos.png";
+            item3.subtitle = "Configuracion de Recaudadores ";
+            item3.ruta = "vehiculos";
+
+            item4.title = "sincronizacion";
+            item4.icon = "img/sincro.png";
+            item4.subtitle = "Configuracion de Instalaciones ";
+            item4.ruta = "sincronizacion";
+
+            item5.title = "ajustes";
+            item5.icon = "img/ajustes.png";
+            item5.subtitle = "Configuracion de Instalaciones ";
+            item5.ruta = "ajustes";
+
+            MainMenuItems.Add(item1);
+            MainMenuItems.Add(item2);
+            MainMenuItems.Add(item3);
+            MainMenuItems.Add(item4);
+            MainMenuItems.Add(item5);
+        }
+
+        public List<MainMenuItem> MainMenuItems { get; init; }
+
+        public IDialogReference modalEstablecientoSelecter { get; init; }
+
+        public IDialogReference modalConceptoAveriaSelecter { get; init; }
+
+        public string EstablecimientoSelecterTipe { get; init; }
+
+        public IDialogReference modalMaquinaSelecter { get; init; }
+
+        public IDialogReference modalEstadoSelecter { get; init; }
+    }
+}

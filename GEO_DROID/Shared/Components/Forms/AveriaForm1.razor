@@ -10,7 +10,7 @@
 @using GEO_DROID.Store.Maquinas
 
 @inject IDispatcher Dispatcher
-@inject IState<AveriaFormState> AveriaEstadoState
+@inject IState<AveriaFormState> AveriaFormState
 @inject IState<LecturaDetalleState> LecturaDetalleState
 @inject IState<EstablecimientoState> EstablecimientoState
 
@@ -20,16 +20,16 @@
 
 @inject IJSRuntime JS
 
-@if (AveriaEstadoState?.Value.AveriaSelected != null)
+@if (AveriaFormState?.Value.AveriaSelected != null)
 {
 
-    <EditForm Model="Model">
+    <EditForm Model="AveriaFormState?.Value.AveriaSelected">
         <FluentGrid Spacing="0">
             <FluentGridItem xs="12">
                 <FluentStack Orientation="Orientation.Vertical">
                     @if (EstablecimientoState.Value.EstablecimientoSelected is not null)
                     {
-                        <FluentLabel Typo="Typography.H3"> @EstablecimientoState.Value.EstablecimientoSelected.nombre  </FluentLabel>
+                        <FluentLabel Typo="Typography.H3" Color="Color.Success"> @EstablecimientoState.Value.EstablecimientoSelected.nombre  </FluentLabel>
                     }
                 </FluentStack>
                 <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
@@ -42,9 +42,9 @@
                     <FluentLabel Typo="Typography.H4">@Localizer["Maquina"]</FluentLabel>
 
                     <FluentLabel Typo="Typography.H4"
-                                 Color="@(AveriaEstadoState.Value.AveriaSelected.Incidencia is not null ? Color.Accent : Color.Error)">
-                        @(AveriaEstadoState.Value.AveriaSelected.Incidencia is not null
-                            ? $"{AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.codigo} / {AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.modeloMaquina}"
+                                 Color="@(AveriaFormState.Value.AveriaSelected.Incidencia is not null ? Color.Accent : Color.Error)">
+                        @(AveriaFormState.Value.AveriaSelected.Incidencia is not null
+                            ? $"{AveriaFormState.Value.AveriaSelected.Incidencia.maquina.codigo} / {AveriaFormState.Value.AveriaSelected.Incidencia.maquina.modeloMaquina}"
                             : Localizer["Selecciona una máquina"])
                     </FluentLabel>
                 </FluentStack>
@@ -55,9 +55,9 @@
                 <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> Dispatcher.Dispatch(new LaunchConceptoSelecter()) )">
                     <FluentLabel Typo="Typography.H4">@Localizer["Concepto"]</FluentLabel>
                     <FluentLabel Typo="Typography.H4"
-                                 Color="@(AveriaEstadoState.Value.AveriaSelected.ConceptoAveria is not null ? Color.Accent : Color.Error)">
-                        @(AveriaEstadoState.Value.AveriaSelected.ConceptoAveria is not null
-                            ? $"{AveriaEstadoState.Value.AveriaSelected.ConceptoAveria?.descripcion}"
+                                 Color="@(AveriaFormState.Value.AveriaSelected.ConceptoAveria is not null ? Color.Accent : Color.Error)">
+                        @(AveriaFormState.Value.AveriaSelected.ConceptoAveria is not null
+                            ? $"{AveriaFormState.Value.AveriaSelected.ConceptoAveria?.descripcion}"
                             : Localizer["Selecciona un concepto"])
                     </FluentLabel>
                 </FluentStack>
@@ -68,9 +68,9 @@
                 <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> Dispatcher.Dispatch(new LaunchEstadoSelecter()) )">
                     <FluentLabel Typo="Typography.H4">@Localizer["Estado"]</FluentLabel>
                     <FluentLabel Typo="Typography.H4"
-                                 Color="@(AveriaEstadoState.Value.AveriaSelected.AveriaEstado is not null ? Color.Accent : Color.Error)">
-                        @(AveriaEstadoState.Value.AveriaSelected.AveriaEstado is not null
-                            ? $"{AveriaEstadoState.Value.AveriaSelected.AveriaEstado?.descripcion}"
+                                 Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is not null ? Color.Accent : Color.Error)">
+                        @(AveriaFormState.Value.AveriaSelected.AveriaEstado is not null
+                            ? $"{AveriaFormState.Value.AveriaSelected.AveriaEstado?.descripcion}"
                             : Localizer["Selecciona un estado"])
                     </FluentLabel>
                 </FluentStack>
@@ -81,41 +81,41 @@
                 <FluentStack Orientation="Orientation.Vertical">
                     <FluentTextArea Resize="TextAreaResize.Vertical"
                                     Label="@Localizer["Descripción"]"
-                                    @bind-Value="Model.comentarios"
+                                    @bind-Value="AveriaFormState.Value.AveriaSelected.observaciones"
                                     Style="width: 100%;" />
 
                     <FluentTextArea Resize="TextAreaResize.Vertical"
                                     Label="@Localizer["Detalle"]"
-                                    @bind-Value="Model.detalle"
+                                    @bind-Value="AveriaFormState.Value.AveriaSelected.detalle"
                                     Style="width: 100%;" />
 
                     <FluentTextArea Resize="TextAreaResize.Vertical"
                                     Label="@Localizer["Comentarios"]"
-                                    @bind-Value="Model.comentarios"
+                                    @bind-Value="AveriaFormState.Value.AveriaSelected.comentarios"
                                     Style="width: 100%;" />
                 </FluentStack>
                 <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
             </FluentGridItem>
 
             <FluentGridItem xs="12" Style="margin-bottom:50px;">
-                @if (!showLecturaForms)
-                {
-                    <FluentButton Appearance="Appearance.Accent" OnClick="() => HandleAnadirCargaClick()" Style="margin-top: 1rem; width: 100%;">
-                        @Localizer["AnadirCarga"]
-                    </FluentButton>
-                }
+                <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> Dispatcher.Dispatch(new NavigationToAction("CargaForm")) )">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Realizar Carga"]
+                    </FluentLabel>
 
-                @if (showLecturaForms)
-                {
-                    <FluentStack Orientation="Orientation.Vertical" Style="margin-top: 1rem;">
-                        <LecturaInicialContadoresForm />
-                        <FluentDivider Style="margin-top: 1rem; margin-bottom: 1rem;" />
-                        <LecturaFinalContadores />
-                        <FluentButton Appearance="Appearance.Stealth" OnClick="() => showLecturaForms = false" Style="margin-top: 1rem; width: 100%;">
-                            @Localizer["OcultarContadores"] @* Assuming a key for "Hide Counters" *@
-                        </FluentButton>
-                    </FluentStack>
-                }
+                    @if (AveriaFormState.Value.CargaSelected is null)
+                    {
+                        <FluentLabel Typo="Typography.H4" Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is   null ? Color.Accent : Color.Error)">No Realizada  </FluentLabel>
+                    }
+
+                    else
+
+                    {
+                        <FluentLabel Typo="Typography.H4" Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is not null ? Color.Accent : Color.Error)">Realizada  </FluentLabel>
+
+                    }
+
+                </FluentStack>
             </FluentGridItem>
         </FluentGrid>
     </EditForm>
@@ -131,209 +131,35 @@
         <FluentButton @onclick='() => GoBack()' BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
             Cancelar
         </FluentButton>
-        <FluentButton BackgroundColor="red" Disabled="@((AveriaEstadoState.Value.AveriaSelected is null ))" @onclick="EliminarAveria" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        <FluentButton BackgroundColor="red" Disabled="@((AveriaFormState.Value.AveriaSelected is null ))" @onclick="EliminarAveria" Type="ButtonType.Button" Color="white" Style="flex: 1;">
             Eliminar
         </FluentButton>
 
     </FluentStack>
 
-    @* <form class="w-100 content overflow-auto  w-100 d-flex flex-column align-items-center justify-content-start scrollableForm " needs-validation>
-        <div class="row w-100 bg-dark ">
-    <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center">
-    <span style="color:white" class="SubTitulo">Detalles</span>
-    </div>
-    </div>
-    <div class="row w-100  ">
-    <div class="col-12 w-100 border">
-    <div class="d-flex flex-column justify-content-start mb-1" @onclick="() => Dispatcher.Dispatch(new ChangeModalMaquinaSelecter(true))">
-    <label class="TextoMedio">Maquina</label>
 
-    <input class="form-control @(AveriaEstadoState.Value.maquinaValid ? "" : "is-invalid")"
-    style="height: fit-content; min-height: 1.5em; color: blue"
-    value="@( AveriaEstadoState.Value.AveriaSelected.Incidencia  is not null ? $"{AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.codigo} / {AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.modeloMaquina}": "" )"
-    readonly />
-
-    <div class="invalid-feedback @(AveriaEstadoState.Value.maquinaValid ? "d-none" : "d-block")">
-    Por favor, elige una máquina válida.
-    </div>
-    </div>
-    <GEO_DROID.Shared.Components.Selecter.MaquinasSelecter />
-    </div>
-    <div class="col-12 w-100 border">
-    <div class="d-flex flex-column justify-content-start mb-1" @onclick="() => Dispatcher.Dispatch(new ChangeModalConceptoSelecter(true))">
-    <label class="TextoMedio">Concepto</label>
-
-    <input class="form-control @(AveriaEstadoState.Value.conceptoValid ? "" : "is-invalid")"
-    style="height: fit-content; min-height: 1.5em; color: blue"
-    value="@(AveriaEstadoState.Value.AveriaSelected.ConceptoAveria is not null ? $"{ AveriaEstadoState.Value.AveriaSelected.ConceptoAveria?.descripcion}": "" )"
-    readonly />
-
-    <div class="invalid-feedback @(AveriaEstadoState.Value.conceptoValid ? "d-none" : "d-block")">
-    Por favor, elige un concepto válido.
-    </div>
-    </div>
-    <GEO_DROID.Shared.Components.Selecter.ConceptoSelecter />
-    </div>
-    <div class="col-12 w-100 border">
-    <div class="d-flex flex-column justify-content-start mb-1" @onclick="() => Dispatcher.Dispatch(new ChangeModalAveriaestadoSelecter(true))">
-    <label class="TextoMedio">Estado</label>
-
-    <input class="form-control @(AveriaEstadoState.Value.estadoValid ? "" : "is-invalid")"
-    style="height: fit-content; min-height: 1.5em; color: blue"
-    value=" @(AveriaEstadoState.Value.AveriaSelected.AveriaEstado is not null ? $" { AveriaEstadoState.Value.AveriaSelected.AveriaEstado?.descripcion}": "" )"
-    readonly />
-
-    <div class="invalid-feedback @(AveriaEstadoState.Value.estadoValid ? "d-none" : "d-block")">
-    Por favor, elige un estado válido.
-    </div>
-    </div>
-    <GEO_DROID.Shared.Components.Selecter.EstadoSelecter />
-    </div>
-
-    </div>
-    <div class="row w-100  ">
-    <div class="col-12 w-100 border d-flex flex-column justify-content-start pl-3 ">
-    <span>Descripción</span>
-    <textarea oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="bluetext mb-1 auto-expand" style=" min-height:1.5em ;" placeholder="Comentarios"></textarea>
-    </div>
-    <div class="col-12 w-100 border d-flex flex-column justify-content-start pl-3 ">
-    <span>Detalle</span>
-    <textarea oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="bluetext mb-1 auto-expand" style=" min-height:1.5em ;" @bind="averia.detalle" placeholder="Detalle"></textarea>
-    </div>
-    <div class="col-12 w-100 border d-flex flex-column justify-content-start pl-3">
-    <span>Comentarios</span>
-    <textarea oninput='this.style.height = "";this.style.height = this.scrollHeight + "px"' class="bluetext mb-1 auto-expand " style=" min-height:1.5em ; " @bind="averia.comentarios" placeholder="Comentarios"></textarea>
-    </div>
-    </div>
-    <div class="row w-100 bg-dark">
-    <div class="col-12 w-100 d-flex flex-column justify-content-center align-items-center"> //13.5/14/15
-    <span style="color:white" class="subtitle">Acciones</span>
-    </div>
-    </div>
-        <div class="row w-100 border ">
-            <div class="col-12 w-100 border d-flex flex-column justify-content-start" @onclick='() => NavigateToCarga()'>
-                <span class="fs-6">Realizar carga</span>
-                @if (AveriaEstadoState.Value.CargaSelected != null)
-                {
-                    <span class="bluetext">Realizada @AveriaEstadoState.Value.CargaSelected.cargaEmpresa / @AveriaEstadoState.Value.CargaSelected.recuperacionEmpresa </span>
-                }
-                else
-                {
-                    <span class="bluetext">No realizada</span>
-                }
-            </div>
-            <div class="col-12 w-100 border d-flex flex-column justify-content-start" @onclick='() => NavigateToLecturaInicial()'>
-                <span class="fs-6">Lectura inicial de contadores</span>
-                @if (AveriaEstadoState.Value.LecturaDetallesSelected != null && AveriaEstadoState.Value.LecturaDetallesSelected.Count > 0)
-                {
-                    <span class="bluetext">Realizada </span>
-                    @foreach (var entry in AveriaEstadoState.Value.LecturaDetallesSelected)
-                    {
-                        var item = entry.Key;
-                        var lecturaDetalle = entry.Value;
-
-                        <span class="bluetext">@lecturaDetalle.valorAntes</span>
-                    }
-                }
-                else
-                {
-                    <span class="bluetext">No realizada</span>
-                }
-
-            </div>
-            <div class="col-12 w-100 border d-flex flex-column justify-content-start" @onclick='() => NavigateToLecturaFinal()'>
-                <span class="fs-6">Lectura final contadores</span>
-                @if (AveriaEstadoState.Value.LecturaDetallesSelected != null && AveriaEstadoState.Value.LecturaDetallesSelected.Count > 0)
-                {
-                    <span class="bluetext">Realizada </span>
-                    @foreach (var entry in AveriaEstadoState.Value.LecturaDetallesSelected)
-                    {
-                        var item = entry.Key;
-                        var lecturaDetalle = entry.Value;
-
-                        <span class="bluetext">@lecturaDetalle.valor</span>
-                    }
-                }
-                else
-                {
-                    <span class="bluetext">No realizada</span>
-                }
-            </div>
-        </div>
-    </form>
-    *@
 
 }
 
 @code {
 
-    [SupplyParameterFromForm]
-    private Averia Model { get; set; } = new();
 
-
-    private string title = "";
-
-
-    private Establecimiento establecimiento;
-    private Carga carga;
-
-    private LecturaContador lecturaContador;
-    private List<LecturaDetalle> lecturasdetalle;
-    private bool ActiveTeclado = false;
-
-    private bool realizadaIni = false;
-    private bool realizadaFin = false;
-
-    private bool modalDescripción = false;
-    private bool modalDetalle = false;
-    private bool modalComentario = false;
-
-    private bool AveriaView = true;
-    private bool CargaView = false;
-    private bool LecturaInicialContadores = false;
-    private bool LecturaFinalContadores = false;
-
-    private bool margin = false;
     private bool showLecturaForms = false;
-
-    private void HandleAnadirCargaClick()
-    {
-        showLecturaForms = true;
-
-        if (AveriaEstadoState?.Value.AveriaSelected?.Incidencia?.maquina?.patronContador != null &&
-            (AveriaEstadoState.Value.LecturaDetallesSelected == null || !AveriaEstadoState.Value.LecturaDetallesSelected.Any()))
-        {
-
-            Dispatcher.Dispatch(new LoadLecturaDetalleSelected(AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.patronContador, AveriaEstadoState.Value.AveriaSelected.Incidencia));
-        }
-    }
 
     protected override void OnInitialized()
     {
-        base.OnInitialized();
-        if (AveriaEstadoState?.Value.AveriaSelected is not null)
-        {
-            //tenemos un averia seleccionada estamos modificando 15
-            Model = AveriaEstadoState.Value.AveriaSelected;
-            //cargamos la carga en el formulario State si la crga selected is null
-            if (AveriaEstadoState.Value.CargaSelected is null)
-            {
-                Dispatcher.Dispatch(new LoadCargaForAveriaForm(Model));
-            }
-            if (AveriaEstadoState.Value.LecturaDetallesSelected is null || AveriaEstadoState.Value.LecturaDetallesSelected.Count == 0)
-            {
-                Dispatcher.Dispatch(new LoadLecturaDetalleSelected(AveriaEstadoState.Value.AveriaSelected.Incidencia.maquina.patronContador, AveriaEstadoState.Value.AveriaSelected.Incidencia));
-            }
 
-            HandleAnadirCargaClick();
-            Dispatcher.Dispatch(new ValidateAveriaFormState());
+        if (AveriaFormState?.Value.AveriaSelected is null)
+        {
+            Averia Averia = new Averia();
+            Dispatcher.Dispatch(new ChangeAveriaSelectedFormAction(Averia));
         }
         else
         {
-            // no tenemos la averia seleccionada estamos creando una nueva;
-            Dispatcher.Dispatch(new ChangeAveriaSelectedFormAction(Model));
-            Dispatcher.Dispatch(new ValidateAveriaFormState());
+            if (AveriaFormState?.Value.CargaSelected is null)
+                Dispatcher.Dispatch(new LoadCargaForAveriaForm(AveriaFormState?.Value.AveriaSelected));
         }
+        base.OnInitialized();
 
     }
 
@@ -354,55 +180,9 @@
         Dispatcher.Dispatch(new NavigationToAction($"/{pageTitle.ToLower()}"));
     }
 
-    private void NavigateToCarga()
-    {
-        if (AveriaEstadoState.Value.AveriaSelected.Incidencia != null)
-        {
-            Dispatcher.Dispatch(new NavigationToAction("cargaForm"));
-        }
-        else
-        {
-            // seleccciona maquina crack  
-
-        }
-    }
-
-    private void NavigateToLecturaInicial()
-    {
-        if (AveriaEstadoState.Value.AveriaSelected.Incidencia != null)
-        {
-            Dispatcher.Dispatch(new NavigationToAction("lecturaInicialForm"));
-        }
-        else
-        {
-            // seleccciona maquina crack
-
-        }
-    }
-
-    private void NavigateToLecturaFinal()
-    {
-        if (AveriaEstadoState.Value.AveriaSelected.Incidencia != null)
-        {
-            Dispatcher.Dispatch(new NavigationToAction("lecturaFinalForm"));
-        }
-        else
-        {
-            // seleccciona maquina crack
-
-        }
-    }
-
     public async void EliminarAveria()
     {
-        // int resp = await _AveriasService.DeleteAveriaAsync(averia)
-        bool confirmed = await Dispatcher.ShowConfirmationAsync("Eliminar Averia", "¿Estás seguro de que deseas Eliminar?");
-
-        if (confirmed)
-        {
-            Dispatcher.Dispatch(new DeleteAveria(Model));
-        }
-        GoBack();
+        Dispatcher.Dispatch(new DeleteAveria(AveriaFormState.Value.AveriaSelected));
     }
 
     public void GuardarAveria()
@@ -410,44 +190,12 @@
 
         Dispatcher.Dispatch(new ValidateAveriaFormState());
 
-        if (AveriaEstadoState.Value.Valid)
+        if (AveriaFormState.Value.Valid)
         {
             Dispatcher.Dispatch(new CreateAveriaFromState());
         }
 
         GoBack();
-    }
-
-
-
-    private void ShowModalDescripción()
-    {
-        modalDescripción = true;
-    }
-
-    private void HideModalDescripción()
-    {
-        modalDescripción = false;
-    }
-
-    private void HideModalDetalle()
-    {
-        modalDetalle = false;
-    }
-
-    private void ShowModalDetalle()
-    {
-        modalDetalle = true;
-    }
-
-    private void HideModalComentario()
-    {
-        modalComentario = false;
-    }
-
-    private void ShowModaComentario()
-    {
-        modalComentario = true;
     }
 
     private async void GoBack()

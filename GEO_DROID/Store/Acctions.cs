@@ -1,5 +1,6 @@
 ﻿using GEO_DROID.Store.Confirmation;
 using GeoDroid.Data;
+using InTheHand.Net.Sockets;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.FluentUI.AspNetCore.Components;
 using System.Globalization;
@@ -9,12 +10,13 @@ namespace GEO_DROID.Store;
 public record ChangeCultureAction(CultureInfo culture);
 public record ChangeAveriaSelectedAction(Averia averia);
 public record changeCargaSelectedForAveriasForm(GeoDroid.Data.Carga Carga);
-public record ChangeEstablecimientoSelectedAction(GeoDroid.Data.Establecimiento establecimiento); // Refactored to GEO_DROID/Store/Establecimiento/EstablecimientoActions.cs
+public record ChangeEstablecimientoSelectedAction(GeoDroid.Data.Establecimiento establecimiento);
 public record ChangeRutaSelectedAction(Ruta ruta);
 public record ChangeMaquinaSelectedAction(Maquina maquina);
 public record ChangeConceptoAveriaSelectedAction(ConceptoAveria ConceptoAveria);
 public record ChangeEstablecimientosListSelected(List<GeoDroid.Data.Establecimiento> EstablecimientoList);
 public record ChangeRutasListSelected(List<Ruta> RutaList);
+public record ChangeConectedDevice(BluetoothDeviceInfo device);
 public record ChangeEstablecimientosListForSelecter(List<GeoDroid.Data.Establecimiento> EstablecimientoList);
 public record ChangeNavigationAction(string rute, bool replace = false);
 public record ChangeAveriasListSelectedByEstablecimiento(List<Averia> averiaList);
@@ -23,6 +25,7 @@ public record LaunchEstablecimientoSelecter();
 public record LaunchMaquinaSelecter();
 public record LaunchConceptoSelecter();
 public record LaunchEstadoSelecter();
+public record LaunchTestContadoresDialog();
 //-------------------------------------------------------------------------------------------------------------------//
 public record ChangeAveriaEstadoSelectedAction(GeoDroid.Data.AveriaEstado AveriaEstado);
 public record ChangeAveriaEstadoListForSelecter(List<GeoDroid.Data.AveriaEstado> AveriaEstadoList);
@@ -30,6 +33,7 @@ public record ChangeModalMaquinaSelecter(IDialogReference reference);
 public record ChangeModalAveriaestadoSelecter(IDialogReference reference);
 public record ChangeModalConceptoSelecter(IDialogReference reference);
 public record ChangeModalEstadoSelecter(IDialogReference reference);
+public record ChangeModalTestContadoresSelecter(IDialogReference reference);
 public record ChangeModalEstablecimientoSelecter(IDialogReference reference);
 public record ChangeMaquinasListForSelecter(List<Maquina> MaquinaList);
 public record ChangeConceptoAveriaSelectedFormAction(ConceptoAveria ConceptoAveria);
@@ -57,7 +61,7 @@ public record GetAveriasCount(GeoDroid.Data.Establecimiento establecimiento);
 public record GetAveriasByEstablecimiento(int establecimientoId);
 //-------------------------------------------------------------------------------------------------------------------//
 public record AddRutaTorutasSelected(Ruta NewRute);
-public record AddRuta(GeoDroid.Data.Establecimiento establecimineto); // Note: This action takes Establecimiento, consider if it belongs to Establecimiento or Ruta feature
+public record AddRuta(GeoDroid.Data.Establecimiento establecimineto); 
 public record AddAveria(Averia averia);
 public record AddEstablecimientoSelected(GeoDroid.Data.Establecimiento establecimiento);
 //-------------------------------------------------------------------------------------------------------------------//
@@ -76,9 +80,10 @@ public record ValidateAveriaFormState();
 public record ValidateAveriaFormStateMaquina();
 public record ValidateAveriaFormStateConceptoAveria();
 public record ValidateAveriaFormStateAveriaEstado();
-//--------------------------------------------------------------------------------------------------------------------//
+//-------------------------------------------------------------------------------------------------------------------//
 public record CreateAveriaFromState();
 public record LoadAveriaForm(Averia averia);
+public record LoadLastBluetoothDevice();
 public record LoadCargaForAveriaForm(Averia averia);
 public record LoadLecturaDetalleForAveriaForm(List<PatContDetalle> PatronContador, Incidencia incidencia);
 public record LoadLecturaDetalleSelected(List<PatContDetalle> PatronContador, Incidencia incidencia);
@@ -88,3 +93,5 @@ public record UpdateAveriaFormLecturaDetalleValueAction(PatContDetalle PatronDet
 public record DeleteAveria(Averia averia);
 //--------------------------------------------------------------------------------------------------------------------//
 public record SaveConfiguration(GeoDroid.Data.Configuration Configuration);
+
+public record SaveBluetoothDevice(BluetoothDeviceInfo device);

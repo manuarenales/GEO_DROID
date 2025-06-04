@@ -1,0 +1,75 @@
+﻿@using GEO_DROID.Store
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Establecimiento
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IState<EstablecimientoState> Establecimientostate
+@inject IState<AplicacionState> AplicacionState
+@inject IDispatcher Dispatcher
+@implements IDialogContentComponent<EstableciminetoSelecterDialog>
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+@if (AplicacionState.Value is not null)
+{
+    <FluentDialogBody>
+        <FluentTextField Placeholder="Buscar"
+                         @bind-Value="busqueda"
+                         @oninput="FilterEstados"
+                         Style="width:100%" />
+
+        <div style="max-height: 60vh; overflow-y: auto;">
+            <FluentGrid Spacing="0">
+                @if (Establecimientostate.Value.EstablecimientoListForSelecter is not null)
+                {
+                    @foreach (var item in Establecimientostate.Value.EstablecimientoListForSelecter
+                   .Where(e => string.IsNullOrEmpty(busqueda) || e.nombre.ToLower().Contains(busqueda.ToLower())))
+                    {
+                        <FluentGridItem xs="12">
+                            <FluentCard>
+                                <FluentStack Orientation="Orientation.Horizontal" @onclick='() => AddItemToList(item)'>
+                                    <FluentLabel Typo="Typography.H5" Color="@Color.Neutral">@item.nombre</FluentLabel>
+                                </FluentStack>
+                            </FluentCard>
+                        </FluentGridItem>
+                    }
+                }
+            </FluentGrid>
+        </div>
+    </FluentDialogBody>
+}
+
+
+
+@code {
+
+
+    [Parameter]
+    public EstableciminetoSelecterDialog Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog? Dialog { get; set; }
+
+    string busqueda = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dispatcher.Dispatch(new LoadEstablecimientosForSelecterAction());
+
+        await base.OnInitializedAsync();
+    }
+
+    private void AddItemToList(Establecimiento item)
+    {
+        Dispatcher.Dispatch(new AddRuta(item));
+    }
+
+    public void FilterEstados(ChangeEventArgs filter)
+    {
+        busqueda = filter.Value.ToString();
+    }
+
+    private void ToggleDialogPrimaryActionButton(bool enable)
+    {
+        Dialog!.TogglePrimaryActionButton(enable);
+    }
+
+}

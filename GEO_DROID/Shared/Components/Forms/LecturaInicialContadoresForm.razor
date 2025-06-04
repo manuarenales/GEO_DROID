@@ -45,9 +45,10 @@ else if (AveriaFormState?.Value.AveriaSelected != null)
 
 
 @code {
+
     // protected override void OnInitialized()
     // {
-    //     base.OnInitialized();
+    //     base.OnInitialized(); tambien Megas gigamazx y zmove
     //     // Loading logic is expected to be handled by the parent component (AveriaForm1.razor)
     //     // if (AveriaFormState?.Value.AveriaSelected is not null)
     //     // {
@@ -61,10 +62,9 @@ else if (AveriaFormState?.Value.AveriaSelected != null)
 
     private void HandleValueChanged(PatContDetalle patKey, long newValue)
     {
-        // Dispatch the granular update action
-        Dispatcher.Dispatch(new UpdateAveriaFormLecturaDetalleValueAction(patKey, newValue, true)); // true for IsValorAntes
+
+        Dispatcher.Dispatch(new UpdateAveriaFormLecturaDetalleValueAction(patKey, newValue, true));
     }
 
-    // Removed GuardarLectura, CancelarLectura, LeerLectura, GoBack methods
-    // These functionalities will be handled by the parent AveriaForm1.razor or re-evaluated.
+
 }

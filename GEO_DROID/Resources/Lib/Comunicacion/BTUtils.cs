@@ -397,7 +397,7 @@ namespace BLL.LeerInfoMaquina
 
         static public void StartReading(BluetoothReader.OnDataReadDelegate onDataRead)
         {
-            System.Diagnostics.Debug.Assert(_bthSocket != null, "You should be calling EndReading before trying to start reading again from Bluetooth");
+           // System.Diagnostics.Debug.Assert(_bthSocket != null, "You should be calling EndReading before trying to start reading again from Bluetooth");
 
             // Crear el CancellationTokenSource y obtener el token
             _cancellationTokenSource = new CancellationTokenSource();
@@ -471,6 +471,7 @@ namespace BLL.LeerInfoMaquina
                     //_bthSocket.Connect();
                     _bthSocket.OutputStream.Write(data, 0, data.Length);
                     _bthSocket.OutputStream.Flush();
+                    // 
                 }
             }
             catch (Exception ex)

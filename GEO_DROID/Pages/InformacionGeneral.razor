@@ -6,10 +6,12 @@
 
 <FluentGrid Spacing="0">
     <FluentGridItem xs="12">
+
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
             <FluentLabel Typo="Typography.H4" Color="@Color.Neutral">Nombre del Recaudador</FluentLabel>
             <FluentLabel Typo="Typography.H4" Color="@Color.Accent">Manuel Pina Monzo</FluentLabel>
         </FluentStack>
+
         <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
     </FluentGridItem>
 
@@ -39,20 +41,18 @@
             <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
         </FluentGridItem>
     }
-    @* important *@
-
-    <!-- Botón inferior  -->
-    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem;">
-        <FluentButton Appearance="Appearance.Accent" OnClick="ImprimirTicket" Style="width: 80%;">
-            🖨️ Imprimir Ticket Resumen Día
-        </FluentButton>
-    </FluentStack>
-
-
 
 </FluentGrid>
-@code {
 
+<!-- Botón inferior  -->
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem;">
+    <FluentButton Appearance="Appearance.Accent" OnClick="ImprimirTicket" Style="width: 80%;">
+        🖨️ Imprimir Ticket Resumen Día
+    </FluentButton>
+</FluentStack>
+
+@code {
+    
     private List<(string Label, string Valor)> DatosRuta = new()
     {
     ("Num. Recaudaciones", "33"),
@@ -69,5 +69,8 @@
         await base.OnInitializedAsync();
     }
 
-    public void ImprimirTicket() { }
+    public void ImprimirTicket()
+    {
+     
+    }
 }

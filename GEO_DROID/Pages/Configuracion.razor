@@ -15,85 +15,102 @@
 
 @if (ConfigurationState.Value.ConfigurationSelected != null)
 {
-    <div class="row">
-        <div class="col-12">
-            <h5>Sincronizacion</h5>
-            <div class="list-group">
-                <div class="list-group-item d-flex flex-column justify-content-start">
-                    <span>Nº Unidad</span>
-                    <input class="form-control @(NunidadIsValid ? "" : "is-invalid")" type="number" placeholder="Some text value..." @bind="ConfigurationState.Value.ConfigurationSelected.unitNumber" />
-                    @if (!NunidadIsValid)
-                    {
-                        <div class="invalid-feedback">
-                            Please enter a valid unit number.
-                        </div>
-                    }
-                </div>
-                <div class="list-group-item d-flex flex-column justify-content-start">
-                    <span>Contraseña</span>
-                    <input class="form-control @(ContraseñaIsValid ? "" : "is-invalid")" placeholder="Some text value..." @bind="ConfigurationState.Value.ConfigurationSelected.password" />
-                    @if (!ContraseñaIsValid)
-                    {
-                        <div class="invalid-feedback">
-                            Please enter a valid password.
-                        </div>
-                    }
-                </div>
-                <div class="list-group-item d-flex flex-column justify-content-start">
-                    <span>Servidor GEO</span>
-                    <input class="form-control @(ServerIsValid ? "" : "is-invalid")" placeholder="Some text value..." @bind="ConfigurationState.Value.ConfigurationSelected.ip" />
-                    @if (!ServerIsValid)
-                    {
-                        <div class="invalid-feedback">
-                            Please enter a valid GEO server.
-                        </div>
-                    }
-                </div>
-                <div class="list-group-item d-flex flex-column justify-content-start">
-                    <span>Puerto GEO</span>
-                    <input class="form-control @(PuertoIsValid ? "" : "is-invalid")" type="number" placeholder="Some text value..." @bind="ConfigurationState.Value.ConfigurationSelected.port" />
-                    @if (!PuertoIsValid)
-                    {
-                        <div class="invalid-feedback">
-                            Please enter a valid GEO port.
-                        </div>
-                    }
-                </div>
-                <div class="list-group-item d-flex justify-content-start align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" @bind="ConfigurationState.Value.ConfigurationSelected.syncCompressionEnabled" id="minDatos">
-                        <label class="form-check-label" for="minDatos">Minimizar uso de datos</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 mt-2">
-            <h5>Tickets</h5>
-            <div class="list-group">
-                <div class="list-group-item d-flex flex-column justify-content-start" @onclick='() => NavigateTo("utilities")'>
-                    <span>Impresora</span>
-                    <span>@MacImpresion </span>
-                </div>
-                <div class="list-group-item d-flex justify-content-start align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" @bind="firmas" id="firmas">
-                        <label class="form-check-label" for="firmas">Imprimir area de firmas</label>
-                    </div>
-                </div>
-                <div class="list-group-item d-flex justify-content-start align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" @bind="tiketCopi" id="tiketCopi">
-                        <label class="form-check-label" for="tiketCopi">Imprimir dos copias del tiket</label>
-                    </div>
-                </div>
-            </div>
-            <div class=" col-12 p-2 w-100 ">
-                <button type="button" class="btn btn-secondary w-100 p-2" @onclick=" ()=>Guardar()">Guardar</button>
-            </div>
-        </div>
-    </div>
+    <FluentGrid>
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentLabel Typo="Typography.H4">@Localizer["Sincronizacion"]  </FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
 
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentNumberField @bind-Value="ConfigurationState.Value.ConfigurationSelected.unitNumber" Label="Nº Unidad"></FluentNumberField>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentTextField @bind-Value="ConfigurationState.Value.ConfigurationSelected.password" Label="Contraseña"></FluentTextField>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentTextField @bind-Value="ConfigurationState.Value.ConfigurationSelected.ip" Label="Servidor GEO"></FluentTextField>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentNumberField @bind-Value="ConfigurationState.Value.ConfigurationSelected.port" Label="Puerto GEO"></FluentNumberField>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+
+
+
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentCheckbox @bind-Value="ConfigurationState.Value.ConfigurationSelected.syncCompressionEnabled" Label="Minimizar uso de datos"></FluentCheckbox>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentLabel Typo="Typography.H4">@Localizer["Tickets"]  </FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12">
+
+            <FluentStack Orientation="Orientation.Vertical" @onclick='() => NavigateTo("utilities")'>
+                <FluentLabel Typo="Typography.H4">Impresora</FluentLabel>
+                <FluentLabel Typo="Typography.H4" Color="@Color.Accent">@MacImpresion</FluentLabel>
+            </FluentStack>
+
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+
+
+        <FluentGridItem xs="12">
+            <FluentLabel> </FluentLabel>
+            <FluentCheckbox @bind-Value="firmas" Label="Imprimir area de firmas"></FluentCheckbox>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12">
+            <FluentLabel> </FluentLabel>
+            <FluentCheckbox @bind-Value="tiketCopi" Label="Imprimir dos copias del tiket"></FluentCheckbox>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+    </FluentGrid>
+
+
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+                 Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; gap: 1rem; ">
+        <FluentButton BackgroundColor="#2596be" @onclick="Guardar" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Guardar
+        </FluentButton>
+        <FluentButton @onclick='() => GoBack()' BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Cancelar
+        </FluentButton>
+    </FluentStack>
 }
+
+
+
 
 
 
@@ -117,6 +134,7 @@
 
         Dispatcher.Dispatch(new GetCongiguration());
         salir = false;
+
     }
 
     private async void Guardar()

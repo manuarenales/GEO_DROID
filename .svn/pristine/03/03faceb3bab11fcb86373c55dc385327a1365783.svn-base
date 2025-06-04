@@ -1,0 +1,42 @@
+﻿@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Navegation
+@implements IDialogContentComponent<TestContadoresDialog>
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IState<NavigationState> NavigationState
+@inject IState<AplicacionState> AplicacionState
+@inject IDispatcher Dispatcher
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+
+@if (AplicacionState.Value is not null)
+{
+    <FluentDialogBody>
+
+        <FluentGrid Spacing="0">
+            <FluentGridItem xs="12">
+
+            </FluentGridItem>
+        </FluentGrid>
+
+    </FluentDialogBody>
+}
+
+
+@code {
+    [Parameter]
+    public TestContadoresDialog Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog? Dialog { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+
+    private void ToggleDialogPrimaryActionButton(bool enable)
+    {
+        Dialog!.TogglePrimaryActionButton(enable);
+    }
+}

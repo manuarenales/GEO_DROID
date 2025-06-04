@@ -1,0 +1,26 @@
+﻿
+.fab-tooltip-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+    .fab-tooltip-wrapper .tooltip-text {
+        visibility: hidden;
+        opacity: 0;
+        background-color: black;
+        color: white;
+        text-align: center;
+        border-radius: 4px;
+        padding: 0.3rem 0.6rem;
+        position: absolute;
+        bottom: 70px;
+        right: 0;
+        transition: opacity 0.3s;
+        white-space: nowrap;
+        z-index: 1000;
+    }
+
+    .fab-tooltip-wrapper:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }

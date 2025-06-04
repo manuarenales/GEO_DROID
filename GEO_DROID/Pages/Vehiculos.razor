@@ -30,7 +30,22 @@
     {
         // Obtener ubicación
         await base.OnInitializedAsync();
-        this.location = await GetLocationAsync();
+
+        var permissionStatus = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+
+        if (permissionStatus != PermissionStatus.Granted)
+        {
+            permissionStatus = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        }
+
+        if (permissionStatus == PermissionStatus.Granted)
+        {
+            location = await GetLocationAsync();
+        }
+        else
+        {
+            Console.WriteLine("Permiso de ubicación no concedido.");
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -39,7 +54,7 @@
         {
             // Inicializar el mapa después del primer render
             await JS.InvokeVoidAsync("initializeMap", _mapId, location.Latitude, location.Longitude);
-            mapInitialized = true; // Evitar re-inicialización en cada render
+            mapInitialized = true; 
         }
     }
 
@@ -47,10 +62,8 @@
     {
         try
         {
-            // Intentar obtener la última ubicación conocida 
             var loc = await Geolocation.GetLastKnownLocationAsync();
-        
-            // Si no hay ubicación previa, obtener una nueva ubicación
+
             if (loc == null)
             {
                 loc = await Geolocation.GetLocationAsync(new GeolocationRequest
@@ -63,9 +76,8 @@
         }
         catch (Exception ex)
         {
-           
-            Console.WriteLine($"Error obteniendo ubicación: {ex.Message}");
             return null;
         }
+
     }
 }

@@ -27,7 +27,7 @@ namespace GEO_DROID.Store.AveriaCase
 
                 List<Averia> result = new();
 
-                // Obtener establecimiento
+                // Obtener establecimiento bendicion
                 var establecimiento = await _database._database.Table<GeoDroid.Data.Establecimiento>()
                     .Where(e => e.id == action.establecimientoId).FirstOrDefaultAsync();
 
@@ -47,7 +47,7 @@ namespace GEO_DROID.Store.AveriaCase
                     return;
                 }
 
-                // Obtener incidencia de la máquina 22 cada
+                // Obtener incidencia de la máquina 
                 List<Incidencia> incidencias = await _database._database.Table<Incidencia>().Where(i => i.idMaquinas == maquina.id).ToListAsync();
 
                 foreach (Incidencia Incidencia in incidencias)
@@ -136,7 +136,7 @@ namespace GEO_DROID.Store.AveriaCase
         [EffectMethod]
         public async Task GetAveriasCount(GetAveriasCount action, IDispatcher dispatcher)
         {
-            // Obtener datos de la base de datos 
+            // Obtener datos de la base de datos  
             try
             {
                 // Obtener establecimiento

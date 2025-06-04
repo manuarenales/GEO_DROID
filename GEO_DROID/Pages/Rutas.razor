@@ -16,26 +16,12 @@
 
 <FluentGrid Spacing="0">
 
-    <!-- Añadir Establecimiento -->
-    @*  <FluentGridItem xs="12" onclick="@(() => Addestablecimiento( ))">
-    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
-    <FluentIcon Value="@(new Icons.Regular.Size48.AddCircle())" />
-    <FluentLabel Typo="Typography.H4">@Localizer["añadirestablecimiento"]</FluentLabel>
-    </FluentStack>
-    <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
-    </FluentGridItem> *@
-
-
-
-    <!-- Fecha con Selector contra -->
     <FluentGridItem xs="12">
         <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
             <FluentDatePicker Label="@FormattedDate(selectedDate)" @bind-Value="@selectedDate" />
         </FluentStack>
         <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
     </FluentGridItem>
-
-
 
 </FluentGrid>
 
@@ -46,7 +32,8 @@
         @foreach (Ruta ruta in rutasState.Value.RutasListSelected)
         {
             <FluentGridItem xs="12" @onclick="@(() => NavigateTo("opciones", ruta))">
-                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.SpaceBetween">
+
+                <FluentStack Style="padding:5px;" Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.SpaceBetween">
 
                     <FluentStack Orientation="Orientation.Vertical">
                         <FluentLabel Typo="Typography.H4">
@@ -66,12 +53,12 @@
                     </FluentStack>
 
                 </FluentStack>
+
                 <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
             </FluentGridItem>
         }
     </FluentGrid>
 }
-
 
 <FluentButton @onclick="@(() => Addestablecimiento())"
               Appearance="Appearance.Accent"
@@ -81,13 +68,12 @@
 
 
 @code {
-
     private DateTime? selectedDate = DateTime.Now;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
+        
         Dispatcher.Dispatch(new GetRutasListByDate(selectedDate));
     }
 
@@ -99,8 +85,6 @@
 
     private void DeleteItem(Establecimiento establecimiento)
     {
-        // TODO: Implement actual deletion logic, e.g., dispatch an action
-        // The 'establecimiento' parameter is currently unused.
         StateHasChanged();
     }
 
@@ -120,10 +104,6 @@
 
     private void Addestablecimiento()
     {
-
         Dispatcher.Dispatch(new LaunchEstablecimientoSelecterAction());
     }
-
-
-
 }

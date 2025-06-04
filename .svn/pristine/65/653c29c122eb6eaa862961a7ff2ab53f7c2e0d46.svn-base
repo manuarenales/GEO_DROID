@@ -1,0 +1,129 @@
+﻿@page "/rutas";
+@using GEO_DROID.Services;
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Rutas
+@using IDispatcher = Fluxor.IDispatcher;
+@using Emojis = Microsoft.FluentUI.AspNetCore.Components.Emojis;
+@using GEO_DROID.Store.Establecimiento;
+@using GEO_DROID.Shared.Components.Otros;
+
+@inject NavigationManager Navigation;
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject IState<RutasState> rutasState;
+@inject IDispatcher Dispatcher ;
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+<FluentGrid Spacing="0">
+
+    <!-- Añadir Establecimiento -->
+    @*  <FluentGridItem xs="12" onclick="@(() => Addestablecimiento( ))">
+    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+    <FluentIcon Value="@(new Icons.Regular.Size48.AddCircle())" />
+    <FluentLabel Typo="Typography.H4">@Localizer["añadirestablecimiento"]</FluentLabel>
+    </FluentStack>
+    <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem> *@
+
+
+
+    <!-- Fecha con Selector contra -->
+    <FluentGridItem xs="12">
+        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentDatePicker Label="@FormattedDate(selectedDate)" @bind-Value="@selectedDate" />
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+
+
+</FluentGrid>
+
+@if (rutasState.Value.RutasListSelected is not null)
+{
+    <FluentGrid Spacing="0">
+
+        @foreach (Ruta ruta in rutasState.Value.RutasListSelected)
+        {
+            <FluentGridItem xs="12" @onclick="@(() => NavigateTo("opciones", ruta))">
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.SpaceBetween">
+
+                    <FluentStack Orientation="Orientation.Vertical">
+                        <FluentLabel Typo="Typography.H4">
+                            @ruta.Establecimiento.nombre
+                        </FluentLabel>
+
+                        <FluentStack Orientation="Orientation.Horizontal">
+                            <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Activities.Color.Default.SlotMachine())" />
+                            <FluentEmoji Value="@(new Emojis.Objects.Color.Default.Toolbox())" />
+                            <FluentEmoji Value="@(new Emojis.Symbols.Color.Default.RepeatButton())" />
+                            <FluentEmoji Value="@(new Emojis.Objects.Color.Default.MoneyBag())" />
+                        </FluentStack>
+                    </FluentStack>
+
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
+                        <Recaudacion CodigoEstablecimiento="@ruta.Establecimiento.codigo" />
+                    </FluentStack>
+
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+        }
+    </FluentGrid>
+}
+
+
+<FluentButton @onclick="@(() => Addestablecimiento())"
+              Appearance="Appearance.Accent"
+              Style="position: fixed; bottom: 1.5rem; right: 1.5rem; border-radius: 50%; width: 56px; height: 56px; font-size: 24px;">
+    +
+</FluentButton>
+
+
+@code {
+
+    private DateTime? selectedDate = DateTime.Now;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Dispatcher.Dispatch(new GetRutasListByDate(selectedDate));
+    }
+
+    private void NavigateTo(string pageTitle, Ruta ruta)
+    {
+        Dispatcher.Dispatch(new ChangeRutaSelectedAction(ruta));
+        Dispatcher.Dispatch(new NavigationToAction($"/{pageTitle.ToLower()}"));
+    }
+
+    private void DeleteItem(Establecimiento establecimiento)
+    {
+        // TODO: Implement actual deletion logic, e.g., dispatch  
+        // The 'establecimiento' parameter is currently unused.
+        StateHasChanged();
+    }
+
+    public string FormattedDate(DateTime? date)
+    {
+        if (date != null)
+        {
+            return $"{date?.ToString("dddd, dd")} de {date?.ToString("MMMM")}, {date?.Year}";
+
+        }
+        else
+        {
+            return "";
+        }
+
+    }
+
+    private void Addestablecimiento()
+    {
+
+        Dispatcher.Dispatch(new LaunchEstablecimientoSelecterAction());
+    }
+
+
+
+}

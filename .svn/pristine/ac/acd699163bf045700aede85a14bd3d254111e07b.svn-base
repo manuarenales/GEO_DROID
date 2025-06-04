@@ -1,0 +1,19 @@
+﻿using Fluxor;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace GEO_DROID.Store.Bluetooth
+{
+    public static class BluetoothReducer
+    {
+
+        [ReducerMethod]
+        public static BluetoothState OnLoadEstablecimientosAction(BluetoothState state, ChangeConectedDevice action) =>
+           state with { bluetoothDeviceInfo = action.device };
+
+
+    }
+}

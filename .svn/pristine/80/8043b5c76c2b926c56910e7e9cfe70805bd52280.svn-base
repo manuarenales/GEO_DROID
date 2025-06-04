@@ -1,0 +1,43 @@
+﻿@namespace GEO_DROID.Shared.Components.Otros
+﻿ 
+ 
+@using GEO_DROID.Services
+
+@if (recaudacion != null)
+{
+    <span class="textRecaudacion ">@recaudacion.recaudacion</span>
+}
+else if (recaudacion == null && loading == false)
+{
+    <span class="text ">No se pudo obtener la recaudación.</span>
+}
+else
+{
+    <div style="display: @(loading ? "block" : "none")" class="spinner-border text-warning"></div>
+}
+
+
+@code {
+    [Parameter]
+    public string CodigoEstablecimiento { get; set; }
+    private GeolineOdataService establecimientoService;
+    RecaudacionEstablecimientoDTO recaudacion;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        establecimientoService = new GeolineOdataService();
+
+        try
+        {
+            recaudacion = await establecimientoService.GetEstablecimientoByCodigoAsync(CodigoEstablecimiento);
+            loading = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            loading = false;
+        }
+    }
+}
+

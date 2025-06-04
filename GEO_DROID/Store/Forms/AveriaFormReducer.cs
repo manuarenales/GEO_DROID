@@ -30,6 +30,7 @@ namespace GEO_DROID.Store.Forms
         public static AveriaFormState changeCargaSelectedForAveriasForm(AveriaFormState state, changeCargaSelectedForAveriasForm action)
         {
             return state with { CargaSelected = action.Carga };
+
         }
 
         [ReducerMethod]
@@ -122,7 +123,7 @@ namespace GEO_DROID.Store.Forms
         [ReducerMethod]
         public static AveriaFormState ValidateAveriaFormStateConceptoAveria(AveriaFormState state, ValidateAveriaFormStateConceptoAveria action)
         {
-            //
+
             return state with { conceptoValid = true };
         }
 
@@ -189,7 +190,7 @@ namespace GEO_DROID.Store.Forms
                 detalleToUpdate.valor = action.NewValor;
             }
 
-            // Determine if there's an adjustment
+
             detalleToUpdate.tieneAjuste = detalleToUpdate.valor != detalleToUpdate.valorAntes;
 
             newLecturaDetallesSelected[action.PatronDetalleKey] = detalleToUpdate;

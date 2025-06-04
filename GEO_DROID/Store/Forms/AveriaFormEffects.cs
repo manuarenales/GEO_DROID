@@ -19,6 +19,7 @@ namespace GEO_DROID.Store.Forms
             _database = database;
             _averiaFormState = averiaFormState;
             _RutasStateState = RutasStateState;
+           
         }
 
         [EffectMethod]
@@ -26,7 +27,7 @@ namespace GEO_DROID.Store.Forms
         {
             try
             {
-                // miramos si tiene ID averia / si no la creamos /
+                // miramos si tiene ID averia / si no la creamos / 13/14/15
                 if (_averiaFormState.Value.AveriaSelected.id is not 0)
                 {
                     //tengo averia estoy modificando 
@@ -48,8 +49,8 @@ namespace GEO_DROID.Store.Forms
                             await _database._database.InsertAsync(carga);
                         }
                     }
-                    //LecturaContadores 
-                    //busco la lectura contador si es que ya existe 
+                    //LecturaContadores
+                    //busco la lectura contador si es que ya existe  
                     LecturaContador lecturaContador = await _database._database.Table<GeoDroid.Data.LecturaContador>().Where(lc => lc.id == _averiaFormState.Value.lecturacontadorId).FirstOrDefaultAsync();
                     if (lecturaContador is null)
                     {
@@ -120,8 +121,7 @@ namespace GEO_DROID.Store.Forms
                     //LecturaContadores
                     if (_averiaFormState.Value.LecturaDetallesSelected is not null)
                     {
-                        // si es nula tenemos que crear una nuevan 
-
+                        // si es nula tenemos que crear una nueva desde cero 
                         LecturaContador newlecturaContador = new LecturaContador();
                         newlecturaContador.idIncidencias = averia.idIncidencias;
 
@@ -173,16 +173,15 @@ namespace GEO_DROID.Store.Forms
             }
         }
 
-
         [EffectMethod]
         public async Task LoadLecturaDetalleForAveriaForm(LoadLecturaDetalleForAveriaForm action, IDispatcher dispatcher)
         {
             try
             {
                 Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle> salida = new Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle>();
-                //Miro si la incidencia tiene LecturaContador
+                //Miro si la incidencia tiene LecturaContador 
                 LecturaContador lecturaContador = await _database._database.Table<GeoDroid.Data.LecturaContador>().Where(lc => lc.idIncidencias == action.incidencia.id).FirstOrDefaultAsync();
-                //Si no tiene lectura contador tenemos que crear la lecturacontador 
+                //Si no tiene lectura contador tenemos que crear la lecturacontador
                 if (lecturaContador is null)
                 {
                     lecturaContador = new LecturaContador();
@@ -196,7 +195,6 @@ namespace GEO_DROID.Store.Forms
                         newlectura.idPatContDetalles = item.id;
                         //esto todabia no tiene ID ojo cuidao se crea cuando se guarda;
                         newlectura.idLecturaContadores = lecturaContador.id;
-
                         salida.Add(item, newlectura);
                     }
                 }
@@ -217,9 +215,6 @@ namespace GEO_DROID.Store.Forms
                 throw ex;
             }
         }
-
-
-
 
     }
 }

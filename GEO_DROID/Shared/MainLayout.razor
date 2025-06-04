@@ -17,17 +17,15 @@
             <GEO_DROID.Shared.Components.ConfirmationPopUp />
             <GEO_DROID.Shared.Components.BlockingSpinner />
 
-
             <FluentToastProvider />
             <FluentDialogProvider />
             <FluentTooltipProvider />
             <FluentMessageBarProvider />
             <FluentMenuProvider />
-
         </FluentBodyContent>
 
         <FluentFooter>
-
+            <FluentToastProvider MaxToastCount="10" />
         </FluentFooter>
 
     </main>
@@ -38,7 +36,7 @@
 
 @code
 {
-
+    
     protected override void OnInitialized()
     {
         base.OnInitialized();

@@ -25,7 +25,6 @@ namespace GEO_DROID.Store.Application
             confirmationState = ConfirmationState;
             _navigationManager = navigationManager;
             _dialogService = DialogService;
-
         }
 
         [EffectMethod]
@@ -74,8 +73,7 @@ namespace GEO_DROID.Store.Application
         [EffectMethod]
         public async Task ChangeModalEstablecimientoSelecter(LaunchEstablecimientoSelecterAction action, IDispatcher dispatcher)
         {
-            //Lanzamos un pop up con el temita este de Modal 
-
+            //Lanzamos un pop up con el temita este de 
             EstableciminetoSelecterDialog content = new()
             {
                 Title = "Añadiendo Establecimiento",
@@ -109,16 +107,18 @@ namespace GEO_DROID.Store.Application
                 }
                 else
                 {
-                    //Aceptar
+                    //Acepta 
                     await _sincroService.StartAsync(null);
                     dispatcher.Dispatch(new ChangeModalEstablecimientoSelecter(null));
                 }
             }
             else
             {
-                //pulsa la x  n 
+                //pulsa la X 
                 dispatcher.Dispatch(new ChangeModalEstablecimientoSelecter(null));
             }
+
+
         }
 
         [EffectMethod]
@@ -268,6 +268,56 @@ namespace GEO_DROID.Store.Application
             {
                 //pulsa la x  n 
                 dispatcher.Dispatch(new ChangeModalEstadoSelecter(null));
+            }
+        }
+
+        [EffectMethod]
+        public async Task ChangeModalTestContadoresSelecter(LaunchTestContadoresDialog action, IDispatcher dispatcher)
+        {
+            //Lanzamos un pop up con el temita este de Modal 
+
+            TestContadoresModelDialog content = new()
+            {
+                Title = "Test Lectura Contadores",
+                DismissTitle = "Cancelar",
+            };
+
+            DialogParameters parameters = new()
+            {
+                Title = content.Title,
+                PrimaryAction = null,
+                DismissTitle = content.PrimaryAction,
+                Height = "90%",
+                PrimaryActionEnabled = false,
+                Width = "95%",
+                TrapFocus = true,
+                DialogBodyStyle = "max-height: 60vh; overflow-y: auto;",
+                Modal = true,
+            };
+
+            IDialogReference dialog = await _dialogService.ShowDialogAsync<TestContadoresDialog>(content, parameters);
+
+            dispatcher.Dispatch(new ChangeModalTestContadoresSelecter(dialog));
+
+            DialogResult? result = await dialog.Result;
+            if (result.Data is not null)
+            {
+                if (result.Cancelled)
+                {
+                    // Cancelar  
+                    dispatcher.Dispatch(new ChangeModalTestContadoresSelecter(null));
+                }
+                else
+                {
+                    //Aceptar
+                    await _sincroService.StartAsync(null);
+                    dispatcher.Dispatch(new ChangeModalTestContadoresSelecter(null));
+                }
+            }
+            else
+            {
+                //pulsa la x 
+                dispatcher.Dispatch(new ChangeModalTestContadoresSelecter(null));
             }
         }
 

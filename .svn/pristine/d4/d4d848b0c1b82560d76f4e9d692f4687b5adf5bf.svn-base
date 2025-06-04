@@ -1,0 +1,66 @@
+﻿@* Removed @page "/lecturaFinalForm" *@
+
+@using Fluxor
+@using GEO_DROID.Store.Forms
+@using GEO_DROID.Store
+@using GeoDroid.Data @* For PatContDetalle *@
+@using Microsoft.Extensions.Localization
+@using GEO_DROID.Resources.Languages @* For StringLocalizer *@
+@using Microsoft.FluentUI.AspNetCore.Components
+
+@inject IState<AveriaFormState> AveriaFormState
+@inject IDispatcher Dispatcher
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+@if (AveriaFormState?.Value.AveriaSelected != null && AveriaFormState.Value.LecturaDetallesSelected != null)
+{
+    <FluentStack Orientation="Orientation.Vertical" Class="w-100">
+        <FluentLabel Typo="Typography.H6">@Localizer["LecturaFinalContadores"]</FluentLabel>
+
+
+        @foreach (var entry in AveriaFormState.Value.LecturaDetallesSelected.OrderBy(e => e.Key.orden))
+        {
+            var patContDetalleKey = entry.Key;
+            var lecturaDetalle = entry.Value;
+
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentLabel Typo="Typography.Body">@patContDetalleKey.tipoContadores (@patContDetalleKey.valorPaso)</FluentLabel>
+                <FluentNumberField Label="@Localizer["ValorActual"]"
+                                   Value="lecturaDetalle?.valor ?? 0"
+                                   ValueChanged="(long newValue) => HandleValueChanged(patContDetalleKey, newValue)"
+                                   Style="width: 100%;" />
+            </FluentStack>
+        }
+
+    </FluentStack>
+}
+else if (AveriaFormState?.Value.AveriaSelected != null)
+{
+    <FluentLabel Typo="Typography.Body">@Localizer["ContadoresNoCargados"]</FluentLabel>
+}
+
+@code {
+    // protected override void OnInitialized()
+    // {
+    //     base.OnInitialized();
+    //     // Loading logic is expected to be handled by the parent component (AveriaForm1.razor)
+    //     // if (AveriaFormState?.Value.AveriaSelected is not null)
+    //     // {
+    //     //     if (AveriaFormState.Value.AveriaSelected.Incidencia?.maquina?.patronContador is not null &&
+    //     //         (AveriaFormState.Value.LecturaDetallesSelected == null || !AveriaFormState.Value.LecturaDetallesSelected.Any()))
+    //     //     {
+    //     //         Dispatcher.Dispatch(new LoadLecturaDetalleForAveriaForm(AveriaFormState.Value.AveriaSelected.Incidencia.maquina.patronContador, AveriaFormState.Value.AveriaSelected.Incidencia));
+    //     //     }
+    //     // }
+    // }
+
+    private void HandleValueChanged(PatContDetalle patKey, long newValue)
+    {
+        // Dispatch the granular update action
+        Dispatcher.Dispatch(new UpdateAveriaFormLecturaDetalleValueAction(patKey, newValue, false)); // false for IsValorAntes (i.e., it's valorActual)
+    }
+
+    // Removed GuardarLectura, CancelarLectura, LeerLectura, GoBack methods
+}

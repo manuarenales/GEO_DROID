@@ -1,0 +1,91 @@
+﻿@using GEO_DROID.Store
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Concepto
+@using GEO_DROID.Store.Maquinas
+@using GEO_DROID.Store.Navegation
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IState<ConceptoAveriaState> ConceptoAveriaState
+@inject IState<AplicacionState> AplicacionState
+@inject IDispatcher Dispatcher
+@implements IDialogContentComponent<ConceptoSelecterDialog>
+@inject IState<NavigationState> NavigationState
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+
+@if (AplicacionState.Value is not null)
+{
+    <FluentDialogBody>
+        <FluentTextField Placeholder="Buscar"
+                         @bind-Value="Bconcepto"
+                         @oninput="FilterEstados"
+                         Style="width:100%" />
+
+        <div style="max-height: 60vh; overflow-y: auto;">
+            <FluentGrid Spacing="0">
+                @if (ConceptoAveriaState.Value.ConceptoAveriaListSelecterSelected is not null)
+                {
+                    @foreach (ConceptoAveria item in ConceptoAveriaState.Value.ConceptoAveriaListSelecterSelected.Where(e => string.IsNullOrEmpty(Bconcepto) || e.descripcion.ToLower().Contains(Bconcepto.ToLower())))
+                    {
+                        <FluentGridItem xs="12">
+                            <FluentCard>
+                                <FluentStack Orientation="Orientation.Horizontal" @onclick='async ()=> {
+                                       ConceptoSelected(item);
+                                    } '>
+                                    <FluentLabel Typo="Typography.H5" Color="@Color.Neutral">@item.descripcion</FluentLabel>
+                                </FluentStack>
+                            </FluentCard>
+                        </FluentGridItem>
+                    }
+                }
+            </FluentGrid>
+        </div>
+    </FluentDialogBody>
+}
+
+
+
+@code {
+
+
+    [Parameter]
+    public ConceptoSelecterDialog Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog? Dialog { get; set; }
+
+    string Bconcepto = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Dispatcher.Dispatch(new GetConceptoAveriaList());
+    }
+
+    public void ConceptoSelected(ConceptoAveria concepto)
+    {
+        if (NavigationState.Value.CurrentRoute == "averiaform1")
+        {
+            Dispatcher.Dispatch(new ChangeConceptoAveriaSelectedFormAction(concepto));
+            Dispatcher.Dispatch(new ValidateAveriaFormStateConceptoAveria());
+            AplicacionState.Value.modalConceptoAveriaSelecter.CloseAsync();
+        }
+        else
+        {
+            Dispatcher.Dispatch(new ChangeConceptoAveriaSelectedAction(concepto));
+        }
+        Dispatcher.Dispatch(new ChangeModalConceptoSelecter(null));
+
+    }
+
+    public void FilterEstados(ChangeEventArgs filter)
+    {
+        Bconcepto = filter.Value.ToString();
+    }
+
+    private void ToggleDialogPrimaryActionButton(bool enable)
+    {
+        Dialog!.TogglePrimaryActionButton(enable);
+    }
+
+}

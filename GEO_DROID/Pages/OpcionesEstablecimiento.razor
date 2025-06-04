@@ -2,6 +2,7 @@
 @using GEO_DROID.Resources
 @using GEO_DROID.Services
 @using GEO_DROID.Store
+@using GEO_DROID.Store.Bluetooth
 @using GEO_DROID.Store.CultureCase
 @using GEO_DROID.Store.Rutas
 @using GeoDroid.Data.Models.DTO
@@ -11,11 +12,12 @@
 @using System.Text.Json
 @inject NavigationManager Navigation
 @inject IState<CultureState> CultureState;
+@inject IState<BluetoothState> BluetoothState;
 @inject IState<AveriaState> AveriaState;
-
 @inject IStringLocalizer<StringLocalizer> Localizer;
 @inject IDispatcher Dispatcher;
 @inject IState<RutasState> RutasState;
+@inject TicketsService TicketsService;
 @inherits Fluxor.Blazor.Web.Components.FluxorComponent
 @inject IJSRuntime JS
 
@@ -25,7 +27,7 @@
 
         <!-- Cabecera del Establecimiento -->
         <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
-            <FluentLabel Typo="Typography.H3">@RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
+            <FluentLabel Color="Color.Success" Typo="Typography.H3">@RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
         </FluentStack>
 
 
@@ -34,15 +36,15 @@
             <FluentLabel Typo="Typography.H5">@Localizer["recaudar"]</FluentLabel>
             <FluentStack Orientation="Orientation.Horizontal" Style="gap: 1rem;">
                 <FluentStack Orientation="Orientation.Horizontal">
-                    <img src="img/tienda.png" style="height: 24px;" />
+                    <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.TravelPlaces.Color.Default.ConvenienceStore())" />
                     <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
                 </FluentStack>
                 <FluentStack Orientation="Orientation.Horizontal">
-                    <img src="img/recaudador.png" style="height: 24px;" />
+                    <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.PeopleBody.HighContrast.Default.ConstructionWorker())" />
                     <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
                 </FluentStack>
                 <FluentStack Orientation="Orientation.Horizontal">
-                    <img src="img/notas.png" style="height: 24px;" />
+                    <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.BookmarkTabs())" />
                     <FluentLabel Typo="Typography.H4">B2600.00</FluentLabel>
                 </FluentStack>
             </FluentStack>
@@ -52,7 +54,7 @@
         <FluentCard>
             <FluentLabel Typo="Typography.H5">@Localizer["motivosmaquinanorecaudada"]</FluentLabel>
             <FluentStack Orientation="Orientation.Horizontal">
-                <img src="img/maquina.png" style="height: 24px;" />
+                <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Activities.Color.Default.SlotMachine())" />
                 <FluentLabel Typo="Typography.H4">0</FluentLabel>
             </FluentStack>
         </FluentCard>
@@ -61,7 +63,7 @@
         <FluentCard @onclick='() => NavigateTo("averias", RutasState.Value.RutaSelected.Establecimiento)' Style="cursor: pointer;">
             <FluentLabel Typo="Typography.H5">@Localizer["averias"]</FluentLabel>
             <FluentStack Orientation="Orientation.Horizontal">
-                <img src="img/repare.jpg" style="height: 24px;" />
+                <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Flat.Default.HammerAndWrench())" />
                 <FluentLabel Typo="Typography.H4">@AveriaState.Value.AveriaCount</FluentLabel>
             </FluentStack>
         </FluentCard>
@@ -70,7 +72,7 @@
         <FluentCard>
             <FluentLabel Typo="Typography.H5">@Localizer["cambios"]</FluentLabel>
             <FluentStack Orientation="Orientation.Horizontal">
-                <img src="img/monedas.png" style="height: 24px;" />
+                <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.Coin())" />
                 <FluentLabel Typo="Typography.H4">1/0/0</FluentLabel>
             </FluentStack>
         </FluentCard>
@@ -80,16 +82,17 @@
             <FluentLabel Typo="Typography.H5">@Localizer["prestamos"]</FluentLabel>
             <FluentStack Orientation="Orientation.Horizontal" Style="gap: 1rem;">
                 <FluentStack Orientation="Orientation.Horizontal">
-                    <img src="img/tienda.png" style="height: 24px;" />
+                    <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.TravelPlaces.Color.Default.ConvenienceStore())" />
                     <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
                 </FluentStack>
                 <FluentStack Orientation="Orientation.Horizontal">
-                    <img src="img/manoflecha1.png" style="height: 24px;" />
+
+                    <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.PeopleBody.HighContrast.Default.BackhandIndexPointingRight())" />
                     <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
                 </FluentStack>
                 <FluentStack Orientation="Orientation.Horizontal">
-                    <img src="img/manoflecha2.png" style="height: 24px;" />
                     <FluentLabel Typo="Typography.H4">0.00</FluentLabel>
+                    <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.PeopleBody.HighContrast.Default.BackhandIndexPointingLeft())" />
                 </FluentStack>
             </FluentStack>
         </FluentCard>
@@ -105,10 +108,10 @@
 
     </FluentStack>
 
-    <!-- Botonera inferior el escultor y la guerra de marmol  -->
+    <!-- Botonera inferior -->
     <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
                  Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem; ">
-        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="ShowModalTickets">
+        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="ImpresionTicket">
             @Localizer["imprimirtickets"]
         </FluentButton>
         <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="ShowModalInfo">
@@ -184,16 +187,27 @@
 
     private async void ImpresionTicket()
     {
-
-        PermissionStatus permissionStatus = Permissions.CheckStatusAsync<BluetoothPermissions>().Result;
-        if (permissionStatus == PermissionStatus.Denied)
+        try
         {
-            await Permissions.RequestAsync<BluetoothPermissions>();
-            await Permissions.RequestAsync<Permissions.Camera>();
+            PermissionStatus permissionStatus = Permissions.CheckStatusAsync<BluetoothPermissions>().Result;
+            if (permissionStatus == PermissionStatus.Denied)
+            {
+                await Permissions.RequestAsync<BluetoothPermissions>();
+                await Permissions.RequestAsync<Permissions.Camera>();
+            }
+            else
+            {
+                // deberia mos de tener un device asociado y listo imprimimos loco
+                if (BluetoothState.Value.bluetoothDeviceInfoSaved.DeviceAddress is not null)
+                {
+                    TicketsService.PrintAveriasFromEstablecimiento(RutasState.Value.RutaSelected.Establecimiento.id, BluetoothState.Value.bluetoothDeviceInfoSaved.DeviceAddress);
+                }
+            }
         }
-        else
+        catch (Exception ex)
         {
 
         }
+
     }
 }
