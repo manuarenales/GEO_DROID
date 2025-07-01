@@ -1,0 +1,44 @@
+﻿@page "/testlist"
+
+<FluentStack Style="padding: 16px;" Orientation="Orientation.Vertical" Spacing="8">
+    <FluentLabel Typo="Typography.H4">Lista de prueba con Fluent UI</FluentLabel>
+
+    <FluentStack Style="max-height: 80vh; overflow-y: auto;" Orientation="Orientation.Vertical" Spacing="8">
+        @foreach (var item in items)
+        {
+            <FluentCard Style="padding: 16px;">
+                <FluentStack Orientation="Orientation.Horizontal" Spacing="12">
+                    <FluentLabel Typo="Typography.H4 " Style="font-size: 32px;">@item.Emoji</FluentLabel>
+                    <FluentStack Orientation="Orientation.Vertical">
+                        <FluentLabel Typo="Typography.H6">@item.Title</FluentLabel>
+                        <FluentLabel Typo="Typography.H4" Color="@Color.Accent">@item.Subtitle</FluentLabel>
+                    </FluentStack>
+                </FluentStack>
+            </FluentCard>
+        }
+    </FluentStack>
+</FluentStack>
+
+@code {
+    private List<ListItem> items = new();
+
+    protected override void OnInitialized()
+    {
+        for (int i = 1; i <= 100; i++)
+        {
+            items.Add(new ListItem
+                {
+                    Emoji = "⚙️",
+                    Title = $"Título {i}",
+                    Subtitle = $"Subtítulo del ítem número {i}"
+                });
+        }
+    }
+
+    public class ListItem
+    {
+        public string Emoji { get; set; }
+        public string Title { get; set; }
+        public string Subtitle { get; set; }
+    }
+}

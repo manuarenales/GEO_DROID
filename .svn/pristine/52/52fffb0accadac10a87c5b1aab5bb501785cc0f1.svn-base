@@ -1,0 +1,284 @@
+﻿@page "/averiaform1"
+
+@using Dispatcher = Fluxor.Dispatcher
+@using GEO_DROID.Store
+@using GEO_DROID.Store.AveriaEstado
+@using GEO_DROID.Store.Concepto
+@using GEO_DROID.Store.Establecimiento
+@using GEO_DROID.Store.Forms
+@using GEO_DROID.Store.LecturaDetalles
+@using GEO_DROID.Store.Maquinas
+
+@inject IDispatcher Dispatcher
+@inject IState<AveriaFormState> AveriaFormState
+@inject IState<LecturaDetalleState> LecturaDetalleState
+@inject IState<EstablecimientoState> EstablecimientoState
+@inject IToastService ToastService
+
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+@inject IJSRuntime JS
+
+@if (AveriaFormState?.Value.AveriaSelected != null)
+{
+
+    <EditForm Model="AveriaFormState?.Value.AveriaSelected">
+        <FluentGrid Spacing="0">
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    @if (EstablecimientoState.Value.EstablecimientoSelected is not null)
+                    {
+                        <FluentLabel Typo="Typography.H3" Color="Color.Success"> @EstablecimientoState.Value.EstablecimientoSelected.nombre  </FluentLabel>
+                    }
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical"
+                             @onclick="() => Dispatcher.Dispatch(new LaunchMaquinaSelecter())"
+                             Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">@Localizer["Maquina"]</FluentLabel>
+
+                    <FluentLabel Typo="Typography.H4"
+                                 Color="@(AveriaFormState.Value.AveriaSelected.Incidencia is not null ? Color.Accent : Color.Error)">
+                        @(AveriaFormState.Value.AveriaSelected.Incidencia is not null
+                            ? $"{AveriaFormState.Value.AveriaSelected.Incidencia.maquina.codigo} / {AveriaFormState.Value.AveriaSelected.Incidencia.maquina.modeloMaquina}"
+                            : Localizer["Selecciona una máquina"])
+                    </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> Dispatcher.Dispatch(new LaunchConceptoSelecter()) )">
+                    <FluentLabel Typo="Typography.H4">@Localizer["Concepto"]</FluentLabel>
+                    <FluentLabel Typo="Typography.H4"
+                                 Color="@(AveriaFormState.Value.AveriaSelected.ConceptoAveria is not null ? Color.Accent : Color.Error)">
+                        @(AveriaFormState.Value.AveriaSelected.ConceptoAveria is not null
+                            ? $"{AveriaFormState.Value.AveriaSelected.ConceptoAveria?.descripcion}"
+                            : Localizer["Selecciona un concepto"])
+                    </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> Dispatcher.Dispatch(new LaunchEstadoSelecter()) )">
+                    <FluentLabel Typo="Typography.H4">@Localizer["Estado"]</FluentLabel>
+                    <FluentLabel Typo="Typography.H4"
+                                 Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is not null ? Color.Accent : Color.Error)">
+                        @(AveriaFormState.Value.AveriaSelected.AveriaEstado is not null
+                            ? $"{AveriaFormState.Value.AveriaSelected.AveriaEstado?.descripcion}"
+                            : Localizer["Selecciona un estado"])
+                    </FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical">
+                    <FluentTextArea Resize="TextAreaResize.Vertical"
+                                    Label="@Localizer["Descripción"]"
+                                    @bind-Value="AveriaFormState.Value.AveriaSelected.observaciones"
+                                    Style="width: 100%;" />
+
+                    <FluentTextArea Resize="TextAreaResize.Vertical"
+                                    Label="@Localizer["Detalle"]"
+                                    @bind-Value="AveriaFormState.Value.AveriaSelected.detalle"
+                                    Style="width: 100%;" />
+
+                    <FluentTextArea Resize="TextAreaResize.Vertical"
+                                    Label="@Localizer["Comentarios"]"
+                                    @bind-Value="AveriaFormState.Value.AveriaSelected.comentarios"
+                                    Style="width: 100%;" />
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=>  NavegateToCargaForm()  )">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Realizar Carga"]
+                    </FluentLabel>
+                    @if (AveriaFormState.Value.CargaSelected is null)
+                    {
+                        <FluentLabel Typo="Typography.H4" Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is   null ? Color.Accent : Color.Error)">No Realizada  </FluentLabel>
+                    }
+                    else
+                    {
+                        <FluentLabel Typo="Typography.H4" Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is not null ? Color.Accent : Color.Error)">Realizada  </FluentLabel>
+                    }
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=>  NavegateToLecturaInicialForm()  )">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Realizar Lectura Contadores Inicial"]
+                    </FluentLabel>
+                    @if (AveriaFormState.Value.LecturaContador is null)
+                    {
+                        <FluentLabel Typo="Typography.H4" Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is   null ? Color.Accent : Color.Error)">No Realizada  </FluentLabel>
+                    }
+                    else
+                    {
+                        <FluentLabel Typo="Typography.H4" Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is not null ? Color.Accent : Color.Error)">Realizada  </FluentLabel>
+                    }
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12" Style="margin-bottom:50px;">
+                <FluentStack Orientation="Orientation.Vertical" @onclick="@( ()=> NavegateToLecturaFinalForm()  )">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Realizar Lectura Contadores Final"]
+                    </FluentLabel>
+                    @if (AveriaFormState.Value.LecturaContador is null)
+                    {
+                        <FluentLabel Typo="Typography.H4" Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is   null ? Color.Accent : Color.Error)">No Realizada  </FluentLabel>
+                    }
+                    else
+                    {
+                        <FluentLabel Typo="Typography.H4" Color="@(AveriaFormState.Value.AveriaSelected.AveriaEstado is not null ? Color.Accent : Color.Error)">
+                            Realizada
+                        </FluentLabel>
+                    }
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+        </FluentGrid>
+    </EditForm>
+
+
+
+
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+                 Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; gap: 1rem; ">
+        <FluentButton BackgroundColor="#2596be" @onclick="GuardarAveria" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Guardar
+        </FluentButton>
+        <FluentButton @onclick='() => GoBack()' BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Cancelar
+        </FluentButton>
+        <FluentButton BackgroundColor="red" Disabled="@((AveriaFormState.Value.AveriaSelected is null ))" @onclick="EliminarAveria" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Eliminar
+        </FluentButton>
+
+    </FluentStack>
+
+
+
+}
+
+@code {
+
+
+    private bool showLecturaForms = false;
+
+    protected override void OnInitialized()
+    {
+
+        if (AveriaFormState?.Value.AveriaSelected is null)
+        {
+            Averia Averia = new Averia();
+            Dispatcher.Dispatch(new ChangeAveriaSelectedFormAction(Averia));
+        }
+        else
+        {
+            //estamos modificando la Averia
+            if (AveriaFormState?.Value.CargaSelected is null)
+                Dispatcher.Dispatch(new LoadCargaForAveriaForm(AveriaFormState?.Value.AveriaSelected));
+
+            if (AveriaFormState?.Value.LecturaContador is null)
+                Dispatcher.Dispatch(new LoadLecturaContadorForAveriaForm(AveriaFormState?.Value.AveriaSelected.Incidencia));
+
+            // if (AveriaFormState?.Value.LecturaContador is not null && AveriaFormState?.Value.PatronLecturaContador is null)
+            //     Dispatcher.Dispatch(new LoadPatronLecturaContadorForAveriaForm(AveriaFormState?.Value.AveriaSelected.Incidencia));
+
+        }
+
+        Dispatcher.Dispatch(new ValidateAveriaFormState());
+        base.OnInitialized();
+
+    }
+
+    protected override ValueTask DisposeAsyncCore(bool disposing)
+    {
+        return base.DisposeAsyncCore(disposing);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("initializeAutoExpandTextAreas");
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Dispatcher.Dispatch(new NavigationToAction($"/{pageTitle.ToLower()}"));
+    }
+
+    public async void EliminarAveria()
+    {
+        Dispatcher.Dispatch(new DeleteAveria(AveriaFormState.Value.AveriaSelected));
+    }
+
+    public void GuardarAveria()
+    {
+        Dispatcher.Dispatch(new ValidateAveriaFormState());
+        if (AveriaFormState.Value.Valid)
+        {
+            Dispatcher.Dispatch(new CreateAveriaFromState());
+        }
+        GoBack();
+    }
+
+    private async void GoBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+
+    public async void NavegateToCargaForm()
+    {
+        if (AveriaFormState?.Value.maquinaValid == true)
+        {
+            Dispatcher.Dispatch(new NavigationToAction("CargaForm"));
+        }
+        else
+        {
+            ToastService.ShowToast(ToastIntent.Info, "Selecciona primero una maquina ");
+
+        }
+    }
+
+    public async void NavegateToLecturaInicialForm()
+    {
+        if (AveriaFormState?.Value.maquinaValid == true)
+        {
+            Dispatcher.Dispatch(new NavigationToAction("lecturaInicialForm"));
+        }
+        else
+        {
+            ToastService.ShowToast(ToastIntent.Info, "Selecciona primero una maquina ");
+        }
+
+    }
+
+    public async void NavegateToLecturaFinalForm()
+    {
+
+        if (AveriaFormState?.Value.maquinaValid == true)
+        {
+            Dispatcher.Dispatch(new NavigationToAction("lecturaFinalForm"));
+        }
+        else
+        {
+            ToastService.ShowToast(ToastIntent.Info, "Selecciona primero una maquina ");
+        }
+
+    }
+
+}

@@ -1,0 +1,82 @@
+﻿using Fluxor;
+using GeoDroid.Data;
+using GeoDroid.Data.SQL;
+using IDispatcher = Fluxor.IDispatcher;
+
+namespace GEO_DROID.Store.Rutas
+{
+    public class RutasEffects
+    {
+        private readonly GeoDroidDatabase _database;
+
+        public RutasEffects(GeoDroidDatabase database)
+        {
+            _database = database;
+
+        }
+
+        [EffectMethod]
+        public async Task GetRutasListByDate(GetRutasListByDate action, IDispatcher dispatcher)
+        {
+            try
+            {
+
+                List<Ruta> rutas = await _database._database
+                    .Table<Ruta>()
+                    .Where(r => r.fecha == action.date.Value.Date)
+                    .ToListAsync();
+
+                foreach (Ruta ruta in rutas)
+                {
+                    ruta.Establecimiento = await _database._database.Table<GeoDroid.Data.Establecimiento>().Where(e => e.id == ruta.idEstablecimiento).FirstOrDefaultAsync();
+                }
+
+                dispatcher.Dispatch(new ChangeRutasListSelected(rutas));
+
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        [EffectMethod]
+        public async Task AddRuta(AddRuta action, IDispatcher dispatcher)
+        {
+            try
+            {
+                Ruta NewRute = new Ruta
+                {
+                    Establecimiento = action.establecimineto,
+                    idEstablecimiento = action.establecimineto.id,
+                    fecha = DateTime.Now.Date
+                };
+
+
+                var rutasExistentes = await _database._database.Table<Ruta>()
+                    .Where(r => r.idEstablecimiento == NewRute.idEstablecimiento)
+                    .ToListAsync();
+
+                bool yaExiste = rutasExistentes.Any(r =>
+                    r.fecha.Date == NewRute.fecha.Date);
+
+                if (!yaExiste)
+                {
+                    await _database._database.InsertAsync(NewRute);
+                    Console.WriteLine("Ruta añadida");
+                    dispatcher.Dispatch(new AddRutaTorutasSelected(NewRute));
+                }
+                else
+                {
+                    Console.WriteLine("Ya existe una ruta con ese establecimiento para la misma fecha.");
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                throw;
+            }
+        }
+    }
+}

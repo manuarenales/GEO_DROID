@@ -1,0 +1,26 @@
+﻿using Fluxor;
+using GEO_DROID.Store.Forms;
+using GEO_DROID.Store.Rutas;
+using GeoDroid.Data;
+using GeoDroid.Data.SQL;
+using IDispatcher = Fluxor.IDispatcher;
+
+namespace GEO_DROID.Store.LecturaDetalle
+{
+    public class LecturaDetalleEffects
+    {
+
+        private readonly GeoDroidDatabase _database;
+        private readonly IState<AveriaFormState> _averiaFormState;
+        private readonly IState<RutasState> _RutasStateState;
+
+
+        public LecturaDetalleEffects(GeoDroidDatabase database, IState<AveriaFormState> averiaFormState, IState<RutasState> RutasStateState)
+        {
+            _database = database;
+            _averiaFormState = averiaFormState;
+            _RutasStateState = RutasStateState;
+        }
+
+    }
+}

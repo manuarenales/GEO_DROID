@@ -2,6 +2,7 @@
 @using BlazorBarcodeScanner.ZXing.JS
 @using GEO_DROID.Resources
 @using GEO_DROID.Services
+@using GEO_DROID.Store.Application
 @using GEO_DROID.Store.Bluetooth
 @using GeoDroid.Data.Models.DTO
 @using InTheHand.Net
@@ -15,37 +16,104 @@
 @inject IJSRuntime JS
 @inject BluetoothServiceManager _BluetoothServiceManager;
 @inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IState<AplicacionState> AplicacionState
+@inject IState<BluetoothState> BluetoothState
+@inject IToastService ToastService
 @inject IDispatcher Dispatcher;
+@inject IToastService ToastService
 
 
-<FluentGrid>
+@if (BluetoothState.Value.currentDeviceConected is not null)
+{
+
+    <FluentCard>
+        <FluentStack Orientation="Orientation.Vertical" Style="padding:4px;">
+            <FluentLabel Typo="Typography.H3" Color="Color.Accent">Dispositivo actual : </FluentLabel>
+            <FluentLabel Typo="Typography.H3" Color="Color.Success">@BluetoothState.Value.currentDeviceConected.DeviceName</FluentLabel>
+        </FluentStack>
+    </FluentCard>
+
+}
+
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Start" Style="padding:4px;">
+    <FluentLabel Typo="Typography.H4">Historial Dispositivos Disponibles </FluentLabel>
+</FluentStack>
+<FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+
+<FluentStack Orientation="Orientation.Vertical" Style="padding:4px;">
+    @if (BluetoothState.Value.devicesHistorialList is not null)
+    {
+        @foreach (BluetoothDevice devicebl in BluetoothState.Value.devicesHistorialList)
+        {
+
+            <FluentStack Orientation="Orientation.Horizontal">
+
+                <FluentLabel Typo="Typography.H4">  @devicebl.DeviceName </FluentLabel>
+
+
+                <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" OnClick="() => ConectBl(devicebl)">
+                    Conectar
+                </FluentButton>
+
+
+                <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="red" OnClick="() => DeleteFromHistorial(devicebl)">
+                    eliminar
+                </FluentButton>
+
+            </FluentStack>
+
+        }
+
+        if (BluetoothState.Value.devicesHistorialList.Count is not 0)
+        {
+
+
+            <FluentStack>
+                <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="red" OnClick="() => LimpiarHistorial()">
+                    Limpiar Historial
+                </FluentButton>
+            </FluentStack>
+
+        }
+
+    }
+</FluentStack>
+
+<FluentStack Orientation="Orientation.Vertical" Width="100%" Style="margin-bottom:60px;">
+
+    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+        <FluentLabel Typo="Typography.H4"> Dispositivos Disponibles </FluentLabel>
+    </FluentStack>
+    <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
     @if (devicesBL is not null)
     {
         @foreach (BluetoothDeviceInfo devicebl in devicesBL)
         {
-            <FluentGridItem xs="12">
-                <FluentGrid>
-                    <FluentGridItem xs="6">
-                        <FluentLabel Typo="Typography.H4">  @devicebl.DeviceName / @devicebl.DeviceAddress  </FluentLabel>
-                    </FluentGridItem>
-                    <FluentGridItem xs="6">
-                        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" @onclick="() => ConectBl(devicebl)">
-                            Conectar
-                        </FluentButton>
-                    </FluentGridItem>
-                </FluentGrid>
-            </FluentGridItem>
+            <FluentCard>
+                <FluentStack Orientation="Orientation.Horizontal" Wrap="true">
+                    <FluentStack Orientation="Orientation.Vertical">
+                        <FluentLabel Typo="Typography.H4">@devicebl.DeviceName </FluentLabel>
+                        <FluentLabel Typo="Typography.H4">@devicebl.DeviceAddress </FluentLabel>
+                    </FluentStack>
+
+                    <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" OnClick="() => ConectBl(devicebl)">
+                        Conectar
+                    </FluentButton>
+                </FluentStack>
+            </FluentCard>
         }
     }
-</FluentGrid>
+</FluentStack>
 
 <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
-             Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem; ">
-    <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" @onclick="SearchDevices">
+             Style=" position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem; ">
+    <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="SearchDevices">
         Buscar Dispositivos
     </FluentButton>
-    <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" @onclick="SearchDevices">
-        Añadir Dispositivo Manual
+    <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1; overflow:visible;">
+        Añadir Disp Manual
     </FluentButton>
 
 </FluentStack>
@@ -62,38 +130,158 @@
     bool enabled;
     bool loading = false;
 
-
     protected override async Task OnInitializedAsync()
     {
+        BluetoothDevice device = null;
+        if (BluetoothState.Value.currentDeviceConected != null)
+        {
+            device = BluetoothState.Value.currentDeviceConected;
+        }
         Dispatcher.Dispatch(new LoadLastBluetoothDevice());
+        Dispatcher.Dispatch(new LoadBluetoothDeviceHistorial());
 
+        Dispatcher.Dispatch(new ChangeConectedDevice(device));
         await base.OnInitializedAsync();
     }
 
-  
 
-    public async void ConectBl(BluetoothDeviceInfo device)
+
+    public async void DeleteFromHistorial(BluetoothDevice device)
     {
-        await _BluetoothServiceManager.ConectBl(device);
+        Dispatcher.Dispatch(new LimpiarHistorialBluetoothDevice(device));
+        Dispatcher.Dispatch(new LoadBluetoothDeviceHistorial());
+
+    }
+
+    public async void LimpiarHistorial()
+    {
+        Dispatcher.Dispatch(new LimpiarHistorialBluetoothDevices());
+        Dispatcher.Dispatch(new LoadBluetoothDeviceHistorial());
+
+    }
+
+    public async Task ConectBl(BluetoothDeviceInfo device)
+    {
+
+        SplashScreenContent paramametros = new SplashScreenContent();
+
+        paramametros.SubTitle = "";
+        paramametros.Title = "Conectando con el Dispositivo";
+        paramametros.LoadingText = "Conectando...";
+        paramametros.Message = (MarkupString)"<strong>  </strong>";
+        paramametros.DisplayTime = 400000000;
+
+        Dispatcher.Dispatch(new OpenSlashBluethooth(paramametros));
+
+        bool conected = await _BluetoothServiceManager.ConectBl(device);
+
+        if (AplicacionState.Value.SplashScreenDialog != null)
+        {
+            await AplicacionState.Value.SplashScreenDialog.CloseAsync();
+        }
+
+        StateHasChanged();
+
+        if (conected)
+        {
+            ToastService.ShowToast(ToastIntent.Success, "Dispositivo Conectado", 1500);
+        }
+
         if (_BluetoothServiceManager.client.Connected)
         {
             string addressString = device.DeviceAddress.ToString();
-            Dispatcher.Dispatch(new ChangeConectedDevice(device));
+
+            // Despacha la acción de guardar el dispositivo
             Dispatcher.Dispatch(new SaveBluetoothDevice(device));
 
+            // Espera un poco para asegurar que la acción anterior se procese
+            await Task.Delay(1000);
+
+            Dispatcher.Dispatch(new LoadLastBluetoothDevice());
+
+            await Task.Delay(500);
+
+            _BluetoothServiceManager.Desconectar();
         }
         else
         {
-
             Console.WriteLine("No se pudo conectar al dispositivo Bluetooth.");
+        }
+
+        Dispatcher.Dispatch(new LoadBluetoothDeviceHistorial());
+    }
+
+    public async Task ConectBl(BluetoothDevice device)
+    {
+        try
+        {
+            SplashScreenContent paramametros = new SplashScreenContent();
+
+            paramametros.SubTitle = "";
+            paramametros.Title = "Conectando con el Dispositivo";
+            paramametros.LoadingText = "Conectando...";
+            paramametros.Message = (MarkupString)"<strong>  </strong>";
+            paramametros.DisplayTime = 400000000;
+
+            Dispatcher.Dispatch(new OpenSlashBluethooth(paramametros));
+
+            bool conected = await _BluetoothServiceManager.ConectBl(device);
+
+            if (AplicacionState.Value.SplashScreenDialog != null)
+            {
+                await AplicacionState.Value.SplashScreenDialog.CloseAsync();
+            }
+
+            StateHasChanged();
+
+            if (conected)
+            {
+                ToastService.ShowToast(ToastIntent.Success, "Dispositivo Conectado", 1500);
+            }
+
+            if (_BluetoothServiceManager.client.Connected)
+            {
+                Dispatcher.Dispatch(new SaveBluetoothDeviceBase(device));
+                await Task.Delay(500);
+
+                Dispatcher.Dispatch(new ChangeConectedDevice(device));
+                await Task.Delay(500);
+
+                _BluetoothServiceManager.client.Dispose(); // O usa .Close() si aplica
+
+            }
+            else
+            {
+                Console.WriteLine("No se pudo conectar al dispositivo Bluetooth.");
+            }
+
+            Dispatcher.Dispatch(new LoadBluetoothDeviceHistorial());
+        }
+        catch (Exception ex)
+        {
+            // Conserva la traza original del error
+
+            throw;
         }
     }
 
     public async Task SearchDevices()
     {
-        loading = true;
+        SplashScreenContent paramametros = new SplashScreenContent();
+
+        paramametros.SubTitle = "";
+        paramametros.Title = "Buscando Dispositivos";
+        paramametros.LoadingText = "Buscando...";
+        paramametros.Message = (MarkupString)"<strong>   </strong>";
+        paramametros.DisplayTime = 400000000;
+
+        Dispatcher.Dispatch(new OpenSlashBluethooth(paramametros));
         devicesBL = await _BluetoothServiceManager.SearchDevices();
-        loading = false;
+        if (AplicacionState.Value.SplashScreenDialog != null)
+        {
+            await AplicacionState.Value.SplashScreenDialog.CloseAsync();
+        }
+
         StateHasChanged();
     }
 
@@ -114,4 +302,6 @@
         NetworkStream stream = _BluetoothServiceManager.client.GetStream();
         stream.Close();
     }
+
+
 }

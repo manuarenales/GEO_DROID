@@ -1,0 +1,98 @@
+﻿@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject IDispatcher Dispatcher
+
+
+
+<FluentStack HorizontalAlignment="HorizontalAlignment.SpaceBetween" VerticalAlignment="VerticalAlignment.Center">
+
+    @if (!isHomePage)
+    {
+        <FluentButton OnClick="GoBack">
+            <FluentIcon Value="@(new Icons.Regular.Size32.ArrowLeft())" Color="Color.Error" />
+        </FluentButton>
+    }
+
+    <FluentLabel Typo="Typography.PaneHeader" Color="@Color.Lightweight">@UpdatePageTitle()</FluentLabel>
+
+    <Idioma />
+</FluentStack>
+
+
+
+
+@code {
+    private string pageTitle = "GeoDroid";
+    private bool isHomePage = false;
+    private string currentPage;
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += HandleLocationChange;
+        UpdatePageTitle();
+    }
+
+
+    private string UpdatePageTitle()
+    {
+        currentPage = Navigation.Uri;
+        var pageTitle = "GeoDroid";
+
+        if (currentPage.EndsWith("/", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = true;
+        }
+        else if (currentPage.EndsWith("/rutas", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Rutas";
+        }
+        else if (currentPage.EndsWith("/informaciongeneral", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Informacion General";
+        }
+        else if (currentPage.EndsWith("/vehiculos", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Vehiculos";
+        }
+        else if (currentPage.EndsWith("/sincronizacion", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Sincronizacion";
+        }
+        else if (currentPage.EndsWith("/ajustes", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Ajustes";
+        }
+        else if (currentPage.EndsWith("/opciones", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Opciones";
+        }
+        else if (currentPage.EndsWith("/averiaform1", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Averias";
+        }
+
+        return pageTitle;
+    }
+
+    private void HandleLocationChange(object sender, LocationChangedEventArgs args)
+    {
+        UpdatePageTitle();
+        StateHasChanged();
+
+    }
+
+    private async void GoBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+
+
+}
+

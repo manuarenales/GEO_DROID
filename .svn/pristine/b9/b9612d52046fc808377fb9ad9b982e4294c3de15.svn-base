@@ -1,0 +1,85 @@
+﻿@page "/recaudacion"
+@using GEO_DROID.Services
+@using GEO_DROID.Shared.Components
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Establecimiento
+@using GEO_DROID.Store.Maquinas
+@using GEO_DROID.Store.Rutas
+@using IDispatcher = Fluxor.IDispatcher;
+@using IOGesture.Components
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IDispatcher Dispatcher
+@inject IState<EstablecimientoState> EstablecimientoState
+@inject IState<MaquinasState> MaquinasState
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IState<RutasState> RutasState;
+@inject IJSRuntime JS
+
+
+@if (RutasState.Value.RutaSelected.Establecimiento is not null)
+{
+
+    <FluentGrid Spacing="0">
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentLabel Typo="Typography.H3" Color="Color.Success">  @RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentLabel Typo="Typography.H4">@Localizer["Maquinas"]  </FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+    </FluentGrid>
+}
+
+
+
+@if (MaquinasState.Value.MaquinaListSelected is not null)
+{
+    <FluentGridItem xs="12">
+        @foreach (Maquina maquina in MaquinasState.Value.MaquinaListSelected)
+        {
+            <FluentCard>
+                <Gesture OnTap="@(  () => NavigateTo("RecaudacionForm", maquina) )">
+                    <FluentStack Orientation="Orientation.Vertical">
+                        <FluentGrid Spacing="0">
+                            <FluentGridItem xs="2">
+                                <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Activities.Color.Default.SlotMachine())" />
+                            </FluentGridItem>
+                            <FluentGridItem xs="10">
+                                <FluentStack Orientation="Orientation.Vertical">
+                                    <FluentLabel Typo="Typography.H4">@maquina.modeloMaquina / @maquina.codigo</FluentLabel>
+                                    <FluentLabel Typo="Typography.H4" Color="@Color.Accent">Texto de informacion sobre la recaudacion  </FluentLabel>
+                                </FluentStack>
+                            </FluentGridItem>
+                        </FluentGrid>
+                    </FluentStack>
+                </Gesture>
+            </FluentCard>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        }
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+}
+
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Dispatcher.Dispatch(new GetMaquinasListFomEstablecimientoSelected(false));
+
+    }
+
+    private void NavigateTo(string pageTitle, Maquina maquina)
+    {
+        Dispatcher.Dispatch(new ChangeMaquinaSelectedAction(maquina));
+        Dispatcher.Dispatch(new NavigationToAction(pageTitle));
+    }
+}

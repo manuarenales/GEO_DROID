@@ -1,0 +1,58 @@
+﻿@using GEO_DROID.Database.Models.DTO
+@using GEO_DROID.Services
+@using GEO_DROID.Services.SincroService
+@using System.Globalization;
+@using System.Text.Json
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.CultureCase
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+@inject IState<AplicacionState> state
+@inject IState<CultureState> CultureState
+@inject IDispatcher Dispatcher
+@inject IStringLocalizer<StringLocalizer> Localizer;
+
+<FluentGrid Justify="JustifyContent.Center" Spacing="0">
+    @foreach (var item in state.Value.MainMenuItems)
+    {
+
+        <FluentGridItem xs="12" onclick="@(() => HandleClick(item))">
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Start" VerticalAlignment="VerticalAlignment.Center">
+                <FluentEmoji Value="item.icon" style="width:64px; height:64px;" />
+
+                <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">
+                    @Localizer[item.title]
+                </FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+    }
+</FluentGrid>
+
+
+
+@code {
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+
+    void HandleClick(MainMenuItem item)
+    {
+        if (item.ruta == "sincronizacion")
+        {
+            Dispatcher.Dispatch(new SincronizationAction());
+        }
+        else
+        {
+            Dispatcher.Dispatch(new NavigationToAction(item.ruta));
+        }
+    }
+
+    //
+}

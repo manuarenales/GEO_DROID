@@ -1,0 +1,135 @@
+﻿@page "/ajustes"
+@using GEO_DROID.Services
+@using IOGesture.Components
+@inject NavigationManager Navigation
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+ @inject IDispatcher Dispatcher
+
+<FluentGrid Justify="JustifyContent.Center" Spacing="0">
+
+    <FluentGridItem xs="12">
+        <Gesture OnTap="@(  () => Dispatcher.Dispatch(new NavigationToAction("configuracion")) )">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+                <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.Gear())" />
+                <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">@Localizer["configuracion"]</FluentLabel>
+            </FluentStack>
+        </Gesture>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12">
+        <Gesture OnTap="@( () => Dispatcher.Dispatch(new LaunchTestContadoresDialog( )) )">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+                <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.TestTube())" />
+                <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">@Localizer["testlecturacontadores"]</FluentLabel>
+            </FluentStack>
+        </Gesture>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12">
+        <Gesture OnTap="OpenEstablecerContadores">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+                <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.Abacus())" />
+                <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">Establecer contadores</FluentLabel>
+            </FluentStack>
+        </Gesture>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12">
+        <Gesture OnTap="OpenTestImpresora">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+                <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.Printer())" />
+                <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">Test impresora Bluetooth</FluentLabel>
+            </FluentStack>
+        </Gesture>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12">
+        <Gesture OnTap="OpenActualizarFirmware">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center">
+                <FluentEmoji Style="width:64px; height:64px;" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Symbols.Color.Default.EjectButton())" />
+                <FluentLabel Typo="Typography.H3" Color="@Color.Neutral">Actualizar firmware de módulo</FluentLabel>
+            </FluentStack>
+        </Gesture>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+</FluentGrid>
+
+
+
+@code {
+
+    private bool modalConfigVisible = false;
+    private bool modalTestContadoresVisible = false;
+    private bool modalEstablecerContadoresVisible = false;
+    private bool modalTestImpresionVisible = false;
+    private bool modalActualizarFirmVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Navigation.NavigateTo($"/{pageTitle.ToLower()}");
+    }
+
+    private void HideConfigModal()
+    {
+        modalConfigVisible = false;
+    }
+
+    private void OpenConfig()
+    {
+        modalConfigVisible = true;
+    }
+
+    private void OpenTestLecturaContadores()
+    {
+        modalTestContadoresVisible = true;
+    }
+
+    private void HideTestContadoresModal()
+    {
+        modalTestContadoresVisible = false;
+    }
+
+    private void OpenEstablecerContadores()
+    {
+        modalEstablecerContadoresVisible = true;
+    }
+
+    private void HideEstablecerContadoresModal()
+    {
+        modalEstablecerContadoresVisible = false;
+    }
+
+    private void HideActualizarFirmModal()
+    {
+        modalActualizarFirmVisible = false;
+    }
+
+    private void OpenTestImpresora()
+    {
+        modalTestImpresionVisible = true;
+    }
+
+    private void HideTestImpresoraModal()
+    {
+        modalTestImpresionVisible = false;
+    }
+
+    private void OpenActualizarFirmware()
+    {
+        modalActualizarFirmVisible = true;
+
+    }
+
+
+}

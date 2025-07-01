@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <title>GEO_DROID</title>
+    <base href="/" />
+
+    <link href="/_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css" rel="stylesheet" />
+    <link href="GEO_DROID.styles.css" rel="stylesheet" />
+
+
+    <!------------ propios ------------>
+    <link rel="stylesheet" href="css/app.css">
+    <!--<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/Fontawesome/Fontawesome.css" />-->
+    <!------------ leafLeft ------------>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <div class="status-bar-safe-area"></div>
+
+    <div id="app">
+        <div style="display:flex; justify-content:center; align-items:center; height:100vh; flex-direction:column;">
+            <img src="img/logo.png" alt="Logo" width="300" />
+        </div>
+    </div>
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script type="text/javascript">
+        window.navigation = (url) => {
+            window.location.href = url;
+        }
+    </script>
+    <script app-name="GEO_DROID" src="./_content/Microsoft.FluentUI.AspNetCore.Components/js/initializersLoader.webview.js"></script>
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script src="_content/BlazorBarcodeScanner.ZXing.JS/zxingjs.index.min.js"></script>
+    <script src="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js" type="module" async></script>
+    <script src="_content/BlazorBarcodeScanner.ZXing.JS/BlazorBarcodeScanner.js"></script>
+    <script src="js/boostrap/Bootstrap_5.3.2_JS_Bundle.js"></script>
+    <script src="js/boostrap/Bootstrap_4.js"></script>
+    <!-- <script src="js/chartjs-plugin-datalabels.min.js"></script> -->
+    <script src="_content/IOGesture/js/tinygesture.js" type="module"></script>
+    <script src="_content/IOGesture/js/IOGesture.js" type="module"></script>
+    <script src="_content/Blazor.Bootstrap/blazor.bootstrap.js"></script>
+    <script src="js/JQuery/JQuery.js"></script>
+    <script src="js/JQuery/Popper.js"></script>
+    <script src="js/JQuery/textarea.js"></script>
+    <script src="_content/Microsoft.FluentUI.AspNetCore.Components/Microsoft.FluentUI.AspNetCore.Components.lib.module.js" type="module" async></script>
+    <script>
+        var map;
+        var marker;
+
+        function initializeMap(mapId, lat, lng) {
+            map = L.map(mapId).setView([lat, lng], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([lat, lng]).addTo(map)
+                .bindPopup('Estas aquí!')
+                .openPopup();
+        }
+
+        function updateMapLocation(lat, lng) {
+            if (marker) {
+                map.setView([lat, lng], 13);
+                marker.setLatLng([lat, lng]).update();
+            }
+        }
+
+
+    </script>
+
+</body>
+</html>

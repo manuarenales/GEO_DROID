@@ -1,0 +1,732 @@
+﻿#if ANDROID
+
+using Android.App;
+using Android.Bluetooth;
+using Android.Content;
+using Android.OS;
+using Android.Runtime;
+using GEO_DROID.Resources.Lib.Extra;
+
+namespace BLL.LeerInfoMaquina
+{
+    class BluetoothPinReceiver : BroadcastReceiver
+    {
+        /// Constantes de android.bluetooth.BluetoothDevice aplicadas al PAIRING_VARIANT
+        private const int PAIRING_VARIANT_CONSENT = 3;
+        private const int PAIRING_VARIANT_DISPLAY_PASSKEY = 4;
+        private const int PAIRING_VARIANT_OOB_CONSENT = 5;
+        private const int PAIRING_VARIANT_PASSKEY = 1;
+        private const int PAIRING_VARIANT_PASSKEY_CONFIRMATION = 2;
+        private const int PAIRING_VARIANT_PIN = 0;
+
+        private string _pin = "";
+
+        public BluetoothPinReceiver(string pin)
+        {
+            _pin = pin;
+        }
+
+        public override void OnReceive(Context context, Intent intent)
+        {
+            if (intent != null)
+            {
+                Bundle bundle = intent.Extras; //DEBUG: Para ver las claves del bundle podemos usar lo siguiente: bundle.KeySet().ToList<string>();
+                if (bundle != null)
+                {
+                    int pairingVariant = bundle.GetInt("android.bluetooth.device.extra.PAIRING_VARIANT", -1);
+                    if (pairingVariant == PAIRING_VARIANT_PIN)// && !string.IsNullOrEmpty(_pin))
+                    {
+                        BluetoothDevice btD = (BluetoothDevice)bundle.Get("android.bluetooth.device.extra.DEVICE");
+                        BTUtils.SetPin(btD, _pin);  //Android 5.0 -> btD.SetPin(System.Text.Encoding.ASCII.GetBytes(_pin));
+                        BTUtils.CancelPairingUserInput(btD);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Clase con información complementaria que puede ser necesaria para realizar la lectura de contadores.
+    /// Por ejemplo, para el protocolo SENTE es necesario conocer el valor de paso de entradas y salidas.
+    /// </summary>
+    public class BluetoothExtraInfo
+    {
+        public decimal ValorPasoEntradas { get; set; }
+        public decimal ValorPasoSalidas { get; set; }
+    }
+
+#if ANDROID
+    public class InfoContadoresPlus
+    {
+        public InfoContadores InfoContadores { get; set; }
+        public string MensajeError { get; set; }
+        public string GuidInstalacionFortune { get; set; }
+    }
+#else 
+    public class InfoContadoresPlus
+    {
+        public InfoContadores InfoContadores { get; set; }
+        public string MensajeError { get; set; }
+        public string GuidInstalacionFortune { get; set; }
+    }
+#endif
+
+    public class BluetoothReader
+    {
+        public delegate void OnDataReadDelegate(byte[] buffer, int numReadBytes);
+        private readonly CancellationToken _cancellationToken;
+
+        public BluetoothReader(BluetoothSocket socket, OnDataReadDelegate onDataReadDelegate, CancellationToken token)
+        {
+            _socket = socket;
+            _onDataReadDelegate = onDataReadDelegate;
+            _cancellationToken = token;
+        }
+
+        public void Read()
+        {
+            byte[] buffer = new byte[1024];
+            int numReadBytes = 0;
+
+            // Bucle de lectura con verificación de cancelación
+            while (!_cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    if (_socket.InputStream.IsDataAvailable())
+                    {
+                        numReadBytes = _socket.InputStream.Read(buffer, 0, buffer.Length);
+                        _onDataReadDelegate(buffer, numReadBytes);
+                    }
+                }
+                catch (Exception e)
+                {
+                    LogErrores.appendLog(e.ToString());
+                }
+
+                // Dormir un poco para evitar que el hilo consuma demasiada CPU
+                Thread.Sleep(50);
+            }
+
+            LogErrores.appendLog("Cancelación solicitada, finalizando el hilo de lectura.");
+        }
+        BluetoothSocket _socket;
+        OnDataReadDelegate _onDataReadDelegate;
+    };
+
+
+
+    public class BTUtils
+    {
+        private BluetoothAdapter _adapter = null;
+        private static CancellationTokenSource _cancellationTokenSource;
+        public enum BluetoothConnectionType { OfficialBTCon = 0, InsecureBTCon, ReflexedBTCon }
+
+        static Thread _threadReader = null;
+        static BluetoothReader _readerWorker = null;
+        static BluetoothAdapter _bthAdapter;
+        static BluetoothDevice _bthDevice;
+        static BluetoothSocket _bthSocket;
+
+        static private InfoContadoresPlus _GetCountersWorker(ProtocoloMaquina pm, String mac, Android.App.Activity activity, BluetoothExtraInfo btExtra)
+        {
+            ModuloBluetooth mbt = new ModuloBluetooth(pm);
+            if (btExtra != null)
+            {
+                mbt.ValorPasoEntradas = btExtra.ValorPasoEntradas;
+                mbt.ValorPasoSalidas = btExtra.ValorPasoSalidas;
+            }
+
+            //mbt.Conectar(mac, activity, null, (TipoDispositivoBTEnum)BluetoothConnectionType.ReflexedBTCon);
+            mbt.Conectar(mac, activity, null, (TipoDispositivoBTEnum)BluetoothConnectionType.OfficialBTCon);
+            InfoContadores cont = mbt.LeerContadores();
+            mbt.Desconectar();
+
+            InfoContadoresPlus info = new InfoContadoresPlus();
+            info.InfoContadores = cont;
+            info.MensajeError = mbt.Error;
+
+            return info;
+        }
+
+        static private InfoContadoresPlus _GetCountersAutoPairingWorker(ProtocoloMaquina pm, String mac, Android.App.Activity activity, BluetoothExtraInfo btExtra, String pin = "")
+        {
+            BluetoothPinReceiver _pinReceiver = new BluetoothPinReceiver(pin);
+            var filter = new IntentFilter("android.bluetooth.device.action.PAIRING_REQUEST");// (BluetoothDevice...ActionAclConnected...ActionFound); 
+            activity.RegisterReceiver(_pinReceiver, filter);
+
+            InfoContadoresPlus info = _GetCountersWorker(pm, mac, activity, btExtra);
+
+            activity.UnregisterReceiver(_pinReceiver);
+
+            return info;
+        }
+
+        static public async Task<InfoContadoresPlus> GetCounters(ProtocoloMaquina pm, String mac, Android.App.Activity activity, BluetoothExtraInfo btExtra, String pin = "")
+        {
+            ProgressDialog pb = new ProgressDialog(activity);
+            pb.SetMessage("Leyendo contadores bluetooth...");
+            pb.Show();
+
+            // Ejecuta el trabajo en un hilo separado
+            InfoContadoresPlus info = await Task.Run(() =>
+            {
+                return _GetCountersAutoPairingWorker(pm, mac, activity, btExtra, pin);
+            });
+
+            // Oculta el ProgressDialog después de que se complete la tarea
+            pb.Dismiss();
+
+            return info;
+        }
+
+        static public string GetAPNConfig(String mac, Android.App.Activity activity, String pin = "")
+        {
+            BluetoothPinReceiver _pinReceiver = new BluetoothPinReceiver(pin);
+            var filter = new IntentFilter("android.bluetooth.device.action.PAIRING_REQUEST");// (BluetoothDevice...ActionAclConnected...ActionFound);
+            activity.RegisterReceiver(_pinReceiver, filter);
+            //679
+            ModuloBluetooth mbt = new ModuloBluetooth(ProtocoloMaquina.TECNAUSA);
+            string cadena = "";
+            if (mbt.Conectar(mac, activity, null, (TipoDispositivoBTEnum)BluetoothConnectionType.OfficialBTCon, pin))
+            {
+                try
+                {
+                    string APNConfig = mbt.GetAPNConfig(null);
+                    if (!string.IsNullOrEmpty(APNConfig) && string.IsNullOrEmpty(mbt.Error))
+                    {
+                        string texto = APNConfig;
+                        if ((APNConfig ?? "").Contains("Automtic"))
+                            texto = "wlapn.com (000114)";
+                        else if ((APNConfig ?? "").Contains("m2m.movistar.es"))
+                            texto = "m2m.movistar.es";
+                        else if ((APNConfig ?? "").Contains("tecnausa"))
+                            texto = "oneapn.com / wlapn.com (TECNAUSA)";
+                        cadena = "APN:" + texto;
+
+                        // Versión
+                        if (APNConfig.Length > 3)
+                            cadena = cadena + " v." + APNConfig.Substring(0, 4);
+                    }
+                    else
+                    {
+                        cadena = "No se ha podido obtener configuración APN. " + System.Environment.NewLine + mbt.Error;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    cadena = "No se ha podido obtener configuración APN. " + System.Environment.NewLine + ex;
+                }
+                finally
+                {
+                    mbt.Desconectar();
+                }
+            }
+
+            return cadena;
+        }
+
+        static public string SetAPNConfig(String mac, Android.App.Activity activity, string configFileName, String pin = "")
+        {
+            BluetoothPinReceiver _pinReceiver = new BluetoothPinReceiver(pin);
+            var filter = new IntentFilter("android.bluetooth.device.action.PAIRING_REQUEST");// (BluetoothDevice...ActionAclConnected...ActionFound);
+            activity.RegisterReceiver(_pinReceiver, filter);
+
+            ModuloBluetooth mbt = new ModuloBluetooth(ProtocoloMaquina.TECNAUSA);
+            string cadena = "";
+            if (mbt.Conectar(mac, activity, null, (TipoDispositivoBTEnum)BluetoothConnectionType.OfficialBTCon, pin))
+            {
+                try
+                {
+                    if (mbt.SetAPNConfig(configFileName, null))
+                        cadena = "APN configurado con éxito";
+                    else
+                        cadena = "No se ha podido establecer configuración APN. " + System.Environment.NewLine + mbt.Error;
+                }
+                catch (Exception ex)
+                {
+                    cadena = "No se ha podido establecer configuración APN. " + System.Environment.NewLine + ex;
+                }
+                finally
+                {
+                    mbt.Desconectar();
+                }
+            }
+
+            return cadena;
+        }
+
+        static public string ActualizarFirmwareForThread(String mac, Android.App.Activity activity, String[] content, String pin = "")
+        {
+
+
+            BluetoothPinReceiver _pinReceiver = new BluetoothPinReceiver(pin);
+            var filter = new IntentFilter("android.bluetooth.device.action.PAIRING_REQUEST");// (BluetoothDevice...ActionAclConnected...ActionFound);
+            activity.RegisterReceiver(_pinReceiver, filter);
+
+            ModuloBluetooth mbt = new ModuloBluetooth(ProtocoloMaquina.TECNAUSA);
+            string cadena = "";
+            //mbt.Conectar(mac,  activity, null, (TipoDispositivoBTEnum)BluetoothConnectionType.SecureBTCon
+            if (mbt.Conectar(mac, activity, null, (TipoDispositivoBTEnum)BluetoothConnectionType.OfficialBTCon, pin))
+            {
+
+                try
+                {
+                    if (mbt.Programar(content, null))
+                        cadena = "Actualizado con éxito";
+                    else
+                        cadena = "No se ha podido actualizar. " + System.Environment.NewLine + mbt.Error;
+                }
+                catch (Exception ex)
+                {
+                    cadena = "No se ha podido actualizar. " + System.Environment.NewLine + ex;
+                }
+                finally
+                {
+                    mbt.Desconectar();
+                }
+            }
+
+            return cadena;
+        }
+
+        static public async Task<InfoContadoresPlus> UpdateFirmware(ProtocoloMaquina pm, String mac, Android.App.Activity activity, BluetoothExtraInfo btExtra, String pin = "")
+        {
+            String[] arrayContent = new String[3];
+
+            // Archivos de firmware
+            arrayContent[0] = "PRI.BIN";
+            arrayContent[1] = "PRIv2.BIN";
+            arrayContent[2] = "PRIV3.BIN";
+
+            ProgressDialog pb = new ProgressDialog(activity);
+            pb.SetMessage("Actualizando firmware...");
+            pb.SetCanceledOnTouchOutside(false);
+            pb.Show();
+
+            // Variable para almacenar el resultado
+            string aux = "";
+
+            // Ejecuta el trabajo en un hilo separado
+            aux = await Task.Run(() =>
+            {
+                return ActualizarFirmwareForThread(mac, activity, arrayContent, pin);
+            });
+
+            // Oculta el ProgressDialog después de que se complete la tarea
+            pb.Dismiss();
+
+            // Crear y devolver InfoContadoresPlus con el resultado
+            InfoContadoresPlus info = null;
+            if (!string.IsNullOrEmpty(aux))
+            {
+                info = new InfoContadoresPlus();
+                info.MensajeError = aux;
+            }
+
+
+            return info;
+        }
+
+
+        static protected void _SetCountersWorker(ProtocoloMaquina pm, String mac, Android.App.Activity activity, Int64 c1, Int64 c2, Int64 c3, Int64 c4)
+        {
+            ModuloBluetooth mbt;
+
+            mbt = new ModuloBluetooth(pm);
+
+            mbt.Conectar(mac, activity, null, (TipoDispositivoBTEnum)BluetoothConnectionType.OfficialBTCon);
+            mbt.SetContadores((int)c1, (int)c2, (int)c3, (int)c4);
+            mbt.Desconectar();
+        }
+
+        static private void _SetCountersAutoPairingWorker(ProtocoloMaquina pm, String mac, Android.App.Activity activity, Int64 c1, Int64 c2, Int64 c3, Int64 c4, String pin = "")
+        {
+            BluetoothPinReceiver _pinReceiver = new BluetoothPinReceiver(pin);
+            var filter = new IntentFilter("android.bluetooth.device.action.PAIRING_REQUEST");// (BluetoothDevice...ActionAclConnected...ActionFound);
+            activity.RegisterReceiver(_pinReceiver, filter);
+
+            _SetCountersWorker(pm, mac, activity, c1, c2, c3, c4);
+
+            //activity.UnregisterReceiver(_pinReceiver); 
+
+            //return cont;
+        }
+
+
+        static public void SetCounters(Action<InfoContadores> workFinishedHandler, String mac, Android.App.Activity activity, Int64 c1, Int64 c2, Int64 c3, Int64 c4, string codigoPin = "")
+        {
+            ProgressDialog pb = new ProgressDialog(activity);
+            pb.SetMessage("Escribiendo contadores...");
+            pb.Show();
+
+            Task task = Task.Factory.StartNew(() => _SetCountersAutoPairingWorker(ProtocoloMaquina.TECNAUSA, mac, activity, c1, c2, c3, c4, codigoPin))
+                .ContinueWith((t) =>
+                {
+                    pb.Dismiss();
+                    if (workFinishedHandler != null)
+                        workFinishedHandler(null);
+                });
+        }
+
+        static public BluetoothSocket CreateBluetoothSocket(BluetoothConnectionType btt, BluetoothDevice device)
+        {
+            BluetoothSocket socket = null;
+            Java.Util.UUID UUID = Java.Util.UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+
+            switch (btt)
+            {
+                case BluetoothConnectionType.InsecureBTCon:
+                    socket = device.CreateInsecureRfcommSocketToServiceRecord(UUID);
+                    break;
+                case BluetoothConnectionType.OfficialBTCon:
+                    socket = device.CreateRfcommSocketToServiceRecord(UUID);
+                    break;
+                case BluetoothConnectionType.ReflexedBTCon:
+                    IntPtr createRfcommSocket = JNIEnv.GetMethodID(device.Class.Handle, "createRfcommSocket", "(I)Landroid/bluetooth/BluetoothSocket;");
+                    IntPtr socketHandle = JNIEnv.CallObjectMethod(device.Handle, createRfcommSocket, new JValue(1));
+                    socket = Java.Lang.Object.GetObject<BluetoothSocket>(socketHandle, JniHandleOwnership.TransferLocalRef);
+                    break;
+                default:
+                    System.Diagnostics.Debug.Assert(false, "No se conecoce el tipo de conexión " + btt);
+                    break;
+            }
+
+            return socket;
+        }
+
+        static public void StartReading(BluetoothReader.OnDataReadDelegate onDataRead)
+        {
+           // System.Diagnostics.Debug.Assert(_bthSocket != null, "You should be calling EndReading before trying to start reading again from Bluetooth");
+
+            // Crear el CancellationTokenSource y obtener el token
+            _cancellationTokenSource = new CancellationTokenSource();
+            var token = _cancellationTokenSource.Token;
+
+            // Crear instancia de BluetoothReader, pasando el token para controlar la cancelación
+            _readerWorker = new BluetoothReader(_bthSocket, onDataRead, token);
+
+            // Crear y ejecutar el hilo de lectura
+            _threadReader = new Thread(new ThreadStart(_readerWorker.Read));
+
+            LogErrores.appendLog("Starting reading thread");
+            _threadReader.Start();
+
+            // Esperar a que el hilo comience a ejecutarse
+            while (!_threadReader.IsAlive)
+            {
+                LogErrores.appendLog("Waiting for the read thread to start");
+                Thread.Sleep(100);
+            }
+        }
+
+        /// <summary>
+        /// Finishes and cleans all data related to last Bluetooth reading setup
+        /// </summary>
+
+        public static void EndReading()
+        {
+            if (_threadReader != null && _cancellationTokenSource != null)
+            {
+                // Señala la cancelación del hilo
+                _cancellationTokenSource.Cancel();
+
+                // Espera a que el hilo termine de forma natural
+                _threadReader.Join();
+
+                _threadReader = null;
+                _cancellationTokenSource = null;
+            }
+
+            if (_bthSocket != null)
+            {
+                try
+                {
+                    _bthSocket.InputStream?.Close();
+                    _bthSocket.OutputStream?.Close();
+                    _bthSocket.Close();
+                }
+                catch (Exception ex)
+                {
+                    LogErrores.appendLog($"Error while closing the socket: {ex.Message}");
+                }
+                finally
+                {
+                    _bthSocket = null;
+                }
+            }
+
+            LogErrores.appendLog("Disconnecting BT system...");
+        }
+
+        public static void SendData(byte[] data)
+        {
+            try
+            {
+                System.Diagnostics.Debug.Assert(_bthSocket != null && _bthSocket.OutputStream != null);
+                if (_bthSocket.OutputStream != null)
+                {
+                    // prueba jorge
+                    //_bthAdapter.CancelDiscovery();
+                    //_bthSocket.Connect();
+                    _bthSocket.OutputStream.Write(data, 0, data.Length);
+                    _bthSocket.OutputStream.Flush();
+                    // 
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static BluetoothAdapter GetAdapter(Android.App.Activity activity)
+        {
+            if (_bthAdapter == null)
+            {
+                activity.RunOnUiThread(() =>
+                {
+                    _bthAdapter = BluetoothAdapter.DefaultAdapter;
+                });
+            }
+
+            while (_bthAdapter == null)
+            {
+                Thread.Sleep(100);
+            }
+
+            return _bthAdapter;
+        }
+
+        public static void DisconnectAdapter(Android.App.Activity act)
+        {
+            if (_bthAdapter != null)
+            {
+                act.RunOnUiThread(() =>
+                {
+                    if (_bthAdapter.IsEnabled)
+                        _bthAdapter.Disable();
+                });
+            }
+        }
+
+        public static bool WakeUpAdapter(Android.App.Activity act)
+        {
+            //System.Diagnostics.Debug.Assert(_bthAdapter != null, "Adapter must not be null in order to wake it up");
+
+            LogErrores.appendLog("Waiking up adapter");
+
+            LogErrores.appendLog("Getting adapter");
+            BluetoothAdapter adapter = GetAdapter(act);
+            LogErrores.appendLog("Finished Getting adapter");
+
+            //Let the blue tooth manager breath a bit
+            Thread.Sleep(100);
+
+
+            act.RunOnUiThread(() =>
+            {
+                if (adapter != null && !adapter.IsEnabled)
+                {
+                    LogErrores.appendLog("Enabling adapter");
+                    adapter.Enable();
+                }
+            });
+
+            while (adapter.State != Android.Bluetooth.State.On)
+            {
+                Thread.Sleep(100);
+            }
+
+            LogErrores.appendLog("Finished Enabling adapter");
+
+            return true;
+        }
+
+        public static bool ResetAdapter(Android.App.Activity act)
+        {
+            BTUtils.DisconnectAdapter(act);
+            Thread.Sleep(1000);
+            BTUtils.WakeUpAdapter(act);
+            LogErrores.appendLog("Waiting 2 seconds");
+            Thread.Sleep(1000);
+
+            return true;
+        }
+
+        #region Métodos de acceso JNI
+
+        private const string JAVACLASS_BLUETOOTH_DEVICE = "android/bluetooth/BluetoothDevice";
+
+        private static IntPtr GetJavaClass(string javaClassName)
+        {
+            IntPtr javaClass = IntPtr.Zero;
+            javaClass = JNIEnv.FindClass(javaClassName);
+            return javaClass;
+        }
+
+        public static bool IsBonded(string mac)
+        {
+            bool bonded = false;
+            BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+            ICollection<BluetoothDevice> pairedDevices = mBluetoothAdapter.BondedDevices;
+            foreach (BluetoothDevice device in pairedDevices)
+            {
+                if (mac.Equals(device.Address))
+                    bonded = true;
+            }
+            return bonded;
+        }
+
+        //public static void RemoveBond(string mac)
+        //{
+        //    //try
+        //    //{
+        //        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+        //        BluetoothDevice device = mBluetoothAdapter.GetRemoteDevice(mac);
+        //        if (device != null)
+        //        {
+        //            IntPtr javaClass_BluetoothDevice = GetJavaClass(JAVACLASS_BLUETOOTH_DEVICE);
+        //            IntPtr javaMethod_CancelPairingUserInput = JNIEnv.GetMethodID(javaClass_BluetoothDevice, "removeBond", "()Z");
+        //            JNIEnv.CallNonvirtualBooleanMethod(device.Handle, javaClass_BluetoothDevice, javaMethod_CancelPairingUserInput, new JValue());
+
+        //            /*Type t = bluetoothDevice.GetType();
+        //            System.Reflection.MethodInfo mi = t.GetMethod("removeBond");
+        //            mi.Invoke(bluetoothDevice, (Object[])null);*/
+        //        }
+        //    //    else
+        //    //    {
+        //    //        System.Diagnostics.Debug.WriteLine("----->NO GETREMOTEDEVICE" );
+        //    //    }
+        //    //}catch(Exception ex)
+        //    //{
+        //    //    System.Diagnostics.Debug.WriteLine("----->" + ex);
+        //    //}
+
+        //    //bool bonded = false;
+        //    //BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.DefaultAdapter;
+        //    //ICollection<BluetoothDevice> pairedDevices = mBluetoothAdapter.BondedDevices;
+        //    //foreach (BluetoothDevice device in pairedDevices)
+        //    //{
+        //    //    if (mac.Equals(device.Address))
+        //    //        bonded = true;
+        //    //}
+        //    //return bonded;
+        //}
+
+        public static bool SetPin(BluetoothDevice device, string pin)
+        {
+            bool ret = false;
+            try
+            {
+                // El método de java setPin(byte[]), espera un array de bytes de longitud>=0 y longitud<=16, codificado en UTF-8
+                System.Text.UTF8Encoding codificador = new System.Text.UTF8Encoding();
+                byte[] pin16 = codificador.GetBytes(pin);
+                IntPtr p = JNIEnv.NewArray<byte>(pin16);
+                JValue parametros = new JValue(p);
+
+                IntPtr javaClass_BluetoothDevice = GetJavaClass(JAVACLASS_BLUETOOTH_DEVICE);
+                IntPtr javaMethod_SetPin = JNIEnv.GetMethodID(device.Class.Handle, "setPin", "([B)Z");
+                ret = JNIEnv.CallNonvirtualBooleanMethod(device.Handle, javaClass_BluetoothDevice, javaMethod_SetPin, parametros);
+            }
+            catch (Exception ex)
+            {
+                LogErrores.appendLog(ex.ToString());
+            }
+            return ret;
+        }
+
+        static public void SetPairingConfirmation(BluetoothDevice device)
+        {
+            IntPtr javaClass_BluetoothDevice = GetJavaClass(JAVACLASS_BLUETOOTH_DEVICE);
+            IntPtr javaMethod_SetPairingConfirmation = JNIEnv.GetMethodID(javaClass_BluetoothDevice, "setPairingConfirmation", "(Z)Z");
+            JNIEnv.CallNonvirtualBooleanMethod(device.Handle, javaClass_BluetoothDevice, javaMethod_SetPairingConfirmation, new JValue(true));
+        }
+
+        static public void CancelPairingUserInput(BluetoothDevice device)
+        {
+            try
+            {
+                IntPtr javaClass_BluetoothDevice = GetJavaClass(JAVACLASS_BLUETOOTH_DEVICE);
+                IntPtr javaMethod_CancelPairingUserInput = JNIEnv.GetMethodID(javaClass_BluetoothDevice, "cancelPairingUserInput", "()Z");
+                JNIEnv.CallNonvirtualBooleanMethod(device.Handle, javaClass_BluetoothDevice, javaMethod_CancelPairingUserInput, new JValue());
+            }
+            catch (Exception ex)
+            {
+                LogErrores.appendLog(ex.ToString());
+            }
+        }
+        #endregion
+
+        static public BluetoothSocket Connect(Android.App.Activity activity, String mac, bool restartDevice = true, String pin = "")
+        {
+
+            LogErrores.appendLog("Starting connection...");
+
+            try
+            {
+                WakeUpAdapter(activity);
+
+                if (_bthDevice == null || _bthSocket == null || (_bthDevice != null && _bthDevice.Address != mac) || restartDevice == true)
+                {
+                    LogErrores.appendLog("Getting remote device");
+                    _bthDevice = _bthAdapter.GetRemoteDevice(mac);
+                    LogErrores.appendLog("Finished Getting remote device");
+
+                    LogErrores.appendLog("Creating socket between devices." + _bthDevice.Name /*+ " RetryCount: " + i*/);
+                    _bthSocket = BTUtils.CreateBluetoothSocket(BluetoothConnectionType.OfficialBTCon, _bthDevice);
+                    LogErrores.appendLog("Socket created. ");
+                }
+
+                //En últimas actualizaciones de android a fecha noviembre de 2016, la llamada a SetPairingConfirmation requiere un permiso especial BLUETOOTH_PRIVILEGED
+                //BTUtils.SetPairingConfirmation(_bthDevice); // Esto es necesario para poder usar SetPin en el BroadcastReceiver (BluetoothPinReceiver)
+                /*if (!pin.Equals(""))
+                {
+                    BTUtils.SetPin(_bthDevice, pin);
+                    //BTUtils.CancelPairingUserInput(_bthDevice);
+                }*/
+
+                Thread.Sleep(1000);
+
+                for (int i = 0; i < 5/*_retryCount*/; ++i)
+                {
+                    try
+                    {
+                        LogErrores.appendLog("Trying to connect to {0} ", _bthDevice.Name);
+                        _bthSocket.Connect();
+                        LogErrores.appendLog("Socket opened with Bth device {0}", _bthDevice.Name);
+
+                        LogErrores.appendLog("Waiting for 2 seconds for the hard to start");
+                        Thread.Sleep(1000);
+
+                        return _bthSocket;
+                    }
+                    catch (Java.IO.IOException e)
+                    {
+                        //ResetAdapter();
+                        e.PrintStackTrace();
+                        LogErrores.appendLog("Socked could not connect. Cause:" + e.Message + ". Retry " + i);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogErrores.appendLog(ex.ToString());
+            }
+
+            return null;
+        }
+
+
+        static public void Disconnect()
+        {
+            if (_bthSocket != null)
+            {
+                _bthSocket.InputStream.Flush();
+                _bthSocket.OutputStream.Flush();
+                _bthSocket.Close();
+            }
+        }
+    }
+}
+#endif

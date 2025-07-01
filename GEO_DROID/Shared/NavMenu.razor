@@ -35,7 +35,7 @@
     private string UpdatePageTitle()
     {
         currentPage = Navigation.Uri;
-        var pageTitle = "GeoDroid";
+        var pageTitle = "GEODROID 2.0.8b";
 
         if (currentPage.EndsWith("/", StringComparison.OrdinalIgnoreCase))
         {
@@ -76,6 +76,16 @@
             isHomePage = false;
             pageTitle = "Averias";
         }
+        else if (currentPage.EndsWith("/configuracion", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Configuración";
+        }
+        else if (currentPage.EndsWith("/utilities", StringComparison.OrdinalIgnoreCase))
+        {
+            isHomePage = false;
+            pageTitle = "Impresora";
+        }
 
         return pageTitle;
     }
@@ -84,7 +94,7 @@
     {
         UpdatePageTitle();
         StateHasChanged();
-        
+
     }
 
     private async void GoBack()

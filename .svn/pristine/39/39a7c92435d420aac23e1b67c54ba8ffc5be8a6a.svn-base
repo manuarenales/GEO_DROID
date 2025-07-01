@@ -1,0 +1,13 @@
+﻿using Fluxor;
+
+
+namespace GEO_DROID.Store.Recaudacion
+{
+    [FeatureState]
+    public record RecaudacionState
+    {
+        public List<GeoDroid.Data.Recaudacion> RecaudacionListSelected { get; init; }
+
+
+    }
+}

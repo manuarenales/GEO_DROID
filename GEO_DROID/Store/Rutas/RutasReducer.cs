@@ -23,12 +23,11 @@ namespace GEO_DROID.Store.Rutas
         public static RutasState AddRutaTorutasSelected(RutasState state, AddRutaTorutasSelected action)
         {
             var rute = new List<Ruta>(state.RutasListSelected);
-            
+
             if (!rute.Any(r => r.idEstablecimiento == action.NewRute.idEstablecimiento))
             {
                 rute.Add(action.NewRute);
             }
-            
             return state with { RutasListSelected = rute };
         }
     }

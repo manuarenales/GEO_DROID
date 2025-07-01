@@ -14,7 +14,5 @@ namespace GEO_DROID.Store.AveriaCase
         public List<Averia> AveriaListSelected { get; init; }
 
         public int AveriaCount { get; init; }
-
-
     }
 }

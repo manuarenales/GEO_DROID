@@ -1,0 +1,34 @@
+﻿@page "/recaudacionForm"
+@using GEO_DROID.Services
+@using GEO_DROID.Shared.Components
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Establecimiento
+@using GEO_DROID.Store.Maquinas
+@using GEO_DROID.Store.Rutas
+@using IDispatcher = Fluxor.IDispatcher;
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IDispatcher Dispatcher
+@inject IState<EstablecimientoState> EstablecimientoState
+@inject IState<MaquinasState> MaquinasState
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IState<RutasState> RutasState;
+@inject IJSRuntime JS
+
+
+@if (RutasState.Value.RutaSelected.Establecimiento is not null)
+{
+
+    <FluentGrid Spacing="0">
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentLabel Typo="Typography.H3" Color="Color.Success">  @RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+         
+    </FluentGrid>
+}
+
+@code {
+ }

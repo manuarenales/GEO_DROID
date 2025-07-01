@@ -1,0 +1,169 @@
+﻿using Fluxor;
+using GeoDroid.Data;
+
+
+namespace GEO_DROID.Store.Forms.Averias
+{
+    public static class AveriaFormReducer
+    {
+        [ReducerMethod]
+        public static AveriaFormState AveriaFormStateSelectedChangedAction(AveriaFormState state, ChangeAveriaSelectedFormAction action)
+        {
+
+            if (action.AveriaSelected is null)
+            {
+                return state with
+                {
+                    AveriaSelected = action.AveriaSelected,
+                };
+            }
+            return state with { AveriaSelected = action.AveriaSelected };
+        }
+
+
+
+        [ReducerMethod]
+        public static AveriaFormState changeCargaSelectedForAveriasForm(AveriaFormState state, changeCargaSelectedForAveriasForm action)
+        {
+            return state with { CargaSelected = action.Carga };
+
+        }
+
+        [ReducerMethod]
+        public static AveriaFormState changePatronContadorSelectedForAveriasForm(AveriaFormState state, changePatronContadorLecturasSelectedForAveriasForm action)
+        {
+            return state with { PatronLecturaContador = action.patron };
+
+        }
+
+        [ReducerMethod]
+        public static AveriaFormState changeLecturaSelectedForAveriasForm(AveriaFormState state, changeLecturaSelectedForAveriasForm action)
+        {
+            return state with { LecturaContador = action.lectura };
+
+        }
+
+
+
+        [ReducerMethod]
+        public static AveriaFormState MaquinaFormStateSelectedChangedAction(AveriaFormState state, ChangeMaquinaSelectedFormAction action)
+        {
+            //Averia 
+            Averia averia = state.AveriaSelected;
+            //Creo la Incidencia si no la tiene 
+            if (averia.Incidencia == null)
+            {
+                averia.Incidencia = new Incidencia();
+
+            }
+
+            averia.Incidencia.maquina = action.MaquinaSelected;
+
+            return state with { AveriaSelected = averia };
+        }
+
+        [ReducerMethod]
+        public static AveriaFormState ConceptoAveriaFormStateSelectedChangedAction(AveriaFormState state, ChangeConceptoAveriaSelectedFormAction action)
+        {
+            Averia averia = state.AveriaSelected;
+            averia.ConceptoAveria = action.ConceptoAveria;
+
+            return state with { AveriaSelected = averia };
+        }
+
+        [ReducerMethod]
+        public static AveriaFormState AveriaEstadoFormStateSelectedChangedAction(AveriaFormState state, ChangeAveriaEstadoSelectedFormAction action)
+        {
+            Averia averia = state.AveriaSelected;
+            averia.AveriaEstado = action.AveriaEstadoSelected;
+
+            return state with { AveriaSelected = averia };
+        }
+
+        [ReducerMethod]
+        public static AveriaFormState ValidateAveriaFormState(AveriaFormState state, ValidateAveriaFormState action)
+        {
+            bool maquinaValid = false;
+            bool conceptoValid = false;
+            bool estadoValid = false;
+
+            if (state.AveriaSelected.Incidencia is null)
+            {
+                maquinaValid = false;
+            }
+            else
+            {
+                if (state.AveriaSelected.Incidencia.maquina is not null) { maquinaValid = true; }
+            }
+
+
+            if (state.AveriaSelected.ConceptoAveria is not null)
+            {
+                conceptoValid = true;
+            }
+            else
+            {
+                conceptoValid = false;
+            }
+
+            if (state.AveriaSelected.AveriaEstado is not null)
+            {
+                estadoValid = true;
+            }
+            else
+            {
+                estadoValid = false;
+            }
+
+            if (maquinaValid == true && conceptoValid == true && estadoValid == true)
+            {
+                return state with { Valid = true, maquinaValid = maquinaValid, conceptoValid = conceptoValid, estadoValid = estadoValid };
+            }
+            else
+            {
+                return state with { Valid = false, maquinaValid = maquinaValid, conceptoValid = conceptoValid, estadoValid = estadoValid };
+            }
+        }
+
+        [ReducerMethod]
+        public static AveriaFormState ValidateAveriaFormStateMaquina(AveriaFormState state, ValidateAveriaFormStateMaquina action)
+        {
+
+            return state with { maquinaValid = true };
+        }
+
+        [ReducerMethod]
+        public static AveriaFormState ValidateAveriaFormStateConceptoAveria(AveriaFormState state, ValidateAveriaFormStateConceptoAveria action)
+        {
+
+            return state with { conceptoValid = true };
+        }
+
+        [ReducerMethod]
+        public static AveriaFormState ValidateAveriaFormStateAveriaEstado(AveriaFormState state, ValidateAveriaFormStateAveriaEstado action)
+        {
+            return state with { estadoValid = true };
+        }
+
+        [ReducerMethod]
+        public static AveriaFormState ResetAveriasForm(AveriaFormState state, ResetAveriasForm action)
+        {
+
+            return state with
+            {
+                AveriaSelected = null,
+                CargaSelected = null,
+                Valid = false,
+                conceptoValid = false,
+                estadoValid = false,
+                maquinaValid = false,
+                LecturaContador = null,
+                PatronLecturaContador = null,
+            };
+        }
+
+
+    }
+
+}
+

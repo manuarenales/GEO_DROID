@@ -1,0 +1,100 @@
+﻿@using GEO_DROID.Store
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Maquinas
+@using GEO_DROID.Store.Navegation
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IState<MaquinasState> MaquinaState
+@inject IState<AplicacionState> AplicacionState
+@inject IDispatcher Dispatcher
+@implements IDialogContentComponent<MaquinaSelecterDialog>
+@inject IState<NavigationState> NavigationState
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+
+@if (AplicacionState.Value is not null)
+{
+    <FluentDialogBody>
+        <FluentTextField Placeholder="Buscar"
+                         @bind-Value="busqueda"
+                         @oninput="FilterEstados"
+                         Style="width:100%" />
+
+        <div style="max-height: 60vh; overflow-y: auto;">
+            <FluentGrid Spacing="0">
+                @if (MaquinaState.Value.MaquinaListSelecterSelected is not null)
+                {
+                    @foreach (Maquina item in MaquinaState.Value.MaquinaListSelecterSelected.Where(e => string.IsNullOrEmpty(busqueda) || e.modeloMaquina.ToLower().Contains(busqueda.ToLower())))
+                    {
+                        <FluentGridItem xs="12" @onclick=' ()=>{MaquinaSelected(item);} '>
+                            <FluentCard>
+                                <FluentStack Orientation="Orientation.Horizontal">
+                                    <FluentLabel Typo="Typography.H5" Color="@Color.Neutral">@item.modeloMaquina</FluentLabel>
+                                </FluentStack>
+                            </FluentCard>
+                        </FluentGridItem>
+                    }
+                }
+            </FluentGrid>
+        </div>
+    </FluentDialogBody>
+}
+
+
+
+@code {
+
+
+    [Parameter]
+    public MaquinaSelecterDialog Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog? Dialog { get; set; }
+
+    string busqueda = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (NavigationState.Value.CurrentRoute == "averiaform1")
+        {
+            Dispatcher.Dispatch(new GetMaquinasListFomEstablecimientoSelected());
+
+        }
+        else
+        {
+            Dispatcher.Dispatch(new GetMaquinasList());
+        }
+
+        //
+    }
+
+    public void MaquinaSelected(Maquina maquina)
+    {
+        if (NavigationState.Value.CurrentRoute == "averiaform1")
+        {
+            Dispatcher.Dispatch(new ChangeMaquinaSelectedFormAction(maquina));
+            Dispatcher.Dispatch(new ValidateAveriaFormStateMaquina());
+            Dispatcher.Dispatch(new LoadPatContForAveriaForm(maquina));
+            AplicacionState.Value.modalMaquinaSelecter.CloseAsync();
+        }
+        else
+        {
+            Dispatcher.Dispatch(new ChangeMaquinaSelectedAction(maquina));
+
+        }
+        Dispatcher.Dispatch(new ChangeModalMaquinaSelecter(null));
+
+    }
+
+    public void FilterEstados(ChangeEventArgs filter)
+    {
+        busqueda = filter.Value.ToString();
+    }
+
+    private void ToggleDialogPrimaryActionButton(bool enable)
+    {
+        Dialog!.TogglePrimaryActionButton(enable);
+    }
+
+}

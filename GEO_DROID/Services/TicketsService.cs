@@ -19,9 +19,12 @@ namespace GEO_DROID.Services
             if (permissionStatus == PermissionStatus.Denied)
             {
                 Permissions.RequestAsync<BluetoothPermissions>();
-                Permissions.RequestAsync<Permissions.Camera>();
+                //Permissions.RequestAsync<Permissions.Camera>();
             }
-            else { _BluetoothServiceManager = new BluetoothServiceManager(); }
+            else
+            {
+                _BluetoothServiceManager = new BluetoothServiceManager();
+            }
 
             _database = database;
         }
@@ -39,7 +42,7 @@ namespace GEO_DROID.Services
             return list;
         }
 
-        public async void PrintAveriasFromEstablecimiento(int idEstablecimientos, BluetoothAddress address)
+        public async void PrintAveriasFromEstablecimiento(int idEstablecimientos, ulong address)
         {
             try
             {
@@ -68,7 +71,7 @@ namespace GEO_DROID.Services
                 // Añadir información de averías  
                 foreach (Averia averia in averias)
                 {
-                    // Cargar relaciones manualmente
+                    // Cargar relaciones manualmente 
                     if (averia.Incidencia == null)
                         averia.Incidencia = await _database._database.Table<Incidencia>().Where(i => i.id == averia.idIncidencias).FirstOrDefaultAsync();
 
@@ -76,7 +79,7 @@ namespace GEO_DROID.Services
                         averia.Incidencia.maquina = await _database._database.Table<Maquina>().Where(m => m.id == averia.Incidencia.idMaquinas).FirstOrDefaultAsync();
 
                     if (averia.AveriaEstado == null)
-                        averia.AveriaEstado = await _database._database.Table<AveriaEstado>().Where(e => e.id == averia.idAveriaEstados).FirstOrDefaultAsync(); // Ajusta `idEstado`
+                        averia.AveriaEstado = await _database._database.Table<AveriaEstado>().Where(e => e.id == averia.idAveriasEstados).FirstOrDefaultAsync(); // Ajusta `idEstado`
 
                     Carga carga = await GetCargaByAveriaId(averia.id);
 
@@ -90,19 +93,35 @@ namespace GEO_DROID.Services
                     }
                 }
 
-
                 dataToDisplay.AppendLine($"{(char)27}{(char)30}");
                 dataToDisplay.AppendLine($"{(char)27}@");
 
                 byte[] byteArray = Encoding.UTF8.GetBytes(dataToDisplay.ToString());
 
                 await _BluetoothServiceManager.SendData(byteArray, address);
+                _BluetoothServiceManager.client.Dispose();
             }
             catch (Exception ex)
             {
                 return;
             }
 
+        }
+
+        public async void PrintTest(ulong address)
+        {
+
+            StringBuilder dataToDisplay = new StringBuilder();
+            // Añadir información del establecimiento
+            dataToDisplay.AppendLine(PadRight("----------- Tikect de Test  -----------", 32));
+            dataToDisplay.AppendLine(PadRight("---Tecnausa  GEODROID---", 32));
+            dataToDisplay.AppendLine(PadRight(" ", 32));
+            dataToDisplay.AppendLine(PadRight(" ", 32));
+
+            byte[] byteArray = Encoding.UTF8.GetBytes(dataToDisplay.ToString());
+
+            await _BluetoothServiceManager.SendData(byteArray, address);
+            _BluetoothServiceManager.client.Dispose();
         }
 
         public async void PrintAveriasFromEstablecimiento2(int idEstablecimientos, BluetoothAddress address)
@@ -223,7 +242,7 @@ namespace GEO_DROID.Services
 
         public async Task<Carga> GetCargaByAveriaId(int idAveria)
         {
-            // Obtener la carga asociada a esa avería
+            // Obtener la carga asociada a esa avería 
             var carga = await _database._database.Table<Carga>().Where(c => c.idAverias == idAveria).FirstOrDefaultAsync();
             if (carga == null)
                 return null;

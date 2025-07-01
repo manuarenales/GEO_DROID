@@ -30,7 +30,6 @@
 
 @code {
 
-
     private async Task<bool> ConfirmarNavegacion(LocationChangingContext context)
     {
         if (AplicacionState.Value.modalEstablecientoSelecter is not null)
@@ -68,9 +67,14 @@
             context.PreventNavigation();
             return false;
         }
+        if (AplicacionState.Value.SplashScreenDialog is not null)
+        {
+            Dispatcher.Dispatch(new CloseSlashDefault());
+            context.PreventNavigation();
+            return false;
+        }
 
-
-        return true; // Permitir navegación
+        return true;
     }
 
 

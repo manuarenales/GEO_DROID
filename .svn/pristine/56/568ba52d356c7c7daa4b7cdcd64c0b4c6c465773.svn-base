@@ -1,0 +1,70 @@
+﻿@page "/cambios"
+@using GEO_DROID.Services
+@using GEO_DROID.Shared.Components
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Cambios
+@using GEO_DROID.Store.Establecimiento
+@using GEO_DROID.Store.Maquinas
+@using GEO_DROID.Store.Rutas
+@using IDispatcher = Fluxor.IDispatcher;
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IDispatcher Dispatcher
+@inject IState<EstablecimientoState> EstablecimientoState
+@inject IState<CambiosState> CambiosState
+@inject IState<RutasState> RutasState;
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IState<RutasState> RutasState;
+@inject IJSRuntime JS
+
+@if (RutasState.Value.RutaSelected.Establecimiento is not null)
+{
+    <FluentGrid Spacing="0">
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentLabel Typo="Typography.H3" Color="Color.Success">  @RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+
+                <FluentLabel Typo="Typography.H4">
+                    @Localizer["Cambios"]
+                </FluentLabel>
+
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+    </FluentGrid>
+}
+
+
+<FluentButton OnClick='() => NavigateTo(" ", null)' Appearance="Appearance.Accent"
+              Style="position: fixed; bottom: 1.5rem; right: 1.5rem; border-radius: 50%; width: 56px; height: 56px; font-size: 24px;">
+    +
+</FluentButton>
+
+@code {
+
+
+
+
+
+
+    private void NavigateTo(string pageTitle, Averia averia)
+    {
+        if (averia != null)
+        {
+            Dispatcher.Dispatch(new ResetAveriasForm());
+            Dispatcher.Dispatch(new ChangeAveriaSelectedFormAction(averia));
+            Dispatcher.Dispatch(new NavigationToAction("averiaform1"));
+        }
+        else
+        {
+            Dispatcher.Dispatch(new ResetAveriasForm());
+            Dispatcher.Dispatch(new ChangeAveriaSelectedFormAction(null));
+            Dispatcher.Dispatch(new NavigationToAction("averiaform1"));
+        }
+    }
+}

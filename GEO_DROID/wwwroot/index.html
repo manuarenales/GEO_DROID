@@ -46,7 +46,9 @@
     <script src="_content/BlazorBarcodeScanner.ZXing.JS/BlazorBarcodeScanner.js"></script>
     <script src="js/boostrap/Bootstrap_5.3.2_JS_Bundle.js"></script>
     <script src="js/boostrap/Bootstrap_4.js"></script>
-    <!-- <script src="js/chartjs-plugin-datalabels.min.js"></script> -->
+    
+    <script src="_content/IOGesture/js/tinygesture.js" type="module"></script>
+    <script src="_content/IOGesture/js/IOGesture.js" type="module"></script>
     <script src="_content/Blazor.Bootstrap/blazor.bootstrap.js"></script>
     <script src="js/JQuery/JQuery.js"></script>
     <script src="js/JQuery/Popper.js"></script>
@@ -75,7 +77,19 @@
             }
         }
 
+        // funcion que hace scroll
+        window.scrollElementIntoView = (element) => {
+            if (element) {
+                setTimeout(() => {
+                    element.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }, 100);
+            }
+        };
 
     </script>
+
 </body>
 </html>

@@ -1,0 +1,97 @@
+﻿@using Android.App
+@using BLL.LeerInfoMaquina
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Navegation
+@implements IDialogContentComponent<TestContadoresModelDialog>
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IState<NavigationState> NavigationState
+@inject IState<AplicacionState> AplicacionState
+@inject IDispatcher Dispatcher
+@inject IStringLocalizer<StringLocalizer> Localizer
+
+
+@if (AplicacionState.Value is not null)
+{
+    <FluentDialogBody>
+
+        <FluentGrid Spacing="0">
+            <FluentGridItem xs="12">
+
+                <FluentTextField Placeholder="Direccion Mac"
+                                 @bind-Value="DireccionMac"
+                                 Style="width:100%" Label="Direccion MAC" />
+
+                <FluentTextField Placeholder="PIN"
+                                 @bind-Value="Pass"
+                                 Style="width:100%" Label="PIN" />
+
+
+                <FluentTextArea Cols="15" Resize="TextAreaResize.Vertical"
+                                Label="@Localizer["Descripción"]"
+                                @bind-Value="result"
+                                Style="width: 100%;" />
+
+
+
+            </FluentGridItem>
+        </FluentGrid>
+
+        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="Conectar">
+            Realizar Lectura
+        </FluentButton>
+
+    </FluentDialogBody>
+}
+
+
+@code {
+    [Parameter]
+    public TestContadoresModelDialog Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog? Dialog { get; set; }
+
+    private string DireccionMac = "00:16:A4:0D:60:90";
+
+    private string result = " ";
+
+    private string Pass = "1111";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    public void Conectar()
+    {
+        Task.Run(() =>
+        {
+            ModuloBluetooth module = new ModuloBluetooth(ProtocoloMaquina.NOVOMATIC_SAS);
+            Activity activity = Platform.CurrentActivity;
+            module.Conectar(DireccionMac, activity, null, TipoDispositivoBTEnum.sis, Pass);
+            InfoContadores lel = module.LeerContadores();
+            result = $@"
+Auxiliar1 : {lel.Auxiliar1.ToString()}
+Auxiliar2 : {lel.Auxiliar2.ToString()}
+Auxiliar3 : {lel.Auxiliar3.ToString()}
+Auxiliar4 : {lel.Auxiliar4.ToString()}
+Auxiliar5 : {lel.Auxiliar5.ToString()}
+Auxiliar6 : {lel.Auxiliar6.ToString()}
+
+Mecanico1 : {lel.Mecanico1.ToString()}
+Mecanico2 : {lel.Mecanico2.ToString()}
+Mecanico3 : {lel.Mecanico3.ToString()}
+Mecanico4 : {lel.Mecanico4.ToString()}
+Salidas : {lel.Salidas.ToString()}
+";
+            module.Desconectar();
+        });
+
+
+    }
+
+    private void ToggleDialogPrimaryActionButton(bool enable)
+    {
+        Dialog!.TogglePrimaryActionButton(enable);
+    }
+}

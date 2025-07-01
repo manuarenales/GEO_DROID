@@ -1,0 +1,329 @@
+﻿using Fluxor;
+using GEO_DROID.Store.Rutas;
+using GeoDroid.Data;
+using GeoDroid.Data.SQL;
+using IDispatcher = Fluxor.IDispatcher;
+
+
+namespace GEO_DROID.Store.Forms.Averias
+{
+    public class AveriaFormEffects
+    {
+
+        private readonly GeoDroidDatabase _database;
+        private readonly IState<AveriaFormState> _averiaFormState;
+        private readonly IState<RutasState> _RutasStateState;
+
+        public AveriaFormEffects(GeoDroidDatabase database, IState<AveriaFormState> averiaFormState, IState<RutasState> RutasStateState)
+        {
+            _database = database;
+            _averiaFormState = averiaFormState;
+            _RutasStateState = RutasStateState;
+
+        }
+
+        [EffectMethod]
+        public async Task CreateAveriaFromState(CreateAveriaFromState action, IDispatcher dispatcher)
+        {
+            try
+            {
+                // miramos si tiene ID averia / si no la creamos   
+                if (_averiaFormState.Value.AveriaSelected.id is not 0)
+                {
+                    //tengo averia estoy modificando 
+                    Averia averia = _averiaFormState.Value.AveriaSelected;
+                    averia.idConceptoAverias = _averiaFormState.Value.AveriaSelected.ConceptoAveria.id;
+                    averia.idAveriasEstados = _averiaFormState.Value.AveriaSelected.AveriaEstado.id;
+
+                    await _database._database.UpdateAsync(averia);
+
+                    //Carga
+                    if (_averiaFormState.Value.CargaSelected is not null)
+                    {
+                        if (_averiaFormState.Value.CargaSelected.id is not 0)
+                        {
+                            GeoDroid.Data.Carga carga = _averiaFormState.Value.CargaSelected;
+                            await _database._database.UpdateAsync(carga);
+                        }
+                        else
+                        {
+                            GeoDroid.Data.Carga carga = _averiaFormState.Value.CargaSelected;
+                            carga.idAverias = averia.id;
+                            carga.idIncidencia = averia.idIncidencias;
+                            await _database._database.InsertAsync(carga);
+                        }
+                    }
+                    //LecturaContador 
+                    if (_averiaFormState.Value.LecturaContador is not null)
+                    {
+                        LecturaContador lectura = _averiaFormState.Value.LecturaContador;
+
+                        if (lectura.id is not 0)
+                        {
+                            lectura.idIncidencias = averia.idIncidencias;
+
+                            await _database._database.UpdateAsync(lectura);
+                        }
+                        else
+                        {
+                            lectura.idIncidencias = averia.idIncidencias;
+                            await _database._database.InsertAsync(lectura);
+                        }
+
+                        if (_averiaFormState.Value.PatronLecturaContador is not null)
+                        {
+                            foreach (var item in _averiaFormState.Value.PatronLecturaContador)
+                            {
+                                PatContDetalle ptcd = item.Key;
+                                GeoDroid.Data.LecturaDetalle ld = item.Value;
+
+                                // condicion por lo de los valores ajustados  
+                                if (ld.valorAntes != 0 && ld.valor == 0)
+                                {
+                                    ld.valor = ld.valorAntes;
+                                }
+
+                                ld.idLecturaContadores = lectura.id;
+
+                                if (ld.id is not 0)
+                                {
+                                    await _database._database.UpdateAsync(ld);
+                                }
+                                else
+                                {
+                                    await _database._database.InsertAsync(ld);
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+
+                    dispatcher.Dispatch(new ResetAveriasForm());
+                }
+                else
+                {
+                    // creando una nueva 
+                    Incidencia Inci = new Incidencia();
+                    Inci.idMaquinas = _averiaFormState.Value.AveriaSelected.Incidencia.maquina.id;
+                    Inci.fecha = DateTime.Now;
+
+                    int incidenciaId = await _database._database.InsertAsync(Inci);
+
+                    Averia averia = new Averia();
+
+                    averia.idIncidencias = Inci.id;
+                    averia.idConceptoAverias = _averiaFormState.Value.AveriaSelected.ConceptoAveria.id;
+                    averia.idAveriasEstados = _averiaFormState.Value.AveriaSelected.AveriaEstado.id;
+                    // estado marca fin si es true le meto fecha de finalizacion 
+
+                    averia.fechaModificacion = DateTime.Now;
+                    //averia.fechaFin = DateTime.null;
+
+                    int done = await _database._database.InsertAsync(averia);
+
+                    //Carga 
+                    if (_averiaFormState.Value.CargaSelected is not null)
+                    {
+                        GeoDroid.Data.Carga carga = _averiaFormState.Value.CargaSelected;
+                        carga.idIncidencia = averia.idIncidencias;
+                        carga.idAverias = averia.id;
+
+                        int donea = await _database._database.InsertAsync(carga);
+                    }
+
+                    //LecturaContador 
+                    if (_averiaFormState.Value.LecturaContador is not null)
+                    {
+                        LecturaContador lectura = _averiaFormState.Value.LecturaContador;
+
+                        if (lectura.id is not 0)
+                        {
+                            lectura.idIncidencias = averia.idIncidencias;
+
+                            await _database._database.UpdateAsync(lectura);
+                        }
+                        else
+                        {
+                            lectura.idIncidencias = averia.idIncidencias;
+                            await _database._database.InsertAsync(lectura);
+                        }
+
+                        if (_averiaFormState.Value.PatronLecturaContador is not null)
+                        {
+                            foreach (var item in _averiaFormState.Value.PatronLecturaContador)
+                            {
+                                PatContDetalle ptcd = item.Key;
+                                GeoDroid.Data.LecturaDetalle ld = item.Value;
+
+                                // condicion por lo de los valores ajustados 
+                                if (ld.valorAntes != 0 && ld.valor == 0)
+                                {
+                                    ld.valor = ld.valorAntes;
+                                }
+
+                                ld.idLecturaContadores = lectura.id;
+
+                                if (ld.id is not 0)
+                                {
+                                    await _database._database.UpdateAsync(ld);
+                                }
+                                else
+                                {
+                                    await _database._database.InsertAsync(ld);
+                                }
+                            }
+                        }
+                    }
+
+                    dispatcher.Dispatch(new ResetAveriasForm());
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+        [EffectMethod]
+        public async Task LoadLecturaContadorForAveriaForm(LoadLecturaContadorForAveriaForm action, IDispatcher dispatcher)
+        {
+            try
+            {
+                LecturaContador lectura = await _database._database.Table<LecturaContador>().Where(l => l.idIncidencias == action.Incidencia.id).FirstOrDefaultAsync();
+                dispatcher.Dispatch(new changeLecturaSelectedForAveriasForm(lectura));
+                if (lectura != null)
+                {
+
+                    // buscamos las lecturasDetalle 
+                    Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle> PatronLecturaContador = new Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle>();
+                    List<GeoDroid.Data.LecturaDetalle> lecturaDetalles = await _database._database.Table<GeoDroid.Data.LecturaDetalle>().Where(ld => ld.idLecturaContadores == lectura.id).ToListAsync();
+
+                    foreach (GeoDroid.Data.LecturaDetalle item in lecturaDetalles)
+                    {
+                        // Buscamos PatContDetalles de cada lectura 
+                        PatContDetalle pat = await _database._database.Table<PatContDetalle>().Where(pt => pt.id == item.idPatContDetalles).FirstOrDefaultAsync();
+                        List<PatContDetalle> las = await _database._database.Table<PatContDetalle>().ToListAsync();
+                        PatronLecturaContador.Add(pat, item);
+                    }
+
+                    dispatcher.Dispatch(new changePatronContadorLecturasSelectedForAveriasForm(PatronLecturaContador));
+                }
+                else
+                {
+                    Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle> PatronLecturaContador = new Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle>();
+                    List<PatContDetalle> patrones = await _database._database.Table<PatContDetalle>().Where(pt => pt.id == action.Incidencia.maquina.idPatronContadores).ToListAsync();
+
+                    foreach (PatContDetalle pat in patrones)
+                    {
+                        // Buscamos La lectura de cada PatContDetalle   
+                        GeoDroid.Data.LecturaDetalle lecturaDetalle = new GeoDroid.Data.LecturaDetalle();
+                        lecturaDetalle.idPatContDetalles = pat.idPatronContadores;
+
+                        PatronLecturaContador.Add(pat, lecturaDetalle);
+                    }
+                    dispatcher.Dispatch(new changePatronContadorLecturasSelectedForAveriasForm(PatronLecturaContador));
+                }
+
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
+
+        [EffectMethod]
+        public async Task LoadPatronLecturaContadorForAveriaForm(LoadPatronLecturaContadorForAveriaForm action, IDispatcher dispatcher)
+        {
+            try
+            {
+                if (action.lectura.id is not 0)
+                {
+                    // buscamos las lecturasDetalle  
+                    Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle> PatronLecturaContador = new Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle>();
+                    List<GeoDroid.Data.LecturaDetalle> lecturaDetalles = await _database._database.Table<GeoDroid.Data.LecturaDetalle>().Where(ld => ld.idLecturaContadores == action.lectura.id).ToListAsync();
+
+                    foreach (GeoDroid.Data.LecturaDetalle item in lecturaDetalles)
+                    {
+                        // Buscamos PatContDetalles de cada lectura 
+                        PatContDetalle pat = await _database._database.Table<PatContDetalle>().Where(pt => pt.idPatronContadores == item.idPatContDetalles).FirstOrDefaultAsync();
+                        PatronLecturaContador.Add(pat, item);
+                    }
+
+                    dispatcher.Dispatch(new changePatronContadorLecturasSelectedForAveriasForm(PatronLecturaContador));
+                }
+                else
+                {
+                    Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle> PatronLecturaContador = new Dictionary<PatContDetalle, GeoDroid.Data.LecturaDetalle>();
+                    List<PatContDetalle> patrones = await _database._database.Table<PatContDetalle>().Where(pt => pt.idPatronContadores == action.Incidencia.maquina.idPatronContadores).ToListAsync();
+
+                    foreach (PatContDetalle pat in patrones)
+                    {
+                        // Buscamos La lectura de cada PatContDetalle 
+
+                        GeoDroid.Data.LecturaDetalle lecturaDetalle = new GeoDroid.Data.LecturaDetalle();
+                        lecturaDetalle.idPatContDetalles = pat.idPatronContadores;
+
+                        PatronLecturaContador.Add(pat, lecturaDetalle);
+                    }
+                    dispatcher.Dispatch(new changePatronContadorLecturasSelectedForAveriasForm(PatronLecturaContador));
+                }
+            }
+            catch (Exception x)
+            {
+
+                throw;
+            }
+
+
+        }
+
+        [EffectMethod]
+        public async Task LoadCargaForAveriaForm(LoadCargaForAveriaForm action, IDispatcher dispatcher)
+        {
+            try
+            {
+                GeoDroid.Data.Carga carga = null;
+                if (action.averia.id is not 0)
+                {
+
+                    carga = await _database._database.Table<GeoDroid.Data.Carga>().Where(c => c.idIncidencia == action.averia.idIncidencias).FirstOrDefaultAsync();
+                }
+                List<GeoDroid.Data.Carga> CARGAS = await _database._database.Table<GeoDroid.Data.Carga>().ToListAsync();
+                dispatcher.Dispatch(new changeCargaSelectedForAveriasForm(carga));
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        [EffectMethod]
+        public async Task DeleteLecturaForAveriasForm(DeleteLecturaForAveriasForm action, IDispatcher dispatcher)
+        {
+            try
+            {
+                await _database._database.DeleteAsync(action.lectura);
+
+                foreach (var item in action.patronLecturas)
+                {
+                    await _database._database.DeleteAsync(item.Value);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
+
+    }
+}

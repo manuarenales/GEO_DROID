@@ -1,0 +1,234 @@
+﻿@page "/opciones"
+@using GEO_DROID.Resources
+@using GEO_DROID.Services
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Bluetooth
+@using GEO_DROID.Store.CultureCase
+@using GEO_DROID.Store.Rutas
+@using GeoDroid.Data.Models.DTO
+@using GEO_DROID.Store.Establecimiento
+@using IOGesture.Components
+@using InTheHand.Net
+@using InTheHand.Net.Sockets
+@using System.Text.Json
+@inject NavigationManager Navigation
+@inject IState<CultureState> CultureState;
+@inject IState<BluetoothState> BluetoothState;
+@inject IState<AveriaState> AveriaState;
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject IDispatcher Dispatcher;
+@inject IState<RutasState> RutasState;
+@inject TicketsService TicketsService;
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IJSRuntime JS
+
+@if (RutasState.Value.RutaSelected.Establecimiento is not null)
+{
+    <FluentStack Orientation="Orientation.Vertical" Style="padding: 4px ;margin-bottom:50px; overflow:auto;">
+
+        <!-- Cabecera del Establecimiento -->
+        <FluentStack HorizontalAlignment="HorizontalAlignment.Center">
+            <FluentLabel Color="Color.Success" Typo="Typography.H3">@RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
+        </FluentStack>
+
+
+        <!-- Recaudar -->
+        <FluentCard>
+            <Gesture OnTap="@( () => NavigateTo("recaudacion", RutasState.Value.RutaSelected.Establecimiento) )">
+                <FluentLabel Typo="Typography.H5">@Localizer["recaudar"]</FluentLabel>
+                <FluentGrid>
+                    <FluentGridItem xs="6" sm="4" md="4">
+                        <FluentStack Orientation="Orientation.Horizontal">
+                            <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.TravelPlaces.Color.Default.ConvenienceStore())" />
+                            <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
+                        </FluentStack>
+                    </FluentGridItem>
+
+                    <FluentGridItem xs="6" sm="4" md="4">
+                        <FluentStack Orientation="Orientation.Horizontal">
+                            <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.BookmarkTabs())" />
+                            <FluentLabel Typo="Typography.H4">B2600.00</FluentLabel>
+                        </FluentStack>
+                    </FluentGridItem>
+
+                    <FluentGridItem xs="6" sm="4" md="4">
+                        <FluentStack Orientation="Orientation.Horizontal">
+                            <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.PeopleBody.HighContrast.Default.ConstructionWorker())" />
+                            <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
+                        </FluentStack>
+                    </FluentGridItem>
+
+                </FluentGrid>
+            </Gesture>
+        </FluentCard>
+
+        <!-- Motivos máquina no recaudada -->
+        <FluentCard>
+            <FluentLabel Typo="Typography.H5">@Localizer["motivosmaquinanorecaudada"]</FluentLabel>
+            <FluentStack Orientation="Orientation.Horizontal">
+                <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Activities.Color.Default.SlotMachine())" />
+                <FluentLabel Typo="Typography.H4">0</FluentLabel>
+            </FluentStack>
+        </FluentCard>
+
+        <!-- Averías -->
+        <FluentCard Style="cursor: pointer;">
+            <Gesture OnTap="@(() => NavigateTo("averias", RutasState.Value.RutaSelected.Establecimiento) )">
+                <FluentLabel Typo="Typography.H5">@Localizer["averias"]</FluentLabel>
+                <FluentStack Orientation="Orientation.Horizontal">
+                    <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Flat.Default.HammerAndWrench())" />
+                    <FluentLabel Typo="Typography.H4">@AveriaState.Value.AveriaCount</FluentLabel>
+                </FluentStack>
+            </Gesture>
+        </FluentCard>
+
+        <!-- Cambios -->
+        <FluentCard>
+            <Gesture OnTap="@(() => NavigateTo("cambios", RutasState.Value.RutaSelected.Establecimiento) )">
+                <FluentLabel Typo="Typography.H5">@Localizer["cambios"]</FluentLabel>
+                <FluentStack Orientation="Orientation.Horizontal">
+                    <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.Coin())" />
+                    <FluentLabel Typo="Typography.H4">1/0/0</FluentLabel>
+                </FluentStack>
+            </Gesture>
+        </FluentCard>
+
+        <!-- Préstamos -->
+        <FluentCard>
+
+            <Gesture OnTap="@(() => NavigateTo("prestamos", RutasState.Value.RutaSelected.Establecimiento) )">
+                <FluentLabel Typo="Typography.H5">@Localizer["prestamos"]</FluentLabel>
+                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 1rem;">
+                    <FluentStack Orientation="Orientation.Horizontal">
+                        <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.TravelPlaces.Color.Default.ConvenienceStore())" />
+                        <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
+                    </FluentStack>
+                    <FluentStack Orientation="Orientation.Horizontal">
+
+                        <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.PeopleBody.HighContrast.Default.BackhandIndexPointingRight())" />
+                        <FluentLabel Typo="Typography.H4">0:00</FluentLabel>
+                    </FluentStack>
+                    <FluentStack Orientation="Orientation.Horizontal">
+                        <FluentLabel Typo="Typography.H4">0.00</FluentLabel>
+                        <FluentEmoji Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.PeopleBody.HighContrast.Default.BackhandIndexPointingLeft())" />
+                    </FluentStack>
+                </FluentStack>
+            </Gesture>
+
+        </FluentCard>
+
+        @if (device != null)
+        {
+            <FluentCard>
+                <FluentLabel Typo="Typography.H4">
+                    @device.Connected , @device.DeviceName , @device.DeviceAddress
+                </FluentLabel>
+            </FluentCard>
+        }
+
+    </FluentStack>
+
+    <!-- Botonera inferior -->
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+                 Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem; ">
+        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="ImpresionTicket">
+            @Localizer["imprimirtickets"]
+        </FluentButton>
+        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="ShowModalInfo">
+            @Localizer["informacion"]
+        </FluentButton>
+    </FluentStack>
+
+
+
+}
+@code {
+
+
+    public bool modalTicketsVisible = false;
+    public bool modalInfoVisible = false;
+    private string nameTickets;
+    public BluetoothDeviceInfo device;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        Dispatcher.Dispatch(new GetAveriasCount(RutasState.Value.RutaSelected.Establecimiento));
+
+    }
+
+    Task OnNameChangedTickets(ChangeEventArgs e)
+    {
+        nameTickets = e.Value.ToString();
+        return Task.CompletedTask;
+    }
+
+    Task OnNameChangedInfo(string value)
+    {
+        return Task.CompletedTask;
+    }
+
+    private void ShowModalTickets()
+    {
+        modalTicketsVisible = true;
+    }
+
+    private void ShowModalInfo()
+    {
+        modalInfoVisible = true;
+    }
+
+    private void NavigateTo(string pageTitle, Establecimiento establecimiento)
+    {
+        Dispatcher.Dispatch(new SelectEstablecimientoAction(establecimiento));
+
+        Dispatcher.Dispatch(new NavigationToAction($"/{pageTitle.ToLower()}"));
+    }
+
+
+    private void HideTicketsModal()
+    {
+        modalTicketsVisible = false;
+    }
+
+    private void HideInfoModal()
+    {
+        modalInfoVisible = false;
+    }
+
+    private EventCallback TicketSelected(string Item)
+    {
+
+        return EventCallback.Empty;
+    }
+
+    private async void ImpresionTicket()
+    {
+        try
+        {
+            PermissionStatus permissionStatus = Permissions.CheckStatusAsync<BluetoothPermissions>().Result;
+            if (permissionStatus == PermissionStatus.Denied)
+            {
+                await Permissions.RequestAsync<BluetoothPermissions>();
+                await Permissions.RequestAsync<Permissions.Camera>();
+            }
+            else
+            {
+                // deberia mos de tener un device asociado y listo imprimimos loco
+                if (BluetoothState.Value.currentDeviceConected.Address is not 0)
+                {
+                    TicketsService.PrintAveriasFromEstablecimiento(RutasState.Value.RutaSelected.Establecimiento.id, BluetoothState.Value.currentDeviceConected.Address);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+
+        }
+
+    }
+}

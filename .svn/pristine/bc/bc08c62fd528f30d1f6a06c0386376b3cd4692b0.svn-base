@@ -1,0 +1,32 @@
+﻿using Fluxor;
+
+
+namespace GEO_DROID.Store.Bluetooth
+{
+    public static class BluetoothReducer
+    {
+
+        [ReducerMethod]
+        public static BluetoothState ChangeConectedDevice(BluetoothState state, ChangeConectedDevice action) =>
+           state with { currentDeviceConected = action.device };
+
+        [ReducerMethod]
+        public static BluetoothState ChangeConectedDeviceInfo(BluetoothState state, ChangeConectedDeviceInfo action)
+        {
+            BluetoothDevice actual = new BluetoothDevice();
+            actual.ConnectionTime = DateTime.Now;
+            actual.Address = action.device.DeviceAddress;
+            actual.DeviceName = action.device.DeviceName;
+
+            return state with { currentDeviceConected = actual };
+        }
+
+
+
+        [ReducerMethod]
+        public static BluetoothState SetBluetoothDeviceHistorial(BluetoothState state, SetBluetoothDeviceHistorial action)
+        {
+            return state with { devicesHistorialList = action.devicesHistorialList };
+        }
+    }
+}

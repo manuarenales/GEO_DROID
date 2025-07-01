@@ -1,0 +1,19 @@
+﻿using Fluxor;
+
+
+namespace GEO_DROID.Store.Bluetooth
+{
+    public static class BluetoothReducer
+    {
+
+        [ReducerMethod]
+        public static BluetoothState ChangeConectedDevice(BluetoothState state, ChangeConectedDevice action) =>
+           state with { bluetoothDeviceInfoSaved = action.device };
+
+        [ReducerMethod]
+        public static BluetoothState LoadBluetoothDeviceAction(BluetoothState state, ChangeConectedDevice action) =>
+           state with { bluetoothDeviceInfoSaved = action.device };
+
+       
+    }
+}

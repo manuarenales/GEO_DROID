@@ -1,0 +1,257 @@
+﻿@page "/lecturaInicialForm"
+
+ @using BLL.LeerInfoMaquina
+@using Fluxor
+@using GEO_DROID.Store.Forms
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Maquinas
+@using GEO_DROID.Store.ModuloCaptura
+@using GeoDroid.Data
+@using Microsoft.Extensions.Localization
+@using GEO_DROID.Resources.Languages
+@using Microsoft.FluentUI.AspNetCore.Components
+
+@inject IJSRuntime JS
+@inject IState<AveriaFormState> AveriaFormState
+@inject IState<ModuloCapturaState> ModuloCapturaState
+@inject IDispatcher Dispatcher
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+
+@if (AveriaFormState.Value.PatronLecturaContador != null)
+{
+    <FluentStack Orientation="Orientation.Vertical" Class="w-100">
+        <FluentLabel Typo="Typography.H4">@Localizer["LecturaInicialContadores"]</FluentLabel>
+
+
+        @foreach (var lecturaDetalle in AveriaFormState.Value.PatronLecturaContador)
+        {
+            var key = lecturaDetalle.Key;
+            var Value = lecturaDetalle.Value;
+
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentLabel Typo="Typography.Body">@key.tipoContadores (@key.valorPaso)</FluentLabel>
+                <FluentNumberField Label="@Localizer["ValorActual"]"
+                                   @bind-Value="@Value.valorAntes"
+                                   Style="width: 100%;" />
+            </FluentStack>
+        }
+
+    </FluentStack>
+}
+
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+             Style=" width: 100%; padding:5px; ">
+    <FluentButton OnClick="LeerContadoresBluetooth" BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Leer Contadores bluetooth
+    </FluentButton>
+
+</FluentStack>
+
+
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+             Style="position: fixed; bottom: 0; width: 100%;  ">
+    <FluentButton OnClick="GuardarLectura" BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Guardar
+    </FluentButton>
+    <FluentButton OnClick="CancelarLectura" BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Cancelar
+    </FluentButton>
+    <FluentButton OnClick="EliminarLectura" BackgroundColor="red" Disabled="@((AveriaFormState.Value.AveriaSelected is null ))" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Eliminar
+    </FluentButton>
+
+</FluentStack>
+
+
+@code {
+    protected override void OnInitialized()
+    {
+        Dispatcher.Dispatch(new GetModuloCapturaByMaquinaID(AveriaFormState.Value.AveriaSelected.Incidencia.maquina.id));
+
+        if (AveriaFormState?.Value.LecturaContador is null)
+        {
+            LecturaContador lecturaContador = new LecturaContador();
+            Dispatcher.Dispatch(new changeLecturaSelectedForAveriasForm(lecturaContador));
+
+            if (AveriaFormState?.Value.PatronLecturaContador is null)
+            {
+                if (AveriaFormState?.Value.LecturaContador is not null && AveriaFormState?.Value.PatronLecturaContador is null)
+                    Dispatcher.Dispatch(new LoadPatronLecturaContadorForAveriaForm(AveriaFormState?.Value.LecturaContador, AveriaFormState?.Value.AveriaSelected.Incidencia));
+            }
+        }
+        base.OnInitialized();
+    }
+
+    private async void GoBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+    public async void GuardarLectura()
+    {
+        //Dispatcher.Dispatch(new changeCargaSelectedForAveriasForm(carga));
+        GoBack();
+    }
+
+    public async void CancelarLectura()
+    {
+
+        Dispatcher.Dispatch(new changePatronContadorLecturasSelectedForAveriasForm(null));
+        Dispatcher.Dispatch(new changeLecturaSelectedForAveriasForm(null));
+        GoBack();
+    }
+
+    public async void EliminarLectura()
+    {
+        Dispatcher.Dispatch(new DeleteLecturaForAveriasForm(AveriaFormState?.Value.PatronLecturaContador, AveriaFormState?.Value.LecturaContador));
+        Dispatcher.Dispatch(new changePatronContadorLecturasSelectedForAveriasForm(null));
+        Dispatcher.Dispatch(new changeLecturaSelectedForAveriasForm(null));
+        GoBack();
+    }
+
+    public async void LeerContadoresBluetooth()
+    {
+#if ANDROID
+    if (ModuloCapturaState.Value.ModuloCapturaSelected is not null)
+    {
+
+    ModuloBluetooth module = new ModuloBluetooth((ProtocoloMaquina) AveriaFormState.Value.AveriaSelected.Incidencia.maquina.protocolosMaquinas  );
+    Android.App.Activity activity = Platform.CurrentActivity;
+    module.Conectar(ModuloCapturaState.Value.ModuloCapturaSelected.mac, activity, null, TipoDispositivoBTEnum.sis, ModuloCapturaState.Value.ModuloCapturaSelected.password);
+     InfoContadores lel = module.LeerContadores();
+    foreach (var lecturaDetalle in AveriaFormState.Value.PatronLecturaContador)
+    {
+    PatContDetalle    key = lecturaDetalle.Key;
+
+    switch (key.tipoProtocolos)
+    {
+    case 0:
+    lecturaDetalle.Value.valorAntes = lel.Entradas;
+    break;
+
+    case 1:
+    lecturaDetalle.Value.valorAntes = lel.Salidas;
+    break;
+
+    case 2:
+    lecturaDetalle.Value.valorAntes = lel.Billetes;
+    break;
+
+    case 3:
+    lecturaDetalle.Value.valorAntes = lel.Test;
+    break;
+
+    case 4:
+    lecturaDetalle.Value.valorAntes = lel.Cajon;
+    break;
+
+    case 5:
+    lecturaDetalle.Value.valorAntes = lel.PagosManuales;
+    break;
+
+    case 10:
+    lecturaDetalle.Value.valorAntes = lel.Billetes5;
+    break;
+
+    case 11:
+    lecturaDetalle.Value.valorAntes = lel.Billetes10;
+    break;
+
+    case 12:
+    lecturaDetalle.Value.valorAntes = lel.Billetes20;
+    break;
+
+    case 13:
+    lecturaDetalle.Value.valorAntes = lel.Billetes50;
+    break;
+
+    case 20:
+    lecturaDetalle.Value.valorAntes = lel.Mecanico1;
+    break;
+
+    case 21:
+    lecturaDetalle.Value.valorAntes = lel.Mecanico2;
+    break;
+
+    case 22:
+    lecturaDetalle.Value.valorAntes = lel.Mecanico3;
+    break;
+
+    case 23:
+    lecturaDetalle.Value.valorAntes = lel.Mecanico4;
+    break;
+
+    case 30:
+    lecturaDetalle.Value.valorAntes = lel.CajonMonedas020;
+    break;
+
+    case 31:
+    lecturaDetalle.Value.valorAntes = lel.CajonMonedas050;
+    break;
+
+    case 32:
+    lecturaDetalle.Value.valorAntes = lel.CajonMonedas100;
+    break;
+
+    case 33:
+    lecturaDetalle.Value.valorAntes = lel.CajonMonedas200;
+    break;
+
+    case 40:
+    lecturaDetalle.Value.valorAntes = lel.Auxiliar1;
+    break;
+
+    case 41:
+    lecturaDetalle.Value.valorAntes = lel.Auxiliar2;
+    break;
+
+    case 42:
+    lecturaDetalle.Value.valorAntes = lel.Auxiliar3;
+    break;
+
+    case 43:
+    lecturaDetalle.Value.valorAntes = lel.Auxiliar4;
+    break;
+
+    case 44:
+    lecturaDetalle.Value.valorAntes = lel.Auxiliar5;
+    break;
+
+    case 45:
+    lecturaDetalle.Value.valorAntes = lel.Auxiliar6;
+    break;
+
+    case 51:
+    lecturaDetalle.Value.valorAntes = lel.Partidas1;
+    break;
+
+    case 52:
+    lecturaDetalle.Value.valorAntes = lel.Partidas2;
+    break;
+
+    case 53:
+    lecturaDetalle.Value.valorAntes = lel.Partidas3;
+    break;
+
+    case 60:
+    lecturaDetalle.Value.valorAntes = lel.TicketIN;
+    break;
+
+    case 61:
+    lecturaDetalle.Value.valorAntes = lel.TicketOUT;
+    break;
+
+    }
+
+    }
+    module.Desconectar();
+
+
+    }
+#endif
+    }
+
+}

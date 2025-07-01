@@ -1,0 +1,76 @@
+﻿@page "/informaciongeneral"
+@using GEO_DROID.Services
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+<FluentGrid Spacing="0">
+    <FluentGridItem xs="12">
+
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentLabel Typo="Typography.H4" Color="@Color.Neutral">Nombre del Recaudador</FluentLabel>
+            <FluentLabel Typo="Typography.H4" Color="@Color.Accent">Manuel Pina Monzo</FluentLabel>
+        </FluentStack>
+
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentLabel Typo="Typography.H4" Color="@Color.Neutral">Fecha Sincronización</FluentLabel>
+            <FluentLabel Typo="Typography.H4" Color="@Color.Accent">11/08/1999</FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+    <FluentGridItem xs="12">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentLabel Typo="Typography.H4" Color="@Color.Accent">📋 Información de Ruta</FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+
+    @foreach (var item in DatosRuta)
+    {
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentLabel Typo="Typography.H4" Color="@Color.Neutral">@item.Label</FluentLabel>
+                <FluentLabel Typo="Typography.H4" Color="@Color.Accent">@item.Valor</FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+    }
+
+</FluentGrid>
+
+<!-- Botón inferior  -->
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem;">
+    <FluentButton Appearance="Appearance.Accent" OnClick="ImprimirTicket" Style="width: 80%;">
+        🖨️ Imprimir Ticket Resumen Día
+    </FluentButton>
+</FluentStack>
+
+@code {
+    
+    private List<(string Label, string Valor)> DatosRuta = new()
+    {
+    ("Num. Recaudaciones", "33"),
+    ("Neto", "33"),
+    ("Cargas", "36"),
+    ("Recuperaciones de Carga", "33"),
+    ("Préstamos", "33"),
+    ("Recuperaciones de Préstamos", "33"),
+    ("Total", "33")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    public void ImprimirTicket()
+    {
+     
+    }
+}

@@ -1,0 +1,106 @@
+﻿@page "/lecturaFinalForm"
+
+@using Fluxor
+@using GEO_DROID.Store.Forms
+@using GEO_DROID.Store
+@using GeoDroid.Data
+@using Microsoft.Extensions.Localization
+@using GEO_DROID.Resources.Languages
+@using Microsoft.FluentUI.AspNetCore.Components
+
+  @inject IJSRuntime JS
+
+@inject IState<AveriaFormState> AveriaFormState
+@inject IDispatcher Dispatcher
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+
+@if (AveriaFormState.Value.PatronLecturaContador != null)
+{
+    <FluentStack Orientation="Orientation.Vertical" Class="w-100">
+        <FluentLabel Typo="Typography.H4">@Localizer["LecturaFinalContadores"]</FluentLabel>
+
+
+        @foreach (var lecturaDetalle in AveriaFormState.Value.PatronLecturaContador)
+        {
+            var key = lecturaDetalle.Key;
+            var Value = lecturaDetalle.Value;
+
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentLabel Typo="Typography.Body">@key.tipoContadores (@key.valorPaso)</FluentLabel>
+                <FluentNumberField Label="@Localizer["ValorActual"]"
+                                   @bind-Value="@Value.valor"
+                                   Style="width: 100%;" />
+            </FluentStack>
+        }
+
+    </FluentStack>
+}
+
+
+
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+             Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; gap: 1rem; ">
+    <FluentButton @onclick="GuardarLectura" BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Guardar
+    </FluentButton>
+    <FluentButton @onclick='() => CancelarLectura()' BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Cancelar
+    </FluentButton>
+    <FluentButton @onclick='() => EliminarLectura()' BackgroundColor="red" Disabled="@((AveriaFormState.Value.AveriaSelected is null ))" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Eliminar
+    </FluentButton>
+
+</FluentStack>
+
+@code {
+
+    protected override void OnInitialized()
+    {
+
+        if (AveriaFormState?.Value.LecturaContador is null)
+        {
+            LecturaContador lecturaContador = new LecturaContador();
+            Dispatcher.Dispatch(new changeLecturaSelectedForAveriasForm(lecturaContador));
+
+            if (AveriaFormState?.Value.PatronLecturaContador is null)
+            {
+                if (AveriaFormState?.Value.LecturaContador is not null && AveriaFormState?.Value.PatronLecturaContador is null)
+                    Dispatcher.Dispatch(new LoadPatronLecturaContadorForAveriaForm(AveriaFormState?.Value.LecturaContador, AveriaFormState?.Value.AveriaSelected.Incidencia));
+            }
+        }
+        base.OnInitialized();
+    }
+
+
+    public async void GuardarLectura()
+    {
+        //Dispatcher.Dispatch(new changeCargaSelectedForAveriasForm(carga));
+        GoBack();
+    }
+
+    public async void CancelarLectura()
+    {
+
+        Dispatcher.Dispatch(new changePatronContadorLecturasSelectedForAveriasForm(null));
+        Dispatcher.Dispatch(new changeLecturaSelectedForAveriasForm(null));
+        GoBack();
+    }
+
+    public async void EliminarLectura()
+    {
+        Dispatcher.Dispatch(new DeleteLecturaForAveriasForm(AveriaFormState?.Value.PatronLecturaContador, AveriaFormState?.Value.LecturaContador));
+        Dispatcher.Dispatch(new changePatronContadorLecturasSelectedForAveriasForm(null));
+        Dispatcher.Dispatch(new changeLecturaSelectedForAveriasForm(null));
+        GoBack();
+    }
+
+
+
+    private async void GoBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

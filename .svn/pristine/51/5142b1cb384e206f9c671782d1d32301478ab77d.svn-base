@@ -1,0 +1,133 @@
+﻿@page "/utilities"
+@using BlazorBarcodeScanner.ZXing.JS
+@using GEO_DROID.Resources
+@using GEO_DROID.Services
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Bluetooth
+@using GeoDroid.Data.Models.DTO
+@using InTheHand.Net
+@using InTheHand.Net.Bluetooth
+@using InTheHand.Net.Sockets
+@using System.Net.Sockets
+@using System.Text
+@using Microsoft.Maui.Controls.PlatformConfiguration
+@using System.Collections.ObjectModel
+@using System.Text.Json
+@inject IJSRuntime JS
+@inject BluetoothServiceManager _BluetoothServiceManager;
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IState<AplicacionState> AplicacionState
+@inject IDispatcher Dispatcher;
+
+
+<FluentGrid>
+    @if (devicesBL is not null)
+    {
+        @foreach (BluetoothDeviceInfo devicebl in devicesBL)
+        {
+            <FluentGridItem xs="12">
+                <FluentGrid>
+                    <FluentGridItem xs="6">
+                        <FluentLabel Typo="Typography.H4">  @devicebl.DeviceName / @devicebl.DeviceAddress  </FluentLabel>
+                    </FluentGridItem>
+                    <FluentGridItem xs="6">
+                        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" @onclick="() => ConectBl(devicebl)">
+                            Conectar
+                        </FluentButton>
+                    </FluentGridItem>
+                </FluentGrid>
+            </FluentGridItem>
+        }
+    }
+</FluentGrid>
+
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+             Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; background-color: white; gap: 1rem; ">
+    <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" @onclick="SearchDevices">
+        Buscar Dispositivos
+    </FluentButton>
+    <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Añadir Dispositivo Manual
+    </FluentButton>
+
+</FluentStack>
+
+
+@code {
+
+    IReadOnlyCollection<BluetoothDeviceInfo> devicesBL;
+
+    private bool Connected = false;
+    private string newDeviceAddress;
+    private BluetoothDeviceInfo deviceFormModal;
+    private string LocalBarcodeText;
+    bool enabled;
+    bool loading = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Dispatcher.Dispatch(new LoadLastBluetoothDevice());
+
+        await base.OnInitializedAsync();
+    }
+
+
+
+    public async void ConectBl(BluetoothDeviceInfo device)
+    {
+        await _BluetoothServiceManager.ConectBl(device);
+        if (_BluetoothServiceManager.client.Connected)
+        {
+            string addressString = device.DeviceAddress.ToString();
+            Dispatcher.Dispatch(new ChangeConectedDevice(device));
+            Dispatcher.Dispatch(new SaveBluetoothDevice(device));
+
+        }
+        else
+        {
+            Console.WriteLine("No se pudo conectar al dispositivo Bluetooth.");
+
+        }
+    }
+
+    public async Task SearchDevices()
+    {
+        SplashScreenContent paramametros = new SplashScreenContent();
+
+        paramametros.SubTitle = "";
+        paramametros.Title = "Buscando Dispositivos";
+        paramametros.LoadingText = "Buscando...";
+        paramametros.Message = (MarkupString)"<strong> Un poco de Paciencia </strong>";
+
+
+        Dispatcher.Dispatch(new OpenSlashDefault(paramametros));
+        devicesBL = await _BluetoothServiceManager.SearchDevices();
+        if (AplicacionState.Value.SplashScreenDialog != null)
+        {
+            await AplicacionState.Value.SplashScreenDialog.CloseAsync();
+        }
+
+        StateHasChanged();
+    }
+
+    private void LocalReceivedBarcodeText(BarcodeReceivedEventArgs args)
+    {
+        this.LocalBarcodeText = args.BarcodeText;
+        StateHasChanged();
+    }
+
+    public void Wat(object error)
+    {
+
+        var sis = error;
+    }
+
+    public void CloseStream()
+    {
+        NetworkStream stream = _BluetoothServiceManager.client.GetStream();
+        stream.Close();
+    }
+
+
+}

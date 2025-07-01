@@ -1,0 +1,135 @@
+﻿@page "/rutas";
+@using GEO_DROID.Services;
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Rutas
+@using IDispatcher = Fluxor.IDispatcher;
+@using Emojis = Microsoft.FluentUI.AspNetCore.Components.Emojis;
+@using GEO_DROID.Store.Establecimiento;
+@using GEO_DROID.Shared.Components.Otros;
+@using IOGesture.Components
+
+@inject NavigationManager Navigation;
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject IState<RutasState> rutasState;
+@inject IDispatcher Dispatcher ;
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+<FluentGrid Spacing="0">
+
+    <FluentGridItem xs="12">
+        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentDatePicker PopupHorizontalPosition="HorizontalPosition.Right" Label="@FormattedDate(selectedDate)"
+                              Value="@selectedDate"
+                              ValueChanged="@OnDateChanged"
+                              ValueExpression="() => selectedDate" />
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+    </FluentGridItem>
+
+</FluentGrid>
+
+@if (rutasState.Value.RutasListSelected is not null)
+{
+
+    <FluentGrid Spacing="0">
+
+        @foreach (Ruta ruta in rutasState.Value.RutasListSelected)
+        {
+            <FluentGridItem xs="12">
+                <Gesture OnTap="@( () => NavigateTo("opciones", ruta) )">
+                    <FluentStack Style="padding:5px;" Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.SpaceBetween">
+                        <FluentStack Orientation="Orientation.Vertical">
+                            <FluentLabel Typo="Typography.H4">
+                                @ruta.Establecimiento.nombre
+                            </FluentLabel>
+
+                            <FluentStack Orientation="Orientation.Horizontal">
+                                <FluentEmoji Style="filter: sepia(1) hue-rotate(-50deg) saturate(5);" Value="@(new Microsoft.FluentUI.AspNetCore.Components.Emojis.Activities.Color.Default.SlotMachine())" />
+                                <FluentEmoji Style="filter: sepia(1) hue-rotate(-50deg) saturate(5);" Value="@(new Emojis.Objects.Color.Default.Toolbox())" />
+                                <FluentEmoji Style="filter: sepia(1) hue-rotate(-50deg) saturate(5);" Value="@(new Emojis.Symbols.Color.Default.RepeatButton())" />
+                                <FluentEmoji Style="filter: sepia(1) hue-rotate(-50deg) saturate(5);" Value="@(new Emojis.Objects.Color.Default.MoneyBag())" />
+                            </FluentStack>
+                        </FluentStack>
+
+                        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Center">
+                            <Recaudacion CodigoEstablecimiento="@ruta.Establecimiento.codigo" />
+                        </FluentStack>
+                    </FluentStack>
+                </Gesture>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+        }
+
+    </FluentGrid>
+
+    @if (rutasState.Value.RutasListSelected.Count == 0)
+    {
+        <div style="min-height:100px; ">
+        </div>
+    }
+}
+
+<FluentButton OnClick="@(() => Addestablecimiento())"
+              Appearance="Appearance.Accent"
+              Style="position: fixed; bottom: 1.5rem; right: 1.5rem; border-radius: 50%; width: 56px; height: 56px; font-size: 24px;">
+    +
+</FluentButton>
+
+
+@code {
+    private DateTime? selectedDate = DateTime.Now.Date;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        //Goated 
+        Dispatcher.Dispatch(new GetRutasListByDate(selectedDate));
+    }
+
+    private void NavigateTo(string pageTitle, Ruta ruta)
+    {
+        Dispatcher.Dispatch(new ChangeRutaSelectedAction(ruta));
+        Dispatcher.Dispatch(new NavigationToAction($"/{pageTitle.ToLower()}"));
+    }
+
+    private void DeleteItem(Establecimiento establecimiento)
+    {
+        StateHasChanged();
+    }
+
+    public string FormattedDate(DateTime? date)
+    {
+        try
+        {
+            if (date != null)
+            {
+                return $"{date?.ToString("dddd, dd")} de {date?.ToString("MMMM")}, {date?.Year}";
+            }
+            else
+            {
+                return "";
+            }
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+    }
+
+    private void OnDateChanged(DateTime? newValue)
+    {
+        selectedDate = newValue;
+        Dispatcher.Dispatch(new GetRutasListByDate(newValue));
+
+    }
+
+
+
+    private void Addestablecimiento()
+    {
+        Dispatcher.Dispatch(new LaunchEstablecimientoSelecterAction());
+
+    }
+}

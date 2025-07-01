@@ -1,5 +1,6 @@
 ﻿using GEO_DROID.Resources;
 using GEO_DROID.Resources.PrinterResources;
+using GEO_DROID.Store.Bluetooth;
 using GeoDroid.Data.Models.DTO;
 using InTheHand.Net;
 using InTheHand.Net.Bluetooth;
@@ -7,7 +8,7 @@ using InTheHand.Net.Sockets;
 using Newtonsoft.Json;
 using System.Net.Sockets;
 using System.Text;
-
+using IDispatcher = Fluxor.IDispatcher;
 
 
 namespace GEO_DROID.Services
@@ -18,20 +19,20 @@ namespace GEO_DROID.Services
         public BluetoothDeviceInfo deviceConected;
         public ulong _deviceConectedAddess;
         public NetworkStream canal;
+        public IDispatcher _dispatcher;
 
         public BluetoothServiceManager()
         {
             Permissions.RequestAsync<BluetoothPermissions>();
             Permissions.RequestAsync<Permissions.Camera>();
             client = new BluetoothClient();
-
         }
 
         public async Task<IReadOnlyCollection<BluetoothDeviceInfo>> SearchDevices()
         {
             return await Task.Run(() =>
              {
-                 return client.DiscoverDevices();
+                 return client.DiscoverDevices(100);
              });
         }
         public async Task<bool> ConectBl(BluetoothDeviceInfo device)
@@ -41,7 +42,23 @@ namespace GEO_DROID.Services
                 await Task.Run(() =>
                 {
                     client.Connect(device.DeviceAddress, BluetoothService.SerialPort);
-                    deviceConected = device;
+
+                });
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+        public async Task<bool> ConectBl(BluetoothDevice device)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    client.Connect(device.Address, BluetoothService.SerialPort);
+
                 });
                 return true;
             }
@@ -222,6 +239,11 @@ namespace GEO_DROID.Services
             try
             {
                 if (canal != null)
+                {
+                    canal.Close();
+                    client.Dispose();
+                }
+                else
                 {
                     canal.Close();
                     client.Dispose();

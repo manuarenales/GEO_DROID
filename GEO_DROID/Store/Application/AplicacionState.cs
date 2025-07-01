@@ -9,7 +9,6 @@ namespace GEO_DROID.Store.Application
     {
         private AplicacionState()
         {
-
             MainMenuItems = new List<MainMenuItem>();
 
             MainMenuItem item1 = new MainMenuItem();
@@ -17,6 +16,7 @@ namespace GEO_DROID.Store.Application
             MainMenuItem item3 = new MainMenuItem();
             MainMenuItem item4 = new MainMenuItem();
             MainMenuItem item5 = new MainMenuItem();
+            MainMenuItem item6 = new MainMenuItem();
 
             item1.title = "ruta";
             item1.icon = new Microsoft.FluentUI.AspNetCore.Components.Emojis.TravelPlaces.Color.Default.Motorway();
@@ -43,11 +43,17 @@ namespace GEO_DROID.Store.Application
             item5.subtitle = "Configuracion de Instalaciones ";
             item5.ruta = "ajustes";
 
+            item6.title = "test";
+            item6.icon = new Microsoft.FluentUI.AspNetCore.Components.Emojis.Objects.Color.Default.Axe();
+            item6.subtitle = "test";
+            item6.ruta = "testlist";
+
             MainMenuItems.Add(item1);
             MainMenuItems.Add(item2);
             MainMenuItems.Add(item3);
             MainMenuItems.Add(item4);
             MainMenuItems.Add(item5);
+            //MainMenuItems.Add(item6);
 
         }
 
@@ -62,5 +68,7 @@ namespace GEO_DROID.Store.Application
         public IDialogReference modalEstadoSelecter { get; init; }
 
         public IDialogReference modalTestEstablecimiento { get; init; }
+
+        public IDialogReference SplashScreenDialog { get; init; }
     }
 }

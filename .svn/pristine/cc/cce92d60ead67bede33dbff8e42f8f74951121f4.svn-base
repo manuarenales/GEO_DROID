@@ -1,0 +1,54 @@
+﻿@using GEO_DROID.Store
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Confirmation
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IState<ConfirmationState> ConfirmationState
+@inject IDispatcher Dispatcher
+
+@if (ConfirmationState.Value?.CurrentDialog is not null)
+{
+    <div class="modal-backdrop"
+         style="z-index: 1049; display: @(ConfirmationState.Value.IsVisible ? "block" : "none");
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5);">
+    </div>
+
+    <div class="modal" style="z-index: 1050; display: @(ConfirmationState.Value.IsVisible ? "block" : "none")">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <img class="m-1 Titulo" style="width: 2em; height: 2em;" src="/img/alert.png" />
+                        <span class="Titulo font-weight-bold">
+                            @ConfirmationState.Value.CurrentDialog.Title
+                        </span>
+                    </div>
+                    <button type="button" class="close" aria-label="Close" @onclick="() => Respond(false)">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="TextoGrande">
+                        @ConfirmationState.Value.CurrentDialog.Message 
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <button type="button" class="btn btn-secondary" @onclick="() => Respond(false)">Cancelar</button>
+                        <button type="button" class="btn btn-primary" @onclick="() => Respond(true)">Aceptar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    private void Respond(bool confirmed)
+    {
+        Dispatcher.Dispatch(new ConfirmationResponseAction(confirmed));
+       
+    }
+}
+

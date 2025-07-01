@@ -1,0 +1,112 @@
+﻿@page "/lecturaContadoresForm"
+
+@using BLL.LeerInfoMaquina
+@using Fluxor
+@using GEO_DROID.Store.Forms
+@using GEO_DROID.Store
+@using GEO_DROID.Store.ModuloCaptura
+@using GEO_DROID.Store.Recaudacion
+@using GeoDroid.Data
+@using Microsoft.Extensions.Localization
+@using GEO_DROID.Resources.Languages
+@using Microsoft.FluentUI.AspNetCore.Components
+
+@inject IJSRuntime JS
+@inject IState<RecaudacionState> RecaudacionState
+@inject IDispatcher Dispatcher
+@inject IState<ModuloCapturaState> ModuloCapturaState
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+
+
+@if (RecaudacionState.Value.PatronLecturaContador != null)
+{
+    <FluentStack Orientation="Orientation.Vertical" Class="w-100">
+        <FluentLabel Typo="Typography.H4">@Localizer["LecturaFinalContadores"]</FluentLabel>
+
+
+        @foreach (var lecturaDetalle in RecaudacionState.Value.PatronLecturaContador)
+        {
+            var key = lecturaDetalle.Key;
+            var Value = lecturaDetalle.Value;
+
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentLabel Typo="Typography.Body">@key.tipoContadores (@key.valorPaso)</FluentLabel>
+                <FluentNumberField Label="@Localizer["ValorActual"]"
+                                   @bind-Value="@Value.valor"
+                                   Style="width: 100%;" />
+            </FluentStack>
+        }
+
+    </FluentStack>
+}
+
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+             Style=" width: 100%; padding:5px; ">
+    <FluentButton OnClick="LeerContadoresBluetooth" BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Leer Contadores bluetooth
+    </FluentButton>
+
+</FluentStack>
+
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+             Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; gap: 1rem; ">
+    <FluentButton OnClick="GuardarLectura" BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Guardar
+    </FluentButton>
+    <FluentButton OnClick="CancelarLectura" BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Cancelar
+    </FluentButton>
+    <FluentButton OnClick="EliminarLectura" BackgroundColor="red" Disabled="@((RecaudacionState.Value.RecaudacionSelected is null ))" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Eliminar
+    </FluentButton>
+
+</FluentStack>
+
+@code {
+
+    protected override void OnInitialized()
+    {
+
+        if (RecaudacionState?.Value.LecturaContador is null)
+        {
+            LecturaContador lecturaContador = new LecturaContador();
+            Dispatcher.Dispatch(new changeLecturaSelectedForRecaudacionForm(lecturaContador));
+
+           
+        }
+        base.OnInitialized();
+    }
+
+    private async void GoBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+    public async void GuardarLectura()
+    {
+
+        GoBack();
+    }
+
+    public async void CancelarLectura()
+    {
+
+
+        GoBack();
+    }
+
+    public async void EliminarLectura()
+    {
+
+        GoBack();
+    }
+
+    public async void LeerContadoresBluetooth()
+    {
+
+    }
+
+
+}

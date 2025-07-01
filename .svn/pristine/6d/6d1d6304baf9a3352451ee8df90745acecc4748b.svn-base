@@ -1,0 +1,69 @@
+﻿@page "/lecturaInicialForm"
+
+@using Fluxor
+@using GEO_DROID.Store.Forms
+@using GEO_DROID.Store
+@using GeoDroid.Data
+@using Microsoft.Extensions.Localization
+@using GEO_DROID.Resources.Languages
+@using Microsoft.FluentUI.AspNetCore.Components
+
+
+@inject IState<AveriaFormState> AveriaFormState
+@inject IDispatcher Dispatcher
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+@if (AveriaFormState.Value.LecturaContador is not null)
+{
+
+    if (AveriaFormState.Value.PatronLecturaContador is not null)
+    {
+        @if (AveriaFormState?.Value.AveriaSelected != null && AveriaFormState.Value.PatronLecturaContador != null)
+        {
+            <FluentStack Orientation="Orientation.Vertical" Class="w-100">
+                <FluentLabel Typo="Typography.H6">@Localizer["LecturaInicialContadores"]</FluentLabel>
+
+
+                @foreach (var lecturaDetalle in AveriaFormState.Value.PatronLecturaContador)
+                {
+                    var key = lecturaDetalle.Key;
+                    var Value = lecturaDetalle.Value;
+
+                    <FluentStack Orientation="Orientation.Vertical">
+                        <FluentLabel Typo="Typography.Body">@key.tipoContadores (@key.valorPaso)</FluentLabel>
+                        <FluentNumberField Label="@Localizer["ValorActual"]"
+                                           @bind-Value="@Value.valorAntes"
+                                           Style="width: 100%;" />
+                    </FluentStack>
+                }
+
+            </FluentStack>
+        }
+    }
+
+}
+else if (AveriaFormState?.Value.LecturaContador != null)
+{
+    <FluentLabel Typo="Typography.Body">@Localizer["ContadoresNoCargados"]</FluentLabel>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+       
+        if (AveriaFormState?.Value.LecturaContador is null)
+        {
+            LecturaContador lecturaContador = new LecturaContador();
+            Dispatcher.Dispatch(new changeLecturaSelectedForAveriasForm(lecturaContador));
+
+            if (AveriaFormState?.Value.PatronLecturaContador is null)
+            {
+
+
+            }
+        }
+        base.OnInitialized();
+    }
+
+}

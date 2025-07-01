@@ -1,0 +1,111 @@
+﻿@using GEO_DROID.Services
+@using System.Globalization
+@using GEO_DROID.Store
+
+@inject NavigationManager NavigationManager
+@inject IDispatcher dispatcher
+
+
+<FluentButton OnClick="OnOpen">
+    <FluentIcon Value="@(new Icons.Regular.Size32.Globe())" Color="Color.Error" />
+</FluentButton>
+
+
+<FluentDialog @ref="_myFluentDialog" @bind-Hidden="@Hidden" Modal=@_modal TrapFocus=@_trapFocus PreventScroll=@_preventScroll @ondialogdismiss=OnDismiss>
+    <FluentDialogHeader ShowDismiss="true">
+        <FluentStack VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size32.Globe())" />
+            <FluentLabel Typo="Typography.PaneHeader">
+                Selecciona Un Idioma
+            </FluentLabel>
+        </FluentStack>
+    </FluentDialogHeader>
+    <FluentDialogBody>
+        <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.Center">
+            @foreach (var culture in cultures)
+            {
+                <FluentButton Appearance="Appearance.Neutral" Style="height:100% ; width:100% ; " OnClick="@(() =>dispatcher.Dispatch(new ChangeCultureAction(culture)))">
+                    <FluentLabel Typo="Typography.H4">
+                        @culture.DisplayName
+                    </FluentLabel>
+                </FluentButton>
+            }
+        </FluentStack>
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentLabel Typo="Typography.Subject">v.2.0.6b</FluentLabel>
+    </FluentDialogFooter>
+</FluentDialog>
+
+
+@code {
+
+    private FluentDialog? _myFluentDialog;
+    private bool _trapFocus = true;
+    private bool _modal = true;
+    private bool _preventScroll = true;
+    private string? _status;
+    private bool Hidden { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var storedLanguage = Preferences.Get("language", "es");
+        var culture = CultureInfo.GetCultureInfo(storedLanguage);
+        Thread.CurrentThread.CurrentCulture = culture;
+        Thread.CurrentThread.CurrentUICulture = culture;
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
+    }
+
+    CultureInfo[] cultures = new[]
+    {
+        new CultureInfo("en"),
+        new CultureInfo("es")
+    };
+
+    CultureInfo Culture
+    {
+        get => CultureInfo.CurrentCulture;
+        set
+        {
+            if (CultureInfo.CurrentCulture != value)
+            {
+                Thread.CurrentThread.CurrentCulture = value;
+                Thread.CurrentThread.CurrentUICulture = value;
+                CultureInfo.DefaultThreadCurrentCulture = value;
+                CultureInfo.DefaultThreadCurrentUICulture = value;
+                Preferences.Set("language", value.Name);
+            }
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            _myFluentDialog!.Hide();
+
+    }
+
+    private void OnOpen()
+    {
+        _status = "Dialog opened with button click";
+        _myFluentDialog!.Show();
+
+    }
+
+    private void OnClose()
+    {
+        _status = $"Dialog dismissed with reason: Close button clicked";
+        _myFluentDialog!.Hide();
+    }
+
+    private void OnDismiss(DialogEventArgs args)
+    {
+        if (args is not null && args.Reason is not null && args.Reason == "dismiss")
+        {
+            _status = $"Dialog dismissed with reason: Dismissed";
+            _myFluentDialog!.Hide();
+        }
+    }
+
+}

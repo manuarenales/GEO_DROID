@@ -7,12 +7,26 @@ namespace GEO_DROID.Store.Bluetooth
     {
 
         [ReducerMethod]
-        public static BluetoothState ChangeConectedDevice(BluetoothState state, ChangeConectedDevice action) =>
-           state with { bluetoothDeviceInfoSaved = action.device };
+        public static BluetoothState ChangeConectedDevice(BluetoothState state, ChangeConectedDevice action)
+        {
+            return state with { currentDeviceConected = action.device };
+        }
 
         [ReducerMethod]
-        public static BluetoothState LoadBluetoothDeviceAction(BluetoothState state, ChangeConectedDevice action) =>
-           state with { bluetoothDeviceInfoSaved = action.device };
+        public static BluetoothState ChangeConectedDeviceInfo(BluetoothState state, ChangeConectedDeviceInfo action)
+        {
+            BluetoothDevice actual = new BluetoothDevice();
+            actual.ConnectionTime = DateTime.Now;
+            actual.Address = action.device.DeviceAddress;
+            actual.DeviceName = action.device.DeviceName;
 
+            return state with { currentDeviceConected = actual };
+        }
+
+        [ReducerMethod]
+        public static BluetoothState SetBluetoothDeviceHistorial(BluetoothState state, SetBluetoothDeviceHistorial action)
+        {
+            return state with { devicesHistorialList = action.devicesHistorialList };
+        }
     }
 }

@@ -1,5 +1,4 @@
-﻿@using Android.App
-@using BLL.LeerInfoMaquina
+﻿  @using BLL.LeerInfoMaquina
 @using GEO_DROID.Store.Application
 @using GEO_DROID.Store.Navegation
 @implements IDialogContentComponent<TestContadoresModelDialog>
@@ -12,7 +11,7 @@
 
 @if (AplicacionState.Value is not null)
 {
-    <FluentDialogBody>
+    <FluentDialogBody Style="overflow: auto;">
 
         <FluentGrid Spacing="0">
             <FluentGridItem xs="12">
@@ -20,36 +19,121 @@
                 <FluentTextField Placeholder="Direccion Mac"
                                  @bind-Value="DireccionMac"
                                  Style="width:100%" Label="Direccion MAC" />
+            </FluentGridItem>
 
+            <FluentGridItem xs="12">
                 <FluentTextField Placeholder="PIN"
                                  @bind-Value="Pass"
                                  Style="width:100%" Label="PIN" />
+            </FluentGridItem>
 
 
-                <FluentTextArea Cols="15" Resize="TextAreaResize.Vertical"
-                                Label="@Localizer["Descripción"]"
-                                @bind-Value="result"
-                                Style="width: 100%;" />
 
+            <FluentGridItem xs="12">
 
+                <FluentSelect Label="Protocolo :" TOption="ProtocoloMaquina?"
+                              Items="ItemListValues"
+                              @bind-SelectedOption="ProtocoloSeleted">
+                    <FluentOption Value="">-- Seleccionar protocolo --</FluentOption>
+                </FluentSelect>
 
             </FluentGridItem>
-        </FluentGrid>
 
-        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="Conectar">
+            <FluentGrid>
+                <FluentGridItem xs="12">
+                    <FluentGrid Spacing="0">
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Auxiliar1 :" Value="@infocontadores.Auxiliar1.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Auxiliar2 :" Value="@infocontadores.Auxiliar2.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Auxiliar3 :" Value="@infocontadores.Auxiliar3.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Auxiliar4 :" Value="@infocontadores.Auxiliar4.ToString()" Disabled="true">  </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Auxiliar5 :" Value="@infocontadores.Auxiliar5.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Auxiliar6 :" Value="@infocontadores.Auxiliar6.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Mecanico1 :" Value="@infocontadores.Mecanico1.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Mecanico2 :" Value="@infocontadores.Mecanico2.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Mecanico3 :" Value="@infocontadores.Mecanico3.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Mecanico4 :" Value="@infocontadores.Mecanico4.ToString()" Disabled="true">  </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Salidas :" Value="@infocontadores.Salidas.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Entradas :" Value="@infocontadores.Entradas.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Billetes :" Value="@infocontadores.Billetes.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Billetes10 :" Value="@infocontadores.Billetes10.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Billetes20 :" Value="@infocontadores.Billetes20.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Billetes5 :" Value="@infocontadores.Billetes5.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Billetes50 :" Value="@infocontadores.Billetes50.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="4">
+                            <FluentTextField Label="Cajon :" Value="@infocontadores.Cajon.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="6">
+                            <FluentTextField Label="CajonMonedas020 :" Value="@infocontadores.CajonMonedas020.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="6">
+                            <FluentTextField Label="CajonMonedas050 :" Value="@infocontadores.CajonMonedas050.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="6">
+                            <FluentTextField Label="CajonMonedas100 :" Value="@infocontadores.CajonMonedas100.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                        <FluentGridItem xs="6">
+                            <FluentTextField Label="CajonMonedas200 :" Value="@infocontadores.CajonMonedas200.ToString()" Disabled="true"> </FluentTextField>
+                        </FluentGridItem>
+                    </FluentGrid>
+                </FluentGridItem>
+            </FluentGrid>
+        </FluentGrid>
+    </FluentDialogBody>
+    <FluentDialogFooter>
+        <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;" OnClick="ConectarAsync">
             Realizar Lectura
         </FluentButton>
-
-    </FluentDialogBody>
+    </FluentDialogFooter>
 }
 
 
 @code {
+
     [Parameter]
     public TestContadoresModelDialog Content { get; set; } = default!;
 
     [CascadingParameter]
     public FluentDialog? Dialog { get; set; }
+
+    public InfoContadores infocontadores = new InfoContadores();
+
+    public ProtocoloMaquina? ProtocoloSeleted = ProtocoloMaquina.NOVOMATIC_SAS;
+
+    public IEnumerable<ProtocoloMaquina?> ItemListValues = new List<ProtocoloMaquina?>();
 
     private string DireccionMac = "00:16:A4:0D:60:90";
 
@@ -60,38 +144,86 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-    }
 
-    public void Conectar()
-    {
-        Task.Run(() =>
+        var protocolos = new ProtocoloMaquina[]
         {
-            ModuloBluetooth module = new ModuloBluetooth(ProtocoloMaquina.NOVOMATIC_SAS);
-            Activity activity = Platform.CurrentActivity;
-            module.Conectar(DireccionMac, activity, null, TipoDispositivoBTEnum.sis, Pass);
-            InfoContadores lel = module.LeerContadores();
-            result = $@"
-Auxiliar1 : {lel.Auxiliar1.ToString()}
-Auxiliar2 : {lel.Auxiliar2.ToString()}
-Auxiliar3 : {lel.Auxiliar3.ToString()}
-Auxiliar4 : {lel.Auxiliar4.ToString()}
-Auxiliar5 : {lel.Auxiliar5.ToString()}
-Auxiliar6 : {lel.Auxiliar6.ToString()}
+        ProtocoloMaquina.FRANCO,
+        ProtocoloMaquina.BARCREST,
+        ProtocoloMaquina.BELLFRUIT,
+        ProtocoloMaquina.UNIDESA,
+        ProtocoloMaquina.CIRSA,
+        ProtocoloMaquina.COSTACALIDA,
+        ProtocoloMaquina.GIGAMES,
+        ProtocoloMaquina.SENTE,
+        ProtocoloMaquina.SLEIC,
+        ProtocoloMaquina.TECNAUSA,
+        ProtocoloMaquina.TOURVISION,
+        ProtocoloMaquina.WORTE,
+        ProtocoloMaquina.GEMINI,
+        ProtocoloMaquina.AMATIC,
+        ProtocoloMaquina.MERKUR,
+        ProtocoloMaquina.OLYMPIC,
+        ProtocoloMaquina.NOVOMATIC,
+        ProtocoloMaquina.ZITRO,
+        ProtocoloMaquina.NOVOMATIC_SAS,
+        ProtocoloMaquina.GISTRA
+        };
 
-Mecanico1 : {lel.Mecanico1.ToString()}
-Mecanico2 : {lel.Mecanico2.ToString()}
-Mecanico3 : {lel.Mecanico3.ToString()}
-Mecanico4 : {lel.Mecanico4.ToString()}
-Salidas : {lel.Salidas.ToString()}
-";
-            module.Desconectar();
+        ItemListValues = protocolos.Aggregate(new List<ProtocoloMaquina?>(), (lista, protocolo) =>
+        {
+            lista.Add(protocolo);
+            return lista;
         });
-
-
     }
+
+    public async Task ConectarAsync()
+    {
+#if ANDROID
+    SplashScreenContent parametros = new SplashScreenContent
+    {
+    SubTitle = "",
+    Title = "Realizando Lectura ",
+    LoadingText = "Conectando...",
+    Message = (MarkupString)"<strong>   </strong>",
+    DisplayTime = 4000232 // algo razonable
+    };
+
+    // Muestra el splash sin bloquear
+    Dispatcher.Dispatch(new OpenSlashBluethooth(parametros));
+
+    // Da tiempo para que el splash se renderice
+    await Task.Delay(200);
+
+    // Ejecuta la lógica de conexión en segundo plano sin bloquear
+    await Task.Run(() =>
+    {
+    ModuloBluetooth module = new ModuloBluetooth((ProtocoloMaquina)ProtocoloSeleted);
+    Android.App.Activity activity = Platform.CurrentActivity;
+    module.Conectar(DireccionMac, activity, null, TipoDispositivoBTEnum.sis, Pass);
+    infocontadores = module.LeerContadores();
+    module.Desconectar();
+    });
+
+    await Task.Delay(200);
+
+
+
+    if (AplicacionState.Value.SplashScreenDialog != null)
+    {
+    await AplicacionState.Value.SplashScreenDialog.CloseAsync();
+    }
+#endif
+    }
+
 
     private void ToggleDialogPrimaryActionButton(bool enable)
     {
         Dialog!.TogglePrimaryActionButton(enable);
+    }
+
+    public class ItemComponent
+    {
+        public ProtocoloMaquina? Value;
+        public string Nombre;
     }
 }

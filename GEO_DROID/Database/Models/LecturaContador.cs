@@ -14,7 +14,6 @@ namespace GeoDroid.Data
         [DataMember]
         //[ForeignKey("incidencia"), DataMember]
         public int? idIncidencias { get; set; }
-
         //public virtual Incidencia? incidencia { get; set; }
     }
 }

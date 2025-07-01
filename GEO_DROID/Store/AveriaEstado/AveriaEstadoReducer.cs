@@ -20,6 +20,5 @@ namespace GEO_DROID.Store.AveriaEstado
             return state with { AveriaEstadoSelected = action.AveriaEstado };
         }
 
-
     }
 }

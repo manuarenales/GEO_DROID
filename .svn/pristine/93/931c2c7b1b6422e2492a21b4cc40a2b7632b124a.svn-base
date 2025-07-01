@@ -1,0 +1,77 @@
+﻿@using System.Globalization
+@using GEO_DROID.Services
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Application
+@using GEO_DROID.Store.Navegation
+
+@inject IDispatcher Dispatcher
+@inject IState<NavigationState> navegation
+@inject IState<AplicacionState> AplicacionState
+@inject NavigationManager Navigation
+
+
+<Fluxor.Blazor.Web.StoreInitializer />
+<NavigationLock OnBeforeInternalNavigation="ConfirmarNavegacion" />
+
+<Microsoft.AspNetCore.Components.Routing.Router AppAssembly="@typeof(Main).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p role="alert">Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Microsoft.AspNetCore.Components.Routing.Router>
+
+
+
+
+@code {
+
+
+    private async Task<bool> ConfirmarNavegacion(LocationChangingContext context)
+    {
+        if (AplicacionState.Value.modalEstablecientoSelecter is not null)
+        {
+            await AplicacionState.Value.modalEstablecientoSelecter.CloseAsync();
+            // Previene la navegación original
+            context.PreventNavigation();
+            return false;
+        }
+        if (AplicacionState.Value.modalConceptoAveriaSelecter is not null)
+        {
+            await AplicacionState.Value.modalConceptoAveriaSelecter.CloseAsync();
+            // Previene la navegación original
+            context.PreventNavigation();
+            return false;
+        }
+        if (AplicacionState.Value.modalEstadoSelecter is not null)
+        {
+            await AplicacionState.Value.modalEstadoSelecter.CloseAsync();
+            // Previene la navegación original
+            context.PreventNavigation();
+            return false;
+        }
+        if (AplicacionState.Value.modalMaquinaSelecter is not null)
+        {
+            await AplicacionState.Value.modalMaquinaSelecter.CloseAsync();
+            // Previene la navegación original
+            context.PreventNavigation();
+            return false;
+        }
+        if (AplicacionState.Value.modalTestEstablecimiento is not null)
+        {
+            await AplicacionState.Value.modalTestEstablecimiento.CloseAsync();
+            // Previene la navegación original
+            context.PreventNavigation();
+            return false;
+        }
+
+
+        return true; // Permitir navegación
+    }
+
+
+}

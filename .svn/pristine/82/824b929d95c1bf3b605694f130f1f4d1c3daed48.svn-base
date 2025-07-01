@@ -1,0 +1,143 @@
+﻿@page "/configuracion"
+@using Fluxor
+@using GEO_DROID.Services
+@using System.Text.Json
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Bluetooth
+@using GEO_DROID.Store.Configuration
+@using GEO_DROID.Store.CultureCase
+@using IOGesture.Components
+@using InTheHand.Net
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IDispatcher Dispatcher
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject IJSRuntime JS
+@inject IState<ConfigurationState> ConfigurationState
+@inject IState<BluetoothState> BluetoothState
+
+
+@if (ConfigurationState.Value.ConfigurationSelected != null)
+{
+    <FluentStack Orientation="Orientation.Vertical">
+
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentLabel Typo="Typography.H4">@Localizer["Sincronizacion"]  </FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentNumberField @bind-Value="ConfigurationState.Value.ConfigurationSelected.unitNumber" Label="Nº Unidad"></FluentNumberField>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentTextField @bind-Value="ConfigurationState.Value.ConfigurationSelected.password" Label="Contraseña"></FluentTextField>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentTextField @bind-Value="ConfigurationState.Value.ConfigurationSelected.ip" Label="Servidor GEO"></FluentTextField>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentNumberField @bind-Value="ConfigurationState.Value.ConfigurationSelected.port" Label="Puerto GEO"></FluentNumberField>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+        <FluentStack Orientation="Orientation.Vertical" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentCheckbox @bind-Value="ConfigurationState.Value.ConfigurationSelected.syncCompressionEnabled" Label="Minimizar uso de datos"></FluentCheckbox>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+            <FluentLabel Typo="Typography.H4">@Localizer["Tickets"]  </FluentLabel>
+        </FluentStack>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+        <Gesture OnTap='() => NavigateTo("utilities")'>
+            <FluentStack Orientation="Orientation.Vertical">
+                <FluentLabel Typo="Typography.H4">Impresora</FluentLabel>
+                @if (BluetoothState.Value.currentDeviceConected is not null)
+                {
+                    <FluentLabel Typo="Typography.H4" Color="@Color.Accent">@BluetoothState.Value.currentDeviceConected.DeviceName</FluentLabel>
+                }
+                else
+                {
+                    <FluentLabel Typo="Typography.H4" Color="@Color.Accent">No Device</FluentLabel>
+                }
+            </FluentStack>
+        </Gesture>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+        <FluentLabel> </FluentLabel>
+        <FluentCheckbox @bind-Value="firmas" Label="Imprimir area de firmas"></FluentCheckbox>
+        <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+
+
+        <FluentGridItem Style="margin-bottom:50px; " xs="12">
+            <FluentLabel> </FluentLabel>
+            <FluentCheckbox @bind-Value="tiketCopi" Label="Imprimir dos copias del tiket"></FluentCheckbox>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+    </FluentStack>
+
+
+    <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center"
+                 Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; gap: 1rem; ">
+        <FluentButton BackgroundColor="#2596be" OnClick="Guardar" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Guardar
+        </FluentButton>
+        <FluentButton OnClick="GoBack" BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+            Cancelar
+        </FluentButton>
+    </FluentStack>
+}
+
+
+
+
+
+
+@code {
+    private bool firmas { get; set; }
+    private bool tiketCopi { get; set; }
+
+    private bool NunidadIsValid { get; set; } = true;
+    private bool ContraseñaIsValid { get; set; } = true;
+    private bool ServerIsValid { get; set; } = true;
+    private bool PuertoIsValid { get; set; } = true;
+    private bool salir = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Dispatcher.Dispatch(new GetCongiguration());
+        Dispatcher.Dispatch(new LoadLastBluetoothDevice());
+
+        salir = false;
+    }
+
+    private async void Guardar()
+    {
+        Dispatcher.Dispatch(new SaveConfiguration(ConfigurationState.Value.ConfigurationSelected));
+        GoBack();
+    }
+
+    private void NavigateTo(string pageTitle)
+    {
+        Dispatcher.Dispatch(new NavigationToAction($"/{pageTitle.ToLower()}"));
+    }
+
+    private async void GoBack()
+    {
+        await JS.InvokeVoidAsync("history.back");
+
+    }
+
+
+}
+

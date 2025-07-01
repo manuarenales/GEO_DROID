@@ -1,0 +1,32 @@
+﻿using Fluxor;
+using GeoDroid.Data;
+using GeoDroid.Data.SQL;
+
+using IDispatcher = Fluxor.IDispatcher;
+
+namespace GEO_DROID.Store.Carga
+{
+    public class CargaEffects
+    {
+        private readonly GeoDroidDatabase _database;
+
+        public CargaEffects(GeoDroidDatabase database)
+        {
+            _database = database;
+        }
+
+        [EffectMethod]
+        public async Task LoadCargaForAveriaForm(DeleteCarga action, IDispatcher dispatcher)
+        {
+            try
+            {
+                await _database._database.DeleteAsync(action.carga);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}

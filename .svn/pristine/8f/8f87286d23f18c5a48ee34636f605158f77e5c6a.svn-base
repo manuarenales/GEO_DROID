@@ -1,0 +1,15 @@
+﻿@page "/"
+@using GEO_DROID.Services
+@using GEO_DROID.Store
+@inject IStringLocalizer<StringLocalizer> Localizer;
+@inject IDispatcher Dispatcher
+
+
+<GEO_DROID.Shared.Components.List.ItemDisplayListComponent></GEO_DROID.Shared.Components.List.ItemDisplayListComponent>
+
+
+
+@code {
+    protected override async Task OnInitializedAsync() { }
+}
+

@@ -1,0 +1,214 @@
+﻿@page "/recaudacionForm"
+@using GEO_DROID.Services
+@using GEO_DROID.Shared.Components
+@using GEO_DROID.Store
+@using GEO_DROID.Store.Establecimiento
+@using GEO_DROID.Store.Maquinas
+@using GEO_DROID.Store.Recaudacion
+@using GEO_DROID.Store.Rutas
+@using IDispatcher = Fluxor.IDispatcher;
+@using IOGesture.Components
+
+
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+@inject IDispatcher Dispatcher
+@inject IState<EstablecimientoState> EstablecimientoState
+@inject IState<RecaudacionState> RecaudacionState
+
+@inject IState<MaquinasState> MaquinasState
+@inject IStringLocalizer<StringLocalizer> Localizer
+@inject IState<RutasState> RutasState;
+@inject IJSRuntime JS
+
+
+@if (RutasState.Value.RutaSelected.Establecimiento is not null)
+{
+
+    <FluentGrid Spacing="0">
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentLabel Typo="Typography.H3" Color="Color.Success">  @RutasState.Value.RutaSelected.Establecimiento.nombre</FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        @if (MaquinasState.Value.MaquinaSelected is not null)
+        {
+            <FluentGridItem xs="12">
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                    <FluentLabel Typo="Typography.H4">@MaquinasState.Value.MaquinaSelected.modeloMaquina / @MaquinasState.Value.MaquinaSelected.codigo</FluentLabel>
+                </FluentStack>
+                <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+            </FluentGridItem>
+        }
+
+    </FluentGrid>
+
+}
+
+<EditForm Model="RecaudacionState.Value.RecaudacionSelected">
+    <FluentGrid Spacing="0">
+        <FluentGridItem xs="12">
+            <Gesture OnTap="NavigateToCounters">
+                <FluentStack Orientation="Orientation.Vertical" Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Contadores"]
+                    </FluentLabel>
+
+                    <FluentLabel Typo="Typography.H4" Color="Color.Accent">
+                        No Realizado
+                    </FluentLabel>
+                </FluentStack>
+            </Gesture>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12">
+            <Gesture>
+                <FluentStack Orientation="Orientation.Vertical" Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Arqueo"] (5543d - 13/12/10 = 0.00$)
+                    </FluentLabel>
+
+                    <FluentNumberField TValue="Decimal" @bind-Value="RecaudacionState.Value.RecaudacionSelected.valorArqueo">  </FluentNumberField>
+                </FluentStack>
+            </Gesture>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12">
+            <Gesture>
+                <FluentStack Orientation="Orientation.Vertical" Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Bruto"]
+                    </FluentLabel>
+
+                    <FluentNumberField @bind-Value="RecaudacionState.Value.RecaudacionSelected.bruto">  </FluentNumberField>
+                </FluentStack>
+            </Gesture>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12">
+            <Gesture>
+                <FluentStack Orientation="Orientation.Vertical" Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Carga / Recuperacion"]
+                    </FluentLabel>
+
+                    <FluentLabel Typo="Typography.H4" Color="Color.Accent">
+                        Emp: 0 Est:0
+                    </FluentLabel>
+                </FluentStack>
+            </Gesture>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12">
+            <Gesture>
+                <FluentStack Orientation="Orientation.Vertical" Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Diferencia"]
+                    </FluentLabel>
+
+                    <FluentLabel Typo="Typography.H4" Color="Color.Accent">
+                        -53.6
+                    </FluentLabel>
+                </FluentStack>
+            </Gesture>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12">
+            <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" HorizontalAlignment="HorizontalAlignment.Start">
+                <FluentLabel Typo="Typography.H4"> Conceptos </FluentLabel>
+            </FluentStack>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12">
+            <Gesture>
+                <FluentStack Orientation="Orientation.Vertical" Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Fallos"]
+                    </FluentLabel>
+
+                    <FluentLabel Typo="Typography.H4" Color="Color.Accent">
+                        0
+                    </FluentLabel>
+                </FluentStack>
+            </Gesture>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12">
+            <Gesture>
+                <FluentStack Orientation="Orientation.Vertical" Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Tasas"]
+                    </FluentLabel>
+
+                    <FluentLabel Typo="Typography.H4" Color="Color.Accent">
+                        0
+                    </FluentLabel>
+                </FluentStack>
+            </Gesture>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+        <FluentGridItem xs="12" Style="margin-bottom:50px;">
+            <Gesture>
+                <FluentStack Orientation="Orientation.Vertical" Style="cursor: pointer;">
+                    <FluentLabel Typo="Typography.H4">
+                        @Localizer["Comentarios"]
+                    </FluentLabel>
+
+                    <FluentTextField Style="width:100%;" @bind-Value="RecaudacionState.Value.RecaudacionSelected.comentario">  </FluentTextField>
+                </FluentStack>
+            </Gesture>
+            <FluentDivider Style="width: 100%;" Role="DividerRole.Presentation"></FluentDivider>
+        </FluentGridItem>
+
+    </FluentGrid>
+</EditForm>
+
+
+<FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Center" Style="position: fixed; bottom: 0; width: 100%; padding: 0.5rem; gap: 1rem; ">
+
+    <FluentButton BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Guardar
+    </FluentButton>
+    <FluentButton OnClick="Cancelar" BackgroundColor="#2596be" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Cancelar
+    </FluentButton>
+    <FluentButton BackgroundColor="red" Disabled="@((RecaudacionState?.Value.RecaudacionSelected is null ))" Type="ButtonType.Button" Color="white" Style="flex: 1;">
+        Eliminar
+    </FluentButton>
+
+</FluentStack>
+
+
+@code {
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (RecaudacionState?.Value.RecaudacionSelected is null)
+        {
+            Recaudacion recaudacion = new Recaudacion();
+            Dispatcher.Dispatch(new ChangeRecaudacionSelectedAction(recaudacion));
+        }
+    }
+
+    private async void Cancelar()
+    {
+        Dispatcher.Dispatch(new ChangeRecaudacionSelectedAction(null));
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+    public void NavigateToCounters()
+    {
+        Dispatcher.Dispatch(new NavigationToAction("lecturaContadoresForm"));
+    }
+
+}

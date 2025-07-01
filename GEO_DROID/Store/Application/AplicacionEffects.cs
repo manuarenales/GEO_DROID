@@ -17,14 +17,16 @@ namespace GEO_DROID.Store.Application
         private readonly IState<ConfirmationState> confirmationState;
         private readonly IDialogService _dialogService;
 
+        private readonly IDialogService _SplashScreenService;
 
-
-        public AplicacionEffects(SyncProcess sincroservice, IState<ConfirmationState> ConfirmationState, NavigationManager navigationManager, IDialogService DialogService)
+        public AplicacionEffects(SyncProcess sincroservice, IState<ConfirmationState> ConfirmationState, NavigationManager navigationManager, IDialogService DialogService, IDialogService SplashScreenService)
         {
             _sincroService = sincroservice;
             confirmationState = ConfirmationState;
             _navigationManager = navigationManager;
             _dialogService = DialogService;
+
+            _SplashScreenService = SplashScreenService;
         }
 
         [EffectMethod]
@@ -44,6 +46,7 @@ namespace GEO_DROID.Store.Application
                 PrimaryAction = content.PrimaryAction,
                 DismissTitle = content.PrimaryAction,
                 TrapFocus = true,
+                Width = "95%",
                 Modal = true,
                 PreventScroll = true
             };
@@ -55,18 +58,41 @@ namespace GEO_DROID.Store.Application
             {
                 if (result.Cancelled)
                 {
-                    // Cancelar 
+                    // Cancelar  
                 }
                 else
                 {
                     //Aceptar
-                    await _sincroService.StartAsync(null);
+                    SplashScreenContent paramametros = new SplashScreenContent();
+
+                    paramametros.SubTitle = "";
+                    paramametros.Title = "Proceso de Sincronizando";
+                    paramametros.LoadingText = "Sincronizando...";
+                    paramametros.Message = (MarkupString)"<strong>   </strong>";
+                    paramametros.DisplayTime = 4000000;
+                    dispatcher.Dispatch(new OpenSlashBluethooth(paramametros));
+
+                    // Deja que el splash tenga tiempo de mostrarse
+                    await Task.Delay(200); // Permite renderizar splash 
+
+                    // Luego ejecutas la sincronización en background
+                    try
+                    {
+                        await Task.Run(async () =>
+                        {
+                            await _sincroService.StartAsync(null);
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+
+                        throw;
+                    }
+
+                    dispatcher.Dispatch(new CloseSlashDefault());
                 }
             }
-            else
-            {
-                //pulsa la x  n 
-            }
+
 
         }
 
@@ -125,7 +151,6 @@ namespace GEO_DROID.Store.Application
         public async Task ChangeModalMaquinaSelecter(LaunchMaquinaSelecter action, IDispatcher dispatcher)
         {
             //Lanzamos un pop up con el temita este de Modal 
-
             MaquinaSelecterDialog content = new()
             {
                 Title = "Seleccion Maquina",
@@ -316,11 +341,30 @@ namespace GEO_DROID.Store.Application
             }
             else
             {
-                //pulsa la x 
                 dispatcher.Dispatch(new ChangeModalTestContadoresSelecter(null));
             }
         }
 
+        [EffectMethod]
+        public async Task OpenSlashDefaultAsync(OpenSlashBluethooth action, IDispatcher dispatcher)
+        {
+
+            IDialogReference? _dialog;
+            DialogParameters<SplashScreenContent> parameters = new()
+            {
+                Content = action.parametros,
+                PreventDismissOnOverlayClick = true,
+                Modal = false,
+                Width = "80%",
+                Height = "80%",
+            };
+
+            _dialog = await _SplashScreenService.ShowSplashScreenAsync(parameters);
+            dispatcher.Dispatch(new ChangeSplashScreenSelecter(_dialog));
+
+
+
+        }
     }
 
 }
